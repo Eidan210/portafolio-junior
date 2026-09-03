@@ -1448,10 +1448,11 @@ p { text-wrap: pretty; }
   /* Las secciones entran con un fundido, sin deslizarse. */
   .reveal { transform: none; }
 
-  /* El rastro del cursor es movimiento puro y decorativo: se retira.
-     main.js tampoco arranca el bucle bajo esta preferencia; esta regla
-     es la red de seguridad si la preferencia cambia en caliente. */
-  #antigravity-canvas { display: none; }
+  /* La corona del cursor NO se oculta aquí: main.js detecta esta misma
+     preferencia y la dibuja en modo calmado — sin órbita, sin
+     respiración y sin retardo, acompañando al cursor sin añadir
+     movimiento propio. Mismo criterio que el resto del bloque: se
+     sustituye el desplazamiento por una presencia estática. */
 }
 
 /* ---------- 17. Impresión ---------- */

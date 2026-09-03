@@ -728,22 +728,26 @@
   }
 
   /* ----------------------------------------------------------
-     13. PARTÍCULAS "ANTIGRAVEDAD" DEL CURSOR
-     Rastro decorativo dibujado con la API nativa de canvas 2D: cada
-     movimiento del ratón emite una ráfaga corta de puntos que suben
-     flotando, se frenan por fricción y se apagan. Sin dependencias.
+     13. CORONA DE PARTÍCULAS "ANTIGRAVEDAD" DEL CURSOR
+     Anillo de puntos que orbita alrededor del cursor y lo persigue con
+     amortiguación fuerte, de ahí la estela. La velocidad del cursor
+     abre la corona por inercia; los puntos ascienden mientras viven y
+     se reciclan al desvanecerse, que es la parte "antigravedad".
+     Canvas API 2D nativa y requestAnimationFrame, sin dependencias.
      ---------------------------------------------------------- */
-  const PARTICULAS = {
-    max: 80,               // techo duro de partículas vivas a la vez
-    porRafaga: 2,          // puntos emitidos por movimiento aceptado
-    intervaloEmision: 32,  // ms mínimos entre ráfagas (~63 puntos/s)
-    dispersion: 10,        // px de desvío aleatorio respecto al cursor
+  const ANILLO = {
+    puntos: 72,          // pool fijo: ni una asignación dentro del bucle
+    radio: 104,          // radio base de la corona en px (~210 de diámetro)
+    pulso: 10,           // amplitud de la respiración del radio
+    grosor: 24,          // ancho de la corona: ondulación radial por punto
+    aperturaMax: 44,     // cuánto más se abre la corona a plena inercia
+    seguimiento: 0.06,   // amortiguación del centro hacia el cursor
+    orbita: 0.004,       // velocidad angular, rad/frame (rotación rígida)
+    ascenso: 17,         // px que sube un punto a lo largo de su vida
+    ciclo: 0.006,        // avance de vida por frame (~2.8 s por vuelta)
     radioMin: 1.5,
     radioMax: 4,
-    empuje: 0.05,          // aceleración hacia arriba: la "antigravedad"
-    friccion: 0.94,        // decay de la velocidad
-    merma: 0.99,           // decay del radio
-    apagado: 0.014,        // decay de la vida (~1.2 s de vuelo)
+    reposo: 900,         // ms sin mover antes de empezar a desvanecer
     accent: '122, 162, 247', // --accent  #7AA2F7
     purple: '187, 154, 247'  // --purple  #BB9AF7
   };
@@ -754,32 +758,63 @@
 
     // Sin puntero fino (móvil, tablet) no hay cursor al que seguir: el
     // efecto solo añadiría latencia al gesto táctil y gasto de batería.
-    // El movimiento reducido se comprueba aquí además de en el CSS para
-    // no registrar siquiera los listeners ni el bucle de dibujo.
     if (!window.matchMedia('(pointer: fine)').matches) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const TAU = Math.PI * 2;
-    const particulas = [];
+
+    /* Con movimiento reducido la corona no se elimina: se calma. Deja de
+       orbitar, de respirar y de abrirse, y acompaña al cursor sin
+       retardo, así que no aporta movimiento propio — que es lo que
+       provoca malestar vestibular, no el cambio de opacidad. Es el mismo
+       criterio que ya aplica el bloque de movimiento reducido del CSS. */
+    const calmado = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const puntos = new Array(ANILLO.puntos);
+    for (let i = 0; i < ANILLO.puntos; i++) {
+      puntos[i] = {
+        // Reparto uniforme en el círculo. Todos giran a la misma
+        // velocidad (rotación rígida): con velocidades distintas los
+        // puntos se agrupan en racimos y la corona se rompe en huecos.
+        ang: (i / ANILLO.puntos) * TAU,
+        // La fase de la ondulación avanza con el índice, así el grosor
+        // recorre la corona como una onda en vez de temblar al azar.
+        fase: (i / ANILLO.puntos) * TAU * 2,
+        radio: ANILLO.radioMin + Math.random() * (ANILLO.radioMax - ANILLO.radioMin),
+        // Vidas escalonadas por la proporción áurea: quedan repartidas
+        // por igual y sin correlación con el ángulo, de modo que el
+        // parpadeo se distribuye en vez de apagar un sector entero.
+        vida: (i * 0.6180339887) % 1,
+        color: i % 9 === 0 ? ANILLO.purple : ANILLO.accent
+      };
+    }
+
     let ancho = 0;
     let alto = 0;
+    let cursorX = 0;
+    let cursorY = 0;
+    let centroX = 0;
+    let centroY = 0;
+    let apertura = 0;
+    let opacidad = 0;
+    let tiempo = 0;
+    let ultimoMovimiento = 0;
+    let hayCursor = false;
     let animando = false;
-    let ultimaEmision = 0;
     let redimensionPendiente = false;
 
     // Reloj monótono: mezclar performance.now() con Date.now() rompería
-    // la comparación del estrangulador porque tienen orígenes distintos.
+    // la comparación del reposo porque tienen orígenes distintos.
     const ahora = (window.performance && window.performance.now)
       ? function () { return window.performance.now(); }
       : function () { return Date.now(); };
 
     /* El buffer se dibuja a la resolución real del dispositivo y se
-       escala por CSS: sin esto un punto de 1px se ve borroso en pantallas
-       HiDPI. Se limita a 2x porque por encima no se aprecia y cada paso
-       multiplica los píxeles que hay que rellenar. */
+       escala por CSS: sin esto un punto de 1.5px se ve borroso en
+       pantallas HiDPI. Se limita a 2x porque por encima no se aprecia y
+       cada paso multiplica los píxeles que hay que rellenar. */
     function medir() {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       ancho = canvas.clientWidth || window.innerWidth;
@@ -796,87 +831,110 @@
       window.requestAnimationFrame(paso);
     }
 
-    function emitir(x, y) {
-      const hueco = PARTICULAS.max - particulas.length;
-      if (hueco <= 0) return;   // techo duro: se descarta, no se acumula
-      const cantidad = Math.min(PARTICULAS.porRafaga, hueco);
-
-      for (let i = 0; i < cantidad; i++) {
-        particulas.push({
-          x: x + (Math.random() - 0.5) * PARTICULAS.dispersion,
-          y: y + (Math.random() - 0.5) * PARTICULAS.dispersion,
-          vx: (Math.random() - 0.5) * 0.7,
-          vy: -(0.15 + Math.random() * 0.45),
-          radio: PARTICULAS.radioMin +
-                 Math.random() * (PARTICULAS.radioMax - PARTICULAS.radioMin),
-          vida: 1,
-          // Algún punto suelto en violeta rompe la monotonía sin salirse
-          // de la paleta del sitio.
-          color: Math.random() < 0.18 ? PARTICULAS.purple : PARTICULAS.accent
-        });
-      }
-
-      arrancar();
-    }
-
     function paso() {
+      tiempo += 1;
+
+      // El centro persigue al cursor amortiguado: la distancia que queda
+      // pendiente es justo la inercia, y es la que abre la corona.
+      const dx = cursorX - centroX;
+      const dy = cursorY - centroY;
+      centroX += dx * (calmado ? 1 : ANILLO.seguimiento);
+      centroY += dy * (calmado ? 1 : ANILLO.seguimiento);
+
+      const inercia = calmado ? 0 : Math.min(Math.sqrt(dx * dx + dy * dy), 240) / 240;
+      apertura += (inercia * ANILLO.aperturaMax - apertura) * 0.08;
+
+      // Entra al mover y se apaga sola en reposo, sin cortes.
+      const activo = hayCursor && (ahora() - ultimoMovimiento) < ANILLO.reposo;
+      opacidad += ((activo ? 1 : 0) - opacidad) * 0.07;
+
       ctx.clearRect(0, 0, ancho, alto);
-      // Los puntos que se solapan suman luz en lugar de taparse: es el
-      // brillo sutil sin recurrir a shadowBlur ni a degradados, que
-      // cuestan un orden de magnitud más por partícula.
-      ctx.globalCompositeOperation = 'lighter';
 
-      for (let i = particulas.length - 1; i >= 0; i--) {
-        const p = particulas[i];
+      if (opacidad > 0.01) {
+        // Los puntos que se solapan suman luz en lugar de taparse: es el
+        // brillo sin recurrir a shadowBlur ni a degradados, que cuestan
+        // un orden de magnitud más por partícula.
+        ctx.globalCompositeOperation = 'lighter';
 
-        p.vy -= PARTICULAS.empuje;    // antigravedad: tira hacia arriba
-        p.vx *= PARTICULAS.friccion;
-        p.vy *= PARTICULAS.friccion;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.radio *= PARTICULAS.merma;
-        p.vida -= PARTICULAS.apagado;
+        const respiracion = calmado ? 0
+          : Math.sin(tiempo * 0.013) * ANILLO.pulso +
+            Math.cos(tiempo * 0.039) * ANILLO.pulso * 0.55;
+        const radioBase = ANILLO.radio + respiracion;
 
-        if (p.vida <= 0 || p.radio < 0.3) {
-          particulas.splice(i, 1);
-          continue;
+        for (let i = 0; i < ANILLO.puntos; i++) {
+          const p = puntos[i];
+
+          if (!calmado) {
+            p.ang += ANILLO.orbita;
+            p.vida += ANILLO.ciclo;
+            // Al reciclarse solo reinicia la vida: conserva su ángulo,
+            // que es lo que mantiene la corona repartida.
+            if (p.vida >= 1) p.vida -= 1;
+          }
+
+          // Ondulación radial por punto: rompe el círculo perfecto y da
+          // grosor a la corona. Calmada se congela en su fase inicial,
+          // conservando la forma pero sin movimiento propio.
+          const onda = Math.sin((calmado ? 0 : tiempo * 0.021) + p.fase) *
+                       ANILLO.grosor * 0.5;
+          const r = radioBase + onda + apertura * (0.35 + p.vida * 0.65);
+
+          const x = centroX + Math.cos(p.ang) * r;
+          // El eje vertical va algo comprimido y el punto asciende con la
+          // edad: la corona flota en vez de quedarse clavada.
+          const y = centroY + Math.sin(p.ang) * r * 0.9 -
+                    (calmado ? 0 : p.vida * ANILLO.ascenso);
+
+          // Entrada y salida suaves dentro del ciclo de vida.
+          const f = calmado ? 1
+            : Math.min(p.vida / 0.18, 1) * Math.min((1 - p.vida) / 0.32, 1);
+          const a = opacidad * f;
+          if (a < 0.02) continue;
+
+          // Halo tenue + núcleo: dos arcos por punto.
+          ctx.beginPath();
+          ctx.arc(x, y, p.radio * 3, 0, TAU);
+          ctx.fillStyle = 'rgba(' + p.color + ', ' + (a * 0.14).toFixed(3) + ')';
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(x, y, p.radio, 0, TAU);
+          ctx.fillStyle = 'rgba(' + p.color + ', ' + (a * 0.75).toFixed(3) + ')';
+          ctx.fill();
         }
 
-        // Halo tenue + núcleo: dos arcos por partícula.
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radio * 3, 0, TAU);
-        ctx.fillStyle = 'rgba(' + p.color + ', ' + (p.vida * 0.18).toFixed(3) + ')';
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radio, 0, TAU);
-        ctx.fillStyle = 'rgba(' + p.color + ', ' + (p.vida * 0.9).toFixed(3) + ')';
-        ctx.fill();
-      }
-
-      ctx.globalCompositeOperation = 'source-over';
-
-      if (particulas.length) {
+        ctx.globalCompositeOperation = 'source-over';
         window.requestAnimationFrame(paso);
         return;
       }
 
-      // Sin partículas vivas el bucle se detiene: en reposo el efecto no
+      // Corona apagada: el bucle se detiene y en reposo el efecto no
       // consume ni un frame.
       animando = false;
       ctx.clearRect(0, 0, ancho, alto);
     }
 
     window.addEventListener('mousemove', function (evento) {
-      // Se estrangula por tiempo, no por evento: un ratón con alta tasa
-      // de sondeo dispara cientos de mousemove por segundo.
-      const t = ahora();
-      if (t - ultimaEmision < PARTICULAS.intervaloEmision) return;
-      ultimaEmision = t;
       // El lienzo es fixed y cubre el viewport, así que las coordenadas
-      // de cliente sirven tal cual, sin corregir el scroll.
-      emitir(evento.clientX, evento.clientY);
+      // de cliente sirven tal cual, sin corregir el scroll. Aquí solo se
+      // anota la posición: todo el trabajo lo hace el bucle de dibujo,
+      // así que no hace falta estrangular el evento.
+      cursorX = evento.clientX;
+      cursorY = evento.clientY;
+      if (!hayCursor) {
+        // La corona nace centrada en el cursor en vez de cruzar la
+        // pantalla desde el origen.
+        centroX = cursorX;
+        centroY = cursorY;
+        hayCursor = true;
+      }
+      ultimoMovimiento = ahora();
+      arrancar();
     }, { passive: true });
+
+    document.addEventListener('mouseleave', function () {
+      hayCursor = false;   // el puntero sale de la ventana: se desvanece
+    });
 
     window.addEventListener('resize', function () {
       // Redimensionar el buffer es caro y el evento llega en ráfaga:
@@ -891,8 +949,11 @@
 
     document.addEventListener('visibilitychange', function () {
       // El navegador congela requestAnimationFrame en pestañas ocultas;
-      // al volver, el rastro reaparecería detenido a medio camino.
-      if (document.hidden) particulas.length = 0;
+      // al volver, la corona reaparecería congelada a medio camino.
+      if (document.hidden) {
+        hayCursor = false;
+        opacidad = 0;
+      }
     });
 
     medir();
