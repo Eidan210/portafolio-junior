@@ -24,6 +24,45 @@
      ---------------------------------------------------------- */
   const PROJECTS = [
     {
+      nombre: 'Preselección Inteligente de Candidatos',
+      repo: 'Proyecto_n8n',
+      enlace_repo: 'https://github.com/Eidan210/Proyecto_n8n',
+      demo_url: '',
+      privado: true,
+      destacado: true,
+      tecnologias: ['n8n', 'Google Gemini', 'JavaScript', 'HTML5', 'CSS3'],
+      descripcion_corta:
+        'Automatización de reclutamiento con IA: evalúa CVs, puntúa candidatos y avisa al equipo de RRHH.',
+      problema_resuelto:
+        'Recursos Humanos recibe decenas o cientos de currículums en PDF por vacante. Revisarlos a mano ' +
+        'toma días, y lo que el candidato escribe en el formulario no siempre coincide con lo que dice su ' +
+        'hoja de vida.',
+      solucion:
+        'Flujo automatizado de punta a punta orquestado con n8n: recibe la postulación y el PDF desde un ' +
+        'portal web propio, lee y evalúa el CV con Google Gemini calculando un porcentaje de compatibilidad ' +
+        'contra los requisitos reales del puesto, guarda 13 datos por candidato en Google Sheets, envía ' +
+        'correos automáticos al candidato y a RRHH, y alerta por Telegram. Incluye un bot y un dashboard web ' +
+        'para que el reclutador conserve la decisión final (human-in-the-loop).',
+      habilidad_clave:
+        'Integración de múltiples servicios en un flujo automatizado, uso de IA aplicada a un problema de negocio real y diseño con human-in-the-loop.',
+      preview: {
+        file: 'arquitectura del flujo',
+        lang: 'txt',
+        code: [
+          'Portal web  →  n8n  →  Google Gemini',
+          '                │           │',
+          '                │           └→ % de compatibilidad (sin sesgos)',
+          '                │',
+          '                ├→ Google Sheets   (13 datos por candidato)',
+          '                ├→ Gmail           (ticket al candidato + reporte a RRHH)',
+          '                └→ Telegram        (alerta instantanea + bot de decision)',
+          '',
+          'Dashboard web  →  el reclutador decide  (human-in-the-loop)'
+        ].join('\n')
+      }
+    },
+
+    {
       nombre: 'Mym Designsx',
       repo: 'Proyecto-Automatizacion-mym',
       enlace_repo: 'https://github.com/Eidan210/Proyecto-Automatizacion-mym',
@@ -267,7 +306,7 @@
      ---------------------------------------------------------- */
   function buildProjectCard(project, index) {
     const article = document.createElement('article');
-    article.className = 'card project-card reveal';
+    article.className = 'card project-card reveal' + (project.destacado ? ' project-card-featured' : '');
     article.dataset.tech = project.tecnologias.join(',');
 
     const num = String(index + 1).padStart(2, '0');
@@ -287,8 +326,13 @@
         'aria-label="Ver la demo en vivo de ' + esc(project.nombre) + '">Ver demo</a>'
       : '';
 
-    const headAside = project.privado
-      ? '<span class="tag-private">repo privado</span>'
+    // Badges de cabecera: destacado y/o repositorio privado; si no hay
+    // ninguno, se muestra el número de orden.
+    const badges = [];
+    if (project.destacado) badges.push('<span class="tag-featured">★ destacado</span>');
+    if (project.privado) badges.push('<span class="tag-private">repo privado</span>');
+    const headAside = badges.length
+      ? '<span class="project-badges">' + badges.join('') + '</span>'
       : '<span class="project-index">' + num + '</span>';
 
     article.innerHTML = [
@@ -479,41 +523,89 @@
   }
 
   /* ----------------------------------------------------------
-     10. NAVEGACIÓN SUAVE ENTRE SECCIONES
-     El CSS ya aplica `scroll-behavior: smooth`; esto lo refuerza
-     para navegadores que no lo soportan, descuenta la altura del
-     header fijo y mantiene el foco del teclado en la sección
-     destino (accesibilidad).
+     10. COPIAR EL CORREO AL PORTAPAPELES
+     Un enlace mailto: abre el cliente de correo del sistema, que
+     muchas veces no es el que la persona usa. Copiar la dirección
+     es más útil; el mailto: se mantiene como alternativa si el
+     portapapeles no está disponible.
+
+     Nota: la navegación suave se resuelve por completo en CSS con
+     `scroll-behavior: smooth` + `scroll-padding-top`. No se
+     intercepta el clic en JS a propósito: hacerlo cancelaba la
+     animación nativa del navegador.
      ---------------------------------------------------------- */
-  function initSmoothScroll() {
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function initCopyEmail() {
+    const card = document.getElementById('emailCard');
+    const button = document.getElementById('copyEmailBtn');
+    if (!card || !button) return;
 
-    document.querySelectorAll('a[href^="#"]').forEach(function (link) {
-      link.addEventListener('click', function (event) {
-        const id = link.getAttribute('href');
-        if (!id || id === '#') return;
+    const mail = card.querySelector('.contact-mail');
+    const status = card.querySelector('.copy-status');
+    if (!mail) return;
 
-        const target = document.querySelector(id);
-        if (!target) return;
+    const email = mail.textContent.trim();
+    let resetTimer = null;
 
-        event.preventDefault();
+    /** Copia sin la API moderna, para contextos donde no está disponible. */
+    function copiarConFallback(texto) {
+      const area = document.createElement('textarea');
+      area.value = texto;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
 
-        const headerHeight = parseInt(
-          getComputedStyle(document.documentElement).getPropertyValue('--header-h'), 10
-        ) || 64;
-        const top = target.getBoundingClientRect().top + window.pageYOffset - headerHeight - 24;
+      let ok = false;
+      try {
+        ok = document.execCommand('copy');
+      } catch (error) {
+        ok = false;
+      }
+      document.body.removeChild(area);
+      return ok;
+    }
 
-        window.scrollTo({
-          top: top,
-          behavior: reducedMotion ? 'auto' : 'smooth'
-        });
+    function mostrarResultado(ok) {
+      card.classList.toggle('is-copied', ok);
+      if (status) status.textContent = ok ? 'Correo copiado' : 'No se pudo copiar';
+      button.setAttribute('title', ok ? 'Correo copiado' : 'No se pudo copiar');
 
-        // Devuelve el foco a la sección sin añadir un salto extra.
-        target.setAttribute('tabindex', '-1');
-        target.focus({ preventScroll: true });
+      clearTimeout(resetTimer);
+      resetTimer = setTimeout(function () {
+        card.classList.remove('is-copied');
+        if (status) status.textContent = '';
+        button.setAttribute('title', 'Copiar correo');
+      }, 2200);
+    }
 
-        // Refleja la sección en la URL sin provocar un salto brusco.
-        if (history.replaceState) history.replaceState(null, '', id);
+    button.addEventListener('click', function () {
+      if (!navigator.clipboard || !window.isSecureContext) {
+        mostrarResultado(copiarConFallback(email));
+        return;
+      }
+
+      // La API moderna puede quedarse pendiente indefinidamente (por
+      // ejemplo si el navegador deja un permiso sin resolver), lo que
+      // dejaría el botón sin respuesta. Se corre contra un tiempo
+      // límite: si no contesta, se usa el método clásico.
+      let resuelto = false;
+      const finalizar = function (ok) {
+        if (resuelto) return;
+        resuelto = true;
+        mostrarResultado(ok);
+      };
+
+      const limite = setTimeout(function () {
+        finalizar(copiarConFallback(email));
+      }, 600);
+
+      navigator.clipboard.writeText(email).then(function () {
+        clearTimeout(limite);
+        finalizar(true);
+      }).catch(function () {
+        clearTimeout(limite);
+        finalizar(copiarConFallback(email));
       });
     });
   }
@@ -536,7 +628,7 @@
     initHeaderScroll();
     initScrollSpy();
     initReveal();
-    initSmoothScroll();
+    initCopyEmail();
     initYear();
   }
 
