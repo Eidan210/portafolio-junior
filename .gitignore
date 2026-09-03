@@ -1,0 +1,26 @@
+# Documento de trabajo interno: análisis de los repositorios del perfil.
+# Incluye nombres de repos privados y notas de auditoría, así que no forma
+# parte del sitio publicado. Borra esta línea si quieres versionarlo.
+resumen-repositorios.md
+
+# Sistema operativo
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*~
+
+# Dependencias y build (por si más adelante se añade tooling)
+node_modules/
+dist/
+.cache/
+
+# Entorno
+.env
+.env.local
