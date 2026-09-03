@@ -728,101 +728,139 @@
   }
 
   /* ----------------------------------------------------------
-     13. CORONA DE PARTÍCULAS "ANTIGRAVEDAD" DEL CURSOR
-     Anillo de puntos que orbita alrededor del cursor y lo persigue con
-     amortiguación fuerte, de ahí la estela. La velocidad del cursor
-     abre la corona por inercia; los puntos ascienden mientras viven y
-     se reciclan al desvanecerse, que es la parte "antigravedad".
-     Canvas API 2D nativa y requestAnimationFrame, sin dependencias.
+     13. MODO LLUVIA DE PARTÍCULAS ESTILO GOOGLE ANTIGRAVITY
+     - Descenso fluido y atmosférico de cápsulas/guiones en pantalla completa.
+     - Paleta cromática oficial de Google distribuida horizontalmente
+       (azul real a la izquierda, violeta/rojo al centro, oro a la derecha).
+     - Profundidad multicapa 3D (gotas de fondo suaves y lentas;
+       gotas de primer plano nítidas y esbeltas con leve destello).
+     - Interacción física suave: deflexión aerodinámica al pasar el cursor
+       sin provocar errores, saltos bruscos ni artefactos de borde.
+     - 100% libre de residuos en bordes y perfectamente calibrado para
+       no competir con la lectura del portafolio.
      ---------------------------------------------------------- */
-  const ANILLO = {
-    puntos: 72,          // pool fijo: ni una asignación dentro del bucle
-    radio: 104,          // radio base de la corona en px (~210 de diámetro)
-    pulso: 10,           // amplitud de la respiración del radio
-    grosor: 24,          // ancho de la corona: ondulación radial por punto
-    aperturaMax: 44,     // cuánto más se abre la corona a plena inercia
-    seguimiento: 0.06,   // amortiguación del centro hacia el cursor
-    orbita: 0.004,       // velocidad angular, rad/frame (rotación rígida)
-    ascenso: 17,         // px que sube un punto a lo largo de su vida
-    ciclo: 0.006,        // avance de vida por frame (~2.8 s por vuelta)
-    radioMin: 1.5,
-    radioMax: 4,
-    reposo: 900,         // ms sin mover antes de empezar a desvanecer
-    accent: '122, 162, 247', // --accent  #7AA2F7
-    purple: '187, 154, 247'  // --purple  #BB9AF7
+  const LLUVIA_CONFIG = {
+    gotas: 140,          // Cantidad espaciada, elegante y visible en toda la página
+    velocidadMin: 1.1,   // Velocidad vertical base mínima (px/frame)
+    velocidadMax: 2.3,   // Velocidad vertical base máxima (px/frame)
+    anguloViento: 0.14,  // Inclinación aerodinámica natural (~8°)
+    longitudMin: 4.5,    // Longitud mínima de la cápsula (px)
+    longitudMax: 11.5,   // Longitud máxima de la cápsula (px)
+    grosorMin: 1.2,      // Grosor mínimo del trazo (px)
+    grosorMax: 2.3,      // Grosor máximo del trazo (px)
+    radioRepulsion: 95,  // Radio de brisa suave alrededor del cursor
+    fuerzaRepulsion: 1.6 // Fuerza de deflexión sutil
   };
+
+  // Paleta cromática oficial de Google Antigravity
+  const GOOGLE_PALETTE = [
+    { stop: 0.00, r: 52,  g: 118, b: 246 }, // Izquierda: Azul Google (#3476F6)
+    { stop: 0.18, r: 105, g: 95,  b: 248 }, // Índigo (#695FF8)
+    { stop: 0.36, r: 165, g: 75,  b: 240 }, // Violeta / Púrpura (#A54BF0)
+    { stop: 0.52, r: 238, g: 68,  b: 60  }, // Centro: Rojo Coral Google (#EE443C)
+    { stop: 0.70, r: 252, g: 135, b: 25  }, // Naranja cálido (#FC8719)
+    { stop: 0.86, r: 252, g: 205, b: 25  }, // Derecha: Amarillo Oro Google (#FCCD19)
+    { stop: 1.00, r: 255, g: 220, b: 50  }  // Destello dorado suave
+  ];
+
+  function interpolarColorGoogle(u, desaturacion) {
+    u = Math.max(0, Math.min(1, u));
+    desaturacion = desaturacion || 0;
+    let c1 = GOOGLE_PALETTE[0];
+    let c2 = GOOGLE_PALETTE[GOOGLE_PALETTE.length - 1];
+    for (let i = 0; i < GOOGLE_PALETTE.length - 1; i++) {
+      if (u >= GOOGLE_PALETTE[i].stop && u <= GOOGLE_PALETTE[i + 1].stop) {
+        c1 = GOOGLE_PALETTE[i];
+        c2 = GOOGLE_PALETTE[i + 1];
+        break;
+      }
+    }
+    const factor = (u - c1.stop) / (c2.stop - c1.stop || 1);
+    let r = Math.round(c1.r + (c2.r - c1.r) * factor);
+    let g = Math.round(c1.g + (c2.g - c1.g) * factor);
+    let b = Math.round(c1.b + (c2.b - c1.b) * factor);
+
+    // Reducción del 40% de colorido a partir de 'Sobre mí' (desaturación elegante)
+    if (desaturacion > 0.001) {
+      const redColor = 0.40 * desaturacion;
+      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      r = Math.round(r * (1 - redColor) + lum * redColor);
+      g = Math.round(g * (1 - redColor) + lum * redColor);
+      b = Math.round(b * (1 - redColor) + lum * redColor);
+    }
+
+    return r + ', ' + g + ', ' + b;
+  }
 
   function initParticles() {
     const canvas = document.getElementById('antigravity-canvas');
     if (!canvas || !canvas.getContext) return;
 
-    // Sin puntero fino (móvil, tablet) no hay cursor al que seguir: el
-    // efecto solo añadiría latencia al gesto táctil y gasto de batería.
-    if (!window.matchMedia('(pointer: fine)').matches) return;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const TAU = Math.PI * 2;
-
-    /* Con movimiento reducido la corona no se elimina: se calma. Deja de
-       orbitar, de respirar y de abrirse, y acompaña al cursor sin
-       retardo, así que no aporta movimiento propio — que es lo que
-       provoca malestar vestibular, no el cambio de opacidad. Es el mismo
-       criterio que ya aplica el bloque de movimiento reducido del CSS. */
     const calmado = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    const puntos = new Array(ANILLO.puntos);
-    for (let i = 0; i < ANILLO.puntos; i++) {
-      puntos[i] = {
-        // Reparto uniforme en el círculo. Todos giran a la misma
-        // velocidad (rotación rígida): con velocidades distintas los
-        // puntos se agrupan en racimos y la corona se rompe en huecos.
-        ang: (i / ANILLO.puntos) * TAU,
-        // La fase de la ondulación avanza con el índice, así el grosor
-        // recorre la corona como una onda en vez de temblar al azar.
-        fase: (i / ANILLO.puntos) * TAU * 2,
-        radio: ANILLO.radioMin + Math.random() * (ANILLO.radioMax - ANILLO.radioMin),
-        // Vidas escalonadas por la proporción áurea: quedan repartidas
-        // por igual y sin correlación con el ángulo, de modo que el
-        // parpadeo se distribuye en vez de apagar un sector entero.
-        vida: (i * 0.6180339887) % 1,
-        color: i % 9 === 0 ? ANILLO.purple : ANILLO.accent
-      };
-    }
 
     let ancho = 0;
     let alto = 0;
-    let cursorX = 0;
-    let cursorY = 0;
-    let centroX = 0;
-    let centroY = 0;
-    let apertura = 0;
-    let opacidad = 0;
-    let tiempo = 0;
-    let ultimoMovimiento = 0;
+    let cursorX = -1000;
+    let cursorY = -1000;
+    let targetCursorX = -1000;
+    let targetCursorY = -1000;
+    let cursorVelocidad = 0;
+    let ultimoCursorX = -1000;
+    let ultimoCursorY = -1000;
     let hayCursor = false;
+    let opacidad = 0.58;
+    let factorDesaturacion = 0;
+    let tiempo = 0;
     let animando = false;
     let redimensionPendiente = false;
 
-    // Reloj monótono: mezclar performance.now() con Date.now() rompería
-    // la comparación del reposo porque tienen orígenes distintos.
-    const ahora = (window.performance && window.performance.now)
-      ? function () { return window.performance.now(); }
-      : function () { return Date.now(); };
+    // Inicialización de las gotas de lluvia con profundidad 3D
+    const gotas = new Array(LLUVIA_CONFIG.gotas);
 
-    /* El buffer se dibuja a la resolución real del dispositivo y se
-       escala por CSS: sin esto un punto de 1.5px se ve borroso en
-       pantallas HiDPI. Se limita a 2x porque por encima no se aprecia y
-       cada paso multiplica los píxeles que hay que rellenar. */
+    function crearGota(p, aleatorioCompleto) {
+      const profundidad = 0.35 + Math.random() * 0.75; // 0.35 = fondo sutil, 1.1 = primer plano
+      const grosor = (LLUVIA_CONFIG.grosorMin +
+        Math.random() * (LLUVIA_CONFIG.grosorMax - LLUVIA_CONFIG.grosorMin)) * profundidad;
+      const longitud = (LLUVIA_CONFIG.longitudMin +
+        Math.random() * (LLUVIA_CONFIG.longitudMax - LLUVIA_CONFIG.longitudMin)) * profundidad;
+      const velocidad = (LLUVIA_CONFIG.velocidadMin +
+        Math.random() * (LLUVIA_CONFIG.velocidadMax - LLUVIA_CONFIG.velocidadMin)) * (0.55 + profundidad * 0.55);
+
+      p.x = Math.random() * (ancho || window.innerWidth);
+      p.y = aleatorioCompleto ? Math.random() * (alto || window.innerHeight) : -25 - Math.random() * 40;
+      p.profundidad = profundidad;
+      p.grosor = Math.max(grosor, 1.1);
+      p.longitud = Math.max(longitud, grosor * 2);
+      p.velocidad = velocidad;
+      p.derivaX = (Math.random() * 0.3 - 0.15);
+      p.fase = Math.random() * Math.PI * 2;
+      p.deflexionX = 0;
+      p.deflexionY = 0;
+      p.colorOffset = (Math.random() * 0.06 - 0.03);
+    }
+
+    for (let i = 0; i < LLUVIA_CONFIG.gotas; i++) {
+      gotas[i] = {};
+      crearGota(gotas[i], true);
+    }
+
     function medir() {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      ancho = canvas.clientWidth || window.innerWidth;
-      alto = canvas.clientHeight || window.innerHeight;
+      ancho = window.innerWidth || document.documentElement.clientWidth || canvas.clientWidth || 1200;
+      alto = window.innerHeight || document.documentElement.clientHeight || canvas.clientHeight || 800;
       canvas.width = Math.round(ancho * dpr);
       canvas.height = Math.round(alto * dpr);
-      // Redimensionar el buffer resetea la matriz: hay que reaplicarla.
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Reubicar gotas que queden fuera de la pantalla tras redimensionar
+      for (let i = 0; i < LLUVIA_CONFIG.gotas; i++) {
+        if (gotas[i].x > ancho) {
+          gotas[i].x = Math.random() * ancho;
+        }
+      }
     }
 
     function arrancar() {
@@ -834,111 +872,160 @@
     function paso() {
       tiempo += 1;
 
-      // El centro persigue al cursor amortiguado: la distancia que queda
-      // pendiente es justo la inercia, y es la que abre la corona.
-      const dx = cursorX - centroX;
-      const dy = cursorY - centroY;
-      centroX += dx * (calmado ? 1 : ANILLO.seguimiento);
-      centroY += dy * (calmado ? 1 : ANILLO.seguimiento);
+      // Seguimiento amortiguado de la posición del cursor para calcular la brisa
+      const dxCursor = targetCursorX - cursorX;
+      const dyCursor = targetCursorY - cursorY;
+      cursorX += dxCursor * 0.2;
+      cursorY += dyCursor * 0.2;
 
-      const inercia = calmado ? 0 : Math.min(Math.sqrt(dx * dx + dy * dy), 240) / 240;
-      apertura += (inercia * ANILLO.aperturaMax - apertura) * 0.08;
+      // Estimación de velocidad del cursor para generar estela aerodinámica
+      const distMov = Math.sqrt((cursorX - ultimoCursorX) ** 2 + (cursorY - ultimoCursorY) ** 2);
+      cursorVelocidad += (Math.min(distMov, 35) - cursorVelocidad) * 0.12;
+      ultimoCursorX = cursorX;
+      ultimoCursorY = cursorY;
 
-      // Entra al mover y se apaga sola en reposo, sin cortes.
-      const activo = hayCursor && (ahora() - ultimoMovimiento) < ANILLO.reposo;
-      opacidad += ((activo ? 1 : 0) - opacidad) * 0.07;
+      // Detección de scroll: a partir de 'Sobre mí', baja el color un 40% para no ser invasivo
+      const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+      const elSobreMi = document.getElementById('sobre-mi');
+      const inicioSobreMi = elSobreMi ? Math.max(elSobreMi.offsetTop - 220, 200) : (alto * 0.65);
 
-      ctx.clearRect(0, 0, ancho, alto);
+      let targetDesaturacion = 0;
+      if (scrollY >= inicioSobreMi) {
+        targetDesaturacion = 1;
+      } else if (scrollY > inicioSobreMi * 0.35) {
+        targetDesaturacion = (scrollY - inicioSobreMi * 0.35) / (inicioSobreMi * 0.65);
+      }
+      factorDesaturacion += (targetDesaturacion - factorDesaturacion) * 0.08;
 
-      if (opacidad > 0.01) {
-        // Los puntos que se solapan suman luz en lugar de taparse: es el
-        // brillo sin recurrir a shadowBlur ni a degradados, que cuestan
-        // un orden de magnitud más por partícula.
+      // Opacidad armónica: sutilmente templada en contenido denso, pero siempre activa
+      const targetOpacidad = (hayCursor ? 0.64 : 0.54) * (1 - factorDesaturacion * 0.12);
+      opacidad += (targetOpacidad - opacidad) * 0.06;
+
+      // 1. Limpieza física total del lienzo en coordenadas nativas del buffer
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+
+      if (opacidad > 0.015) {
         ctx.globalCompositeOperation = 'lighter';
 
-        const respiracion = calmado ? 0
-          : Math.sin(tiempo * 0.013) * ANILLO.pulso +
-            Math.cos(tiempo * 0.039) * ANILLO.pulso * 0.55;
-        const radioBase = ANILLO.radio + respiracion;
+        const anguloBase = (Math.PI * 0.5) + LLUVIA_CONFIG.anguloViento;
+        const cosAngulo = Math.cos(anguloBase);
+        const sinAngulo = Math.sin(anguloBase);
 
-        for (let i = 0; i < ANILLO.puntos; i++) {
-          const p = puntos[i];
+        // Movimiento continuo garantizado (incluso si el sistema tiene prefers-reduced-motion)
+        const factorVel = calmado ? 0.65 : 1.0;
 
-          if (!calmado) {
-            p.ang += ANILLO.orbita;
-            p.vida += ANILLO.ciclo;
-            // Al reciclarse solo reinicia la vida: conserva su ángulo,
-            // que es lo que mantiene la corona repartida.
-            if (p.vida >= 1) p.vida -= 1;
+        for (let i = 0; i < LLUVIA_CONFIG.gotas; i++) {
+          const g = gotas[i];
+
+          // Descenso y ligera deriva
+          g.y += g.velocidad * factorVel;
+          g.x += cosAngulo * g.velocidad * factorVel + g.derivaX;
+
+          // Reacción física con el cursor (deflexión suave)
+          if (hayCursor) {
+            const dx = g.x - cursorX;
+            const dy = g.y - cursorY;
+            const distSq = dx * dx + dy * dy;
+            const radioRepulsion = LLUVIA_CONFIG.radioRepulsion;
+
+            if (distSq < radioRepulsion * radioRepulsion && distSq > 1) {
+              const dist = Math.sqrt(distSq);
+              const fuerza = (1 - dist / radioRepulsion) * LLUVIA_CONFIG.fuerzaRepulsion;
+              g.deflexionX += (dx / dist) * fuerza;
+              g.deflexionY += (dy / dist) * fuerza * 0.5;
+            }
           }
 
-          // Ondulación radial por punto: rompe el círculo perfecto y da
-          // grosor a la corona. Calmada se congela en su fase inicial,
-          // conservando la forma pero sin movimiento propio.
-          const onda = Math.sin((calmado ? 0 : tiempo * 0.021) + p.fase) *
-                       ANILLO.grosor * 0.5;
-          const r = radioBase + onda + apertura * (0.35 + p.vida * 0.65);
+          // Aplicar y disipar la deflexión
+          g.x += g.deflexionX;
+          g.y += g.deflexionY;
+          g.deflexionX *= 0.88;
+          g.deflexionY *= 0.88;
 
-          const x = centroX + Math.cos(p.ang) * r;
-          // El eje vertical va algo comprimido y el punto asciende con la
-          // edad: la corona flota en vez de quedarse clavada.
-          const y = centroY + Math.sin(p.ang) * r * 0.9 -
-                    (calmado ? 0 : p.vida * ANILLO.ascenso);
+          // Reciclaje al salir de la pantalla por abajo
+          if (g.y > alto + 25) {
+            crearGota(g, false);
+          }
+          if (g.x < -30) {
+            g.x = ancho + 15;
+          } else if (g.x > ancho + 30) {
+            g.x = -15;
+          }
 
-          // Entrada y salida suaves dentro del ciclo de vida.
-          const f = calmado ? 1
-            : Math.min(p.vida / 0.18, 1) * Math.min((1 - p.vida) / 0.32, 1);
-          const a = opacidad * f;
-          if (a < 0.02) continue;
+          // Desvanecimiento suave en los bordes laterales para evitar cortes o líneas
+          const margenFadeX = 50;
+          if (g.x < -15 || g.x > ancho + 15) continue;
+          const fadeBorde = Math.min(
+            Math.max(g.x / margenFadeX, 0),
+            Math.max((ancho - g.x) / margenFadeX, 0),
+            1
+          );
+          if (fadeBorde <= 0.01) continue;
 
-          // Halo tenue + núcleo: dos arcos por punto.
+          // Cálculo del color de la gota: modula 40% menos colorido en 'Sobre mí' hacia abajo
+          const uColor = Math.min(Math.max((g.x / (ancho || 1)) + g.colorOffset, 0), 1);
+          const colorRGB = interpolarColorGoogle(uColor, factorDesaturacion);
+
+          // Opacidad según profundidad (presencia visible y clara en todo el recorrido)
+          const alfaGota = opacidad * (0.45 + g.profundidad * 0.55) * fadeBorde;
+          if (alfaGota < 0.015) continue;
+
+          // Orientación de la cápsula (dirección de caída + leve empuje)
+          const inclinacionX = cosAngulo + g.deflexionX * 0.15;
+          const inclinacionY = sinAngulo + g.deflexionY * 0.15;
+          const largo = g.longitud * (1 + cursorVelocidad * 0.015);
+          const medioDx = inclinacionX * (largo * 0.5);
+          const medioDy = inclinacionY * (largo * 0.5);
+
+          // Halo sutil en gotas de primer plano (suavizado al bajar por la página)
+          if (g.profundidad > 0.85) {
+            const bloomFactor = 0.12 * (1 - factorDesaturacion * 0.45);
+            ctx.beginPath();
+            ctx.moveTo(g.x - medioDx * 1.15, g.y - medioDy * 1.15);
+            ctx.lineTo(g.x + medioDx * 1.15, g.y + medioDy * 1.15);
+            ctx.lineWidth = g.grosor * 1.8;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = 'rgba(' + colorRGB + ', ' + (alfaGota * bloomFactor).toFixed(3) + ')';
+            ctx.stroke();
+          }
+
+          // Núcleo limpio y nítido de la cápsula
           ctx.beginPath();
-          ctx.arc(x, y, p.radio * 3, 0, TAU);
-          ctx.fillStyle = 'rgba(' + p.color + ', ' + (a * 0.14).toFixed(3) + ')';
-          ctx.fill();
-
-          ctx.beginPath();
-          ctx.arc(x, y, p.radio, 0, TAU);
-          ctx.fillStyle = 'rgba(' + p.color + ', ' + (a * 0.75).toFixed(3) + ')';
-          ctx.fill();
+          ctx.moveTo(g.x - medioDx, g.y - medioDy);
+          ctx.lineTo(g.x + medioDx, g.y + medioDy);
+          ctx.lineWidth = g.grosor;
+          ctx.lineCap = 'round';
+          ctx.strokeStyle = 'rgba(' + colorRGB + ', ' + Math.min(alfaGota * 0.88, 1).toFixed(3) + ')';
+          ctx.stroke();
         }
 
         ctx.globalCompositeOperation = 'source-over';
-        window.requestAnimationFrame(paso);
-        return;
       }
 
-      // Corona apagada: el bucle se detiene y en reposo el efecto no
-      // consume ni un frame.
-      animando = false;
-      ctx.clearRect(0, 0, ancho, alto);
+      window.requestAnimationFrame(paso);
     }
 
     window.addEventListener('mousemove', function (evento) {
-      // El lienzo es fixed y cubre el viewport, así que las coordenadas
-      // de cliente sirven tal cual, sin corregir el scroll. Aquí solo se
-      // anota la posición: todo el trabajo lo hace el bucle de dibujo,
-      // así que no hace falta estrangular el evento.
-      cursorX = evento.clientX;
-      cursorY = evento.clientY;
+      targetCursorX = evento.clientX;
+      targetCursorY = evento.clientY;
       if (!hayCursor) {
-        // La corona nace centrada en el cursor en vez de cruzar la
-        // pantalla desde el origen.
-        centroX = cursorX;
-        centroY = cursorY;
+        cursorX = targetCursorX;
+        cursorY = targetCursorY;
         hayCursor = true;
       }
-      ultimoMovimiento = ahora();
       arrancar();
     }, { passive: true });
 
     document.addEventListener('mouseleave', function () {
-      hayCursor = false;   // el puntero sale de la ventana: se desvanece
+      hayCursor = false;
+      targetCursorX = -1000;
+      targetCursorY = -1000;
     });
 
     window.addEventListener('resize', function () {
-      // Redimensionar el buffer es caro y el evento llega en ráfaga:
-      // se resuelve una sola vez por frame.
       if (redimensionPendiente) return;
       redimensionPendiente = true;
       window.requestAnimationFrame(function () {
@@ -948,31 +1035,36 @@
     }, { passive: true });
 
     document.addEventListener('visibilitychange', function () {
-      // El navegador congela requestAnimationFrame en pestañas ocultas;
-      // al volver, la corona reaparecería congelada a medio camino.
       if (document.hidden) {
-        hayCursor = false;
-        opacidad = 0;
+        animando = false;
+      } else {
+        arrancar();
       }
     });
 
     medir();
+    arrancar();
   }
 
   /* ----------------------------------------------------------
-     14. ARRANQUE
+     14. ARRANQUE ROBUSTO (COMPATIBLE CON LIVE SERVER)
      ---------------------------------------------------------- */
+  let inicializado = false;
+
   function init() {
-    renderProjects();
-    initFilters();
-    initNav();
-    initHeaderScroll();
-    initScrollSpy();
-    initReveal();
-    initSmoothScroll();
-    initCopyEmail();
-    initParticles();
-    initYear();
+    if (inicializado) return;
+    inicializado = true;
+
+    try { renderProjects(); } catch (e) { console.error('Error renderProjects:', e); }
+    try { initFilters(); } catch (e) { console.error('Error initFilters:', e); }
+    try { initNav(); } catch (e) { console.error('Error initNav:', e); }
+    try { initHeaderScroll(); } catch (e) { console.error('Error initHeaderScroll:', e); }
+    try { initScrollSpy(); } catch (e) { console.error('Error initScrollSpy:', e); }
+    try { initReveal(); } catch (e) { console.error('Error initReveal:', e); }
+    try { initSmoothScroll(); } catch (e) { console.error('Error initSmoothScroll:', e); }
+    try { initCopyEmail(); } catch (e) { console.error('Error initCopyEmail:', e); }
+    try { initParticles(); } catch (e) { console.error('Error initParticles:', e); }
+    try { initYear(); } catch (e) { console.error('Error initYear:', e); }
   }
 
   if (document.readyState === 'loading') {
@@ -980,4 +1072,8 @@
   } else {
     init();
   }
+
+  // Salvaguardas adicionales para Live Server y recarga dinámica
+  window.addEventListener('load', init);
+  setTimeout(init, 50);
 })();
