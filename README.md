@@ -75,7 +75,7 @@ Los estilos base son los de móvil; los breakpoints solo **añaden** complejidad
 | Desktop | `≥ 1025px` | Hero a dos columnas, nav horizontal, grids de 2–3 |
 
 - Tipografía fluida con `clamp()` y unidades relativas (`rem`, `ch`).
-- **Sin desbordamiento horizontal:** `overflow-x: hidden` en `body` y los bloques de código
+- **Sin desbordamiento horizontal:** `overflow-x: clip` en `body` (para no anular `scroll-behavior: smooth`) y los bloques de código
   llevan su propio `overflow-x: auto`.
 
 ### 4. Rendimiento

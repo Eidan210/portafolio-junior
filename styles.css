@@ -84,6 +84,11 @@ html {
   scrollbar-width: thin;
 }
 
+/* main.js añade esta clase al arrancar y toma el control del
+   desplazamiento con su propia animación, más fiable que la nativa.
+   Sin JavaScript la clase nunca se aplica y manda el CSS de arriba. */
+html.js-scroll { scroll-behavior: auto; }
+
 body {
   background-color: var(--bg);
   color: var(--text);
@@ -94,7 +99,9 @@ body {
   letter-spacing: -0.006em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  /* overflow-x: clip evita el desbordamiento horizontal sin anular
+     scroll-behavior: smooth en html (a diferencia de overflow-x: hidden) */
+  overflow-x: clip;
 }
 
 img, svg { display: block; max-width: 100%; }
@@ -1404,17 +1411,26 @@ p { text-wrap: pretty; }
 
 /* ---------- 16. Accesibilidad: movimiento reducido ---------- */
 @media (prefers-reduced-motion: reduce) {
+  /* El desplazamiento entre anclas pasa a main.js: el navegador
+     suprime el scroll suave nativo bajo esta preferencia. */
   html { scroll-behavior: auto; }
 
+  /* No se elimina toda la animación, se sustituye el MOVIMIENTO por un
+     fundido. Lo que provoca malestar vestibular es el desplazamiento,
+     no el cambio de opacidad, así que se conservan las transiciones de
+     opacidad y color y se descartan las de transform. */
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-property: opacity, color, background-color, border-color,
+                         box-shadow, text-decoration-color !important;
+    transition-duration: 240ms !important;
   }
 
-  .reveal { opacity: 1; transform: none; }
+  /* Las secciones entran con un fundido, sin deslizarse. */
+  .reveal { transform: none; }
 }
 
 /* ---------- 17. Impresión ---------- */
