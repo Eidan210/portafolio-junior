@@ -736,14 +736,14 @@
   const PARTICULAS = {
     max: 80,               // techo duro de partículas vivas a la vez
     porRafaga: 2,          // puntos emitidos por movimiento aceptado
-    intervaloEmision: 26,  // ms mínimos entre ráfagas (~77 puntos/s)
+    intervaloEmision: 32,  // ms mínimos entre ráfagas (~63 puntos/s)
     dispersion: 10,        // px de desvío aleatorio respecto al cursor
-    radioMin: 1,
-    radioMax: 3,
+    radioMin: 1.5,
+    radioMax: 4,
     empuje: 0.05,          // aceleración hacia arriba: la "antigravedad"
     friccion: 0.94,        // decay de la velocidad
-    merma: 0.985,          // decay del radio
-    apagado: 0.018,        // decay de la vida (~0.9 s de vuelo)
+    merma: 0.99,           // decay del radio
+    apagado: 0.014,        // decay de la vida (~1.2 s de vuelo)
     accent: '122, 162, 247', // --accent  #7AA2F7
     purple: '187, 154, 247'  // --purple  #BB9AF7
   };
@@ -844,13 +844,13 @@
 
         // Halo tenue + núcleo: dos arcos por partícula.
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radio * 2.6, 0, TAU);
-        ctx.fillStyle = 'rgba(' + p.color + ', ' + (p.vida * 0.08).toFixed(3) + ')';
+        ctx.arc(p.x, p.y, p.radio * 3, 0, TAU);
+        ctx.fillStyle = 'rgba(' + p.color + ', ' + (p.vida * 0.18).toFixed(3) + ')';
         ctx.fill();
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radio, 0, TAU);
-        ctx.fillStyle = 'rgba(' + p.color + ', ' + (p.vida * 0.6).toFixed(3) + ')';
+        ctx.fillStyle = 'rgba(' + p.color + ', ' + (p.vida * 0.9).toFixed(3) + ')';
         ctx.fill();
       }
 
