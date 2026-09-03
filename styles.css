@@ -149,6 +149,22 @@ p { text-wrap: pretty; }
 }
 ::-webkit-scrollbar-thumb:hover { background: #3C4557; }
 
+/* ---------- 2b. Lienzo de partículas del cursor ---------- */
+/* Capa decorativa fija a pantalla completa. `pointer-events: none` es
+   imprescindible: el lienzo cubre todo el viewport y sin ello bloquearía
+   cualquier clic, enlace o selección de texto. Con z-index 1 queda sobre
+   el fondo pero por debajo del header (100) y del enlace de salto (200),
+   que conservan su superficie limpia. */
+#antigravity-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
 /* ---------- 3. Utilidades de layout ---------- */
 .container {
   width: 100%;
@@ -1431,11 +1447,17 @@ p { text-wrap: pretty; }
 
   /* Las secciones entran con un fundido, sin deslizarse. */
   .reveal { transform: none; }
+
+  /* El rastro del cursor es movimiento puro y decorativo: se retira.
+     main.js tampoco arranca el bucle bajo esta preferencia; esta regla
+     es la red de seguridad si la preferencia cambia en caliente. */
+  #antigravity-canvas { display: none; }
 }
 
 /* ---------- 17. Impresión ---------- */
 @media print {
-  .site-header, .filters, .hero-visual, .nav-toggle { display: none; }
+  .site-header, .filters, .hero-visual, .nav-toggle,
+  #antigravity-canvas { display: none; }
   body { background: #fff; color: #000; }
   .card, .terminal, .project-preview { border-color: #ccc; background: #fff; }
 }

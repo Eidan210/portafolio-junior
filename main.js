@@ -728,7 +728,178 @@
   }
 
   /* ----------------------------------------------------------
-     13. ARRANQUE
+     13. PARTÍCULAS "ANTIGRAVEDAD" DEL CURSOR
+     Rastro decorativo dibujado con la API nativa de canvas 2D: cada
+     movimiento del ratón emite una ráfaga corta de puntos que suben
+     flotando, se frenan por fricción y se apagan. Sin dependencias.
+     ---------------------------------------------------------- */
+  const PARTICULAS = {
+    max: 80,               // techo duro de partículas vivas a la vez
+    porRafaga: 2,          // puntos emitidos por movimiento aceptado
+    intervaloEmision: 26,  // ms mínimos entre ráfagas (~77 puntos/s)
+    dispersion: 10,        // px de desvío aleatorio respecto al cursor
+    radioMin: 1,
+    radioMax: 3,
+    empuje: 0.05,          // aceleración hacia arriba: la "antigravedad"
+    friccion: 0.94,        // decay de la velocidad
+    merma: 0.985,          // decay del radio
+    apagado: 0.018,        // decay de la vida (~0.9 s de vuelo)
+    accent: '122, 162, 247', // --accent  #7AA2F7
+    purple: '187, 154, 247'  // --purple  #BB9AF7
+  };
+
+  function initParticles() {
+    const canvas = document.getElementById('antigravity-canvas');
+    if (!canvas || !canvas.getContext) return;
+
+    // Sin puntero fino (móvil, tablet) no hay cursor al que seguir: el
+    // efecto solo añadiría latencia al gesto táctil y gasto de batería.
+    // El movimiento reducido se comprueba aquí además de en el CSS para
+    // no registrar siquiera los listeners ni el bucle de dibujo.
+    if (!window.matchMedia('(pointer: fine)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const TAU = Math.PI * 2;
+    const particulas = [];
+    let ancho = 0;
+    let alto = 0;
+    let animando = false;
+    let ultimaEmision = 0;
+    let redimensionPendiente = false;
+
+    // Reloj monótono: mezclar performance.now() con Date.now() rompería
+    // la comparación del estrangulador porque tienen orígenes distintos.
+    const ahora = (window.performance && window.performance.now)
+      ? function () { return window.performance.now(); }
+      : function () { return Date.now(); };
+
+    /* El buffer se dibuja a la resolución real del dispositivo y se
+       escala por CSS: sin esto un punto de 1px se ve borroso en pantallas
+       HiDPI. Se limita a 2x porque por encima no se aprecia y cada paso
+       multiplica los píxeles que hay que rellenar. */
+    function medir() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      ancho = canvas.clientWidth || window.innerWidth;
+      alto = canvas.clientHeight || window.innerHeight;
+      canvas.width = Math.round(ancho * dpr);
+      canvas.height = Math.round(alto * dpr);
+      // Redimensionar el buffer resetea la matriz: hay que reaplicarla.
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function arrancar() {
+      if (animando) return;
+      animando = true;
+      window.requestAnimationFrame(paso);
+    }
+
+    function emitir(x, y) {
+      const hueco = PARTICULAS.max - particulas.length;
+      if (hueco <= 0) return;   // techo duro: se descarta, no se acumula
+      const cantidad = Math.min(PARTICULAS.porRafaga, hueco);
+
+      for (let i = 0; i < cantidad; i++) {
+        particulas.push({
+          x: x + (Math.random() - 0.5) * PARTICULAS.dispersion,
+          y: y + (Math.random() - 0.5) * PARTICULAS.dispersion,
+          vx: (Math.random() - 0.5) * 0.7,
+          vy: -(0.15 + Math.random() * 0.45),
+          radio: PARTICULAS.radioMin +
+                 Math.random() * (PARTICULAS.radioMax - PARTICULAS.radioMin),
+          vida: 1,
+          // Algún punto suelto en violeta rompe la monotonía sin salirse
+          // de la paleta del sitio.
+          color: Math.random() < 0.18 ? PARTICULAS.purple : PARTICULAS.accent
+        });
+      }
+
+      arrancar();
+    }
+
+    function paso() {
+      ctx.clearRect(0, 0, ancho, alto);
+      // Los puntos que se solapan suman luz en lugar de taparse: es el
+      // brillo sutil sin recurrir a shadowBlur ni a degradados, que
+      // cuestan un orden de magnitud más por partícula.
+      ctx.globalCompositeOperation = 'lighter';
+
+      for (let i = particulas.length - 1; i >= 0; i--) {
+        const p = particulas[i];
+
+        p.vy -= PARTICULAS.empuje;    // antigravedad: tira hacia arriba
+        p.vx *= PARTICULAS.friccion;
+        p.vy *= PARTICULAS.friccion;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.radio *= PARTICULAS.merma;
+        p.vida -= PARTICULAS.apagado;
+
+        if (p.vida <= 0 || p.radio < 0.3) {
+          particulas.splice(i, 1);
+          continue;
+        }
+
+        // Halo tenue + núcleo: dos arcos por partícula.
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radio * 2.6, 0, TAU);
+        ctx.fillStyle = 'rgba(' + p.color + ', ' + (p.vida * 0.08).toFixed(3) + ')';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radio, 0, TAU);
+        ctx.fillStyle = 'rgba(' + p.color + ', ' + (p.vida * 0.6).toFixed(3) + ')';
+        ctx.fill();
+      }
+
+      ctx.globalCompositeOperation = 'source-over';
+
+      if (particulas.length) {
+        window.requestAnimationFrame(paso);
+        return;
+      }
+
+      // Sin partículas vivas el bucle se detiene: en reposo el efecto no
+      // consume ni un frame.
+      animando = false;
+      ctx.clearRect(0, 0, ancho, alto);
+    }
+
+    window.addEventListener('mousemove', function (evento) {
+      // Se estrangula por tiempo, no por evento: un ratón con alta tasa
+      // de sondeo dispara cientos de mousemove por segundo.
+      const t = ahora();
+      if (t - ultimaEmision < PARTICULAS.intervaloEmision) return;
+      ultimaEmision = t;
+      // El lienzo es fixed y cubre el viewport, así que las coordenadas
+      // de cliente sirven tal cual, sin corregir el scroll.
+      emitir(evento.clientX, evento.clientY);
+    }, { passive: true });
+
+    window.addEventListener('resize', function () {
+      // Redimensionar el buffer es caro y el evento llega en ráfaga:
+      // se resuelve una sola vez por frame.
+      if (redimensionPendiente) return;
+      redimensionPendiente = true;
+      window.requestAnimationFrame(function () {
+        redimensionPendiente = false;
+        medir();
+      });
+    }, { passive: true });
+
+    document.addEventListener('visibilitychange', function () {
+      // El navegador congela requestAnimationFrame en pestañas ocultas;
+      // al volver, el rastro reaparecería detenido a medio camino.
+      if (document.hidden) particulas.length = 0;
+    });
+
+    medir();
+  }
+
+  /* ----------------------------------------------------------
+     14. ARRANQUE
      ---------------------------------------------------------- */
   function init() {
     renderProjects();
@@ -739,6 +910,7 @@
     initReveal();
     initSmoothScroll();
     initCopyEmail();
+    initParticles();
     initYear();
   }
 
