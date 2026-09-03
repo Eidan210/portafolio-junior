@@ -504,16 +504,23 @@
     const items = document.querySelectorAll('.reveal');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    if (reducedMotion || !('IntersectionObserver' in window)) {
+    // Sin IntersectionObserver no hay forma de detectar la entrada:
+    // se muestra todo de una vez.
+    if (!('IntersectionObserver' in window)) {
       items.forEach(function (item) { item.classList.add('is-visible'); });
       return;
     }
+
+    // Con movimiento reducido el CSS ya deja solo el fundido (sin
+    // desplazamiento), así que la entrada se mantiene: únicamente se
+    // recorta el escalonado para que no se alargue.
+    const escalonado = reducedMotion ? 25 : 70;
 
     const observer = new IntersectionObserver(function (entries, obs) {
       entries.forEach(function (entry, i) {
         if (!entry.isIntersecting) return;
         // Escalonado suave entre elementos del mismo bloque.
-        entry.target.style.transitionDelay = (i * 70) + 'ms';
+        entry.target.style.transitionDelay = (i * escalonado) + 'ms';
         entry.target.classList.add('is-visible');
         obs.unobserve(entry.target);
       });
@@ -523,7 +530,109 @@
   }
 
   /* ----------------------------------------------------------
-     10. COPIAR EL CORREO AL PORTAPAPELES
+     10. NAVEGACIÓN SUAVE ENTRE SECCIONES
+
+     El navegador suprime `scroll-behavior: smooth` (y también la
+     opción `behavior: 'smooth'` de scrollTo) cuando el sistema tiene
+     activada la reducción de movimiento, y entonces las anclas dan un
+     salto seco. Aquí se anima el desplazamiento a mano con
+     requestAnimationFrame, que sí funciona en ese caso.
+
+     Mientras el JS está activo, `html.js-scroll` desactiva el scroll
+     suave del CSS para que no compita con este tween. Si el JS no
+     carga, la clase nunca se añade y el CSS sigue encargándose.
+     ---------------------------------------------------------- */
+  function initSmoothScroll() {
+    const enlaces = document.querySelectorAll('a[href^="#"]');
+    if (!enlaces.length) return;
+
+    document.documentElement.classList.add('js-scroll');
+
+    // Con reducción de movimiento se acorta el recorrido en vez de
+    // eliminarlo: un desplazamiento breve orienta mejor que un salto.
+    const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const DURACION = reducido ? 320 : 640;
+
+    let animacion = null;
+
+    function suavizar(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    function cancelar() {
+      if (animacion === null) return;
+      cancelAnimationFrame(animacion);
+      animacion = null;
+    }
+
+    function desplazarHasta(destino, alTerminar) {
+      cancelar();
+
+      const inicio = window.pageYOffset;
+      const distancia = destino - inicio;
+
+      if (Math.abs(distancia) < 2) {
+        if (alTerminar) alTerminar();
+        return;
+      }
+
+      const t0 = performance.now();
+
+      function paso(ahora) {
+        const avance = Math.min((ahora - t0) / DURACION, 1);
+        window.scrollTo(0, inicio + distancia * suavizar(avance));
+
+        if (avance < 1) {
+          animacion = requestAnimationFrame(paso);
+          return;
+        }
+        animacion = null;
+        if (alTerminar) alTerminar();
+      }
+
+      animacion = requestAnimationFrame(paso);
+    }
+
+    // Si la persona retoma el control, la animación se detiene.
+    ['wheel', 'touchstart'].forEach(function (evento) {
+      window.addEventListener(evento, cancelar, { passive: true });
+    });
+
+    enlaces.forEach(function (enlace) {
+      enlace.addEventListener('click', function (evento) {
+        const id = enlace.getAttribute('href');
+        if (!id || id === '#') return;
+
+        const destino = document.querySelector(id);
+        if (!destino) return;
+
+        evento.preventDefault();
+
+        const alturaHeader = parseInt(
+          getComputedStyle(document.documentElement).getPropertyValue('--header-h'), 10
+        ) || 64;
+
+        const maximo = Math.max(
+          document.documentElement.scrollHeight - window.innerHeight, 0
+        );
+        const y = Math.min(
+          Math.max(destino.getBoundingClientRect().top + window.pageYOffset - alturaHeader - 24, 0),
+          maximo
+        );
+
+        desplazarHasta(y, function () {
+          if (history.replaceState) history.replaceState(null, '', id);
+
+          // El foco se mueve al final: hacerlo antes cortaba la animación.
+          destino.setAttribute('tabindex', '-1');
+          destino.focus({ preventScroll: true });
+        });
+      });
+    });
+  }
+
+  /* ----------------------------------------------------------
+     11. COPIAR EL CORREO AL PORTAPAPELES
      Un enlace mailto: abre el cliente de correo del sistema, que
      muchas veces no es el que la persona usa. Copiar la dirección
      es más útil; el mailto: se mantiene como alternativa si el
@@ -611,7 +720,7 @@
   }
 
   /* ----------------------------------------------------------
-     11. AÑO EN EL FOOTER
+     12. AÑO EN EL FOOTER
      ---------------------------------------------------------- */
   function initYear() {
     const year = document.getElementById('year');
@@ -619,7 +728,7 @@
   }
 
   /* ----------------------------------------------------------
-     12. ARRANQUE
+     13. ARRANQUE
      ---------------------------------------------------------- */
   function init() {
     renderProjects();
@@ -628,6 +737,7 @@
     initHeaderScroll();
     initScrollSpy();
     initReveal();
+    initSmoothScroll();
     initCopyEmail();
     initYear();
   }
