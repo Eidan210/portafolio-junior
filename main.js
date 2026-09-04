@@ -28,7 +28,7 @@
       repo: 'Proyecto_n8n',
       enlace_repo: 'https://github.com/Eidan210/Proyecto_n8n',
       demo_url: '',
-      privado: true,
+      privado: false,
       destacado: true,
       tecnologias: ['n8n', 'Google Gemini', 'JavaScript', 'HTML5', 'CSS3'],
       descripcion_corta:
