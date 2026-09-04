@@ -445,10 +445,18 @@
       if (event.key === 'Escape') closeNav();
     });
 
-    // Cierra al pasar a escritorio.
-    window.addEventListener('resize', function () {
-      if (window.innerWidth >= 900) closeNav();
-    });
+    // Cierra al pasar a escritorio. El umbral se lee del mismo breakpoint
+    // que usa el CSS para volver a la barra horizontal (1025px): con un
+    // valor distinto el menú quedaba abierto sin botón que lo cerrase.
+    const escritorio = window.matchMedia('(min-width: 1025px)');
+    const alCambiar = function (event) {
+      if (event.matches) closeNav();
+    };
+    if (escritorio.addEventListener) {
+      escritorio.addEventListener('change', alCambiar);
+    } else {
+      escritorio.addListener(alCambiar); // Safari < 14
+    }
   }
 
   /* ----------------------------------------------------------
@@ -849,8 +857,11 @@
 
     function medir() {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      ancho = window.innerWidth || document.documentElement.clientWidth || canvas.clientWidth || 1200;
-      alto = window.innerHeight || document.documentElement.clientHeight || canvas.clientHeight || 800;
+      // clientWidth excluye la barra de desplazamiento: con innerWidth el
+      // lienzo quedaba unos píxeles más ancho que su caja CSS y la lluvia
+      // se veía estirada en horizontal.
+      ancho = document.documentElement.clientWidth || window.innerWidth || canvas.clientWidth || 1200;
+      alto = document.documentElement.clientHeight || window.innerHeight || canvas.clientHeight || 800;
       canvas.width = Math.round(ancho * dpr);
       canvas.height = Math.round(alto * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
