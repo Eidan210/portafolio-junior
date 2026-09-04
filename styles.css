@@ -340,6 +340,24 @@ main,
   background: rgba(13, 15, 20, 0.88);
 }
 
+/* Progreso de lectura pegado al borde inferior del header. main.js escribe
+   --scroll-progress (0 a 1) y aquí solo se escala: sin reflow por frame. */
+.header-progress {
+  position: absolute;
+  inset: auto 0 -1px 0;
+  height: 2px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.header-progress-bar {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--purple));
+  transform: scaleX(var(--scroll-progress, 0));
+  transform-origin: left center;
+}
+
 .header-inner {
   height: 100%;
   display: flex;
@@ -352,6 +370,7 @@ main,
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
+  min-width: 0;
   font-weight: 650;
   letter-spacing: -0.02em;
 }
@@ -370,7 +389,35 @@ main,
   font-weight: 700;
 }
 
-.brand-text { font-size: 0.95rem; }
+/* El monograma reacciona al hover del enlace completo, no solo de sí mismo. */
+.brand:hover .brand-mark {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.brand-lines {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.brand-text {
+  font-size: 0.95rem;
+  line-height: 1.15;
+}
+
+/* El rol bajo el nombre ocupa espacio muerto del header y deja claro el
+   perfil sin necesidad de llegar al hero. */
+.brand-role {
+  font-family: var(--font-mono);
+  font-size: clamp(0.55rem, 2vw, 0.64rem);
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
 
 .nav {
   position: fixed;
@@ -401,8 +448,11 @@ main,
 }
 
 .nav-link {
-  display: block;
-  padding: var(--space-3) var(--space-3);
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-3);
   border-radius: var(--radius-sm);
   color: var(--text-dim);
   font-size: 0.92rem;
@@ -414,7 +464,43 @@ main,
 
 .nav-link.is-current { color: var(--accent); }
 
-.nav-github { align-self: flex-start; }
+/* Numeración que repite la de los encabezados de sección (01 — Sobre mí).
+   Solo en el panel móvil: en la barra horizontal recargaría la densidad. */
+.nav-index {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+  transition: color var(--transition);
+}
+
+.nav-link.is-current .nav-index { color: var(--accent); }
+
+/* En el panel móvil la sección activa se marca con una barra lateral;
+   el subrayado horizontal se reserva para la barra de escritorio. */
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 2px;
+  height: 0;
+  border-radius: 2px;
+  background: var(--accent);
+  transform: translateY(-50%);
+  transition: height var(--transition);
+}
+
+.nav-link.is-current::after { height: 60%; }
+
+.nav-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
 
 .nav-toggle {
   display: grid;
@@ -1462,6 +1548,43 @@ main,
   .nav-list { flex-direction: row; gap: var(--space-1); }
 
   .nav-link { padding: var(--space-2) var(--space-3); font-size: 0.88rem; }
+
+  /* La numeración recargaría la barra horizontal: solo vive en el panel. */
+  .nav-index { display: none; }
+
+  /* En escritorio la marca de sección pasa a subrayado deslizante. */
+  .nav-link::after {
+    left: var(--space-3);
+    right: var(--space-3);
+    top: auto;
+    bottom: 3px;
+    width: auto;
+    height: 2px;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform var(--transition);
+  }
+
+  .nav-link:hover::after,
+  .nav-link.is-current::after { height: 2px; transform: scaleX(1); }
+
+  .nav-cta {
+    gap: var(--space-3);
+    padding-top: 0;
+    border-top: none;
+  }
+
+  /* Con el CTA de contacto al lado, GitHub se reduce a icono para no
+     competir por la atención ni estrechar la barra a 1025px. */
+  .nav-github { position: relative; padding-inline: 0.55rem; }
+  .nav-github-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 
   .hero-grid {
     grid-template-columns: 1.05fr 0.95fr;
