@@ -438,8 +438,8 @@ main,
 
 /* ---------- 6. Hero ---------- */
 .hero {
-  padding-top: calc(var(--header-h) + var(--space-8));
-  padding-bottom: var(--space-8);
+  padding-top: calc(var(--header-h) + var(--space-7));
+  padding-bottom: var(--space-7);
   position: relative;
   overflow: hidden;
 }
@@ -465,6 +465,11 @@ main,
 }
 
 .hero-content { min-width: 0; }
+
+/* Imprescindible: por defecto un ítem de grid tiene min-width: auto, así que
+   el ancho min-content de la terminal (white-space: pre) ensanchaba la pista
+   por encima del viewport y `.hero { overflow: hidden }` recortaba el texto. */
+.hero-visual { min-width: 0; }
 
 .status-badge {
   display: inline-flex;
@@ -504,16 +509,21 @@ main,
 
 .hero-role {
   font-family: var(--font-mono);
-  font-size: clamp(0.85rem, 2.6vw, 1rem);
+  font-size: clamp(0.82rem, 3.2vw, 1rem);
   color: var(--text-dim);
   margin-bottom: var(--space-5);
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
 }
 
-.role-sep { color: var(--border-strong); }
+/* En móvil el rol se apila en dos líneas: el separador dejaría un "|"
+   colgando al final de la primera, así que solo aparece en línea. */
+.role-sep {
+  display: none;
+  color: var(--border-strong);
+}
 
 .hero-summary {
   color: var(--text-dim);
@@ -531,19 +541,31 @@ main,
   margin-bottom: var(--space-7);
 }
 
+/* auto-fit + minmax: caben 3 columnas cuando hay sitio y bajan a 2 (o a 1
+   en pantallas muy estrechas) sin estrangular las etiquetas. */
 .hero-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
   gap: var(--space-4);
   padding-top: var(--space-5);
   border-top: 1px solid var(--border);
 }
 
+/* La etiqueta crece para ocupar el hueco sobrante: así las cifras quedan
+   alineadas en una misma línea base aunque un rótulo ocupe dos líneas. */
+.stat {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .stat-label {
+  flex: 1;
   font-size: 0.72rem;
   color: var(--text-faint);
   letter-spacing: 0.02em;
   margin-bottom: var(--space-1);
+  text-wrap: balance;
 }
 
 .stat-value {
@@ -558,6 +580,7 @@ main,
 
 /* ---------- 7. Terminal ---------- */
 .terminal {
+  max-width: 100%;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--bg-inset);
@@ -588,9 +611,9 @@ main,
 
 .terminal-body {
   margin: 0;
-  padding: var(--space-5);
+  padding: var(--space-3) var(--space-4);
   font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-size: clamp(0.64rem, 2.45vw, 0.78rem);
   line-height: 1.85;
   color: var(--text-dim);
   overflow-x: auto;
@@ -1399,6 +1422,11 @@ main,
 /* Tablet — 641px a 1024px */
 @media (min-width: 641px) {
   .container { padding-inline: var(--space-6); }
+  .hero { padding-top: calc(var(--header-h) + var(--space-8)); padding-bottom: var(--space-8); }
+  .hero-role { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+  .role-sep { display: inline; }
+  .hero-stats { grid-template-columns: repeat(3, 1fr); }
+  .terminal-body { padding: var(--space-5); }
   .focus-grid { grid-template-columns: repeat(2, 1fr); }
   .modules-list { grid-template-columns: repeat(2, 1fr); gap: var(--space-4); }
   .contact-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1450,7 +1478,7 @@ main,
   .project-card-featured { grid-column: 1 / -1; }
   .contact-grid { grid-template-columns: repeat(2, 1fr); max-width: 760px; }
 
-  .hero { padding-top: calc(var(--header-h) + var(--space-9)); }
+  .hero { padding-top: calc(var(--header-h) + var(--space-9)); padding-bottom: var(--space-8); }
 }
 
 /* ---------- 16. Accesibilidad: movimiento reducido ---------- */
