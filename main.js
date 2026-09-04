@@ -66,7 +66,7 @@
       nombre: 'Mym Designsx',
       repo: 'Proyecto-Automatizacion-mym',
       enlace_repo: 'https://github.com/Eidan210/Proyecto-Automatizacion-mym',
-      demo_url: '', // Sin GitHub Pages activo todavía.
+      demo_url: 'https://eidan210.github.io/Proyecto-Automatizacion-mym/',
       privado: false,
       tecnologias: ['JavaScript', 'HTML5', 'CSS3', 'n8n'],
       descripcion_corta:
