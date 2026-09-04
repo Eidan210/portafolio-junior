@@ -868,55 +868,302 @@ main,
   margin-bottom: var(--space-5);
 }
 
-/* ---------- 9d. Habilidades blandas ---------- */
-.soft-skills { margin-bottom: var(--space-6); }
+/* ---------- 9d. Cómo trabajo — Bento Grid ----------
+   Sustituye a la antigua rejilla uniforme de habilidades blandas.
+   Móvil: una columna. El bento asimétrico se arma en los breakpoints
+   del bloque 15, donde .work-card-xl y .work-card-wide reclaman
+   columnas y filas extra. */
+.work-block { margin-bottom: var(--space-6); }
 
-.soft-grid {
+.work-head { margin-bottom: var(--space-5); }
+
+.work-grid {
   display: grid;
   gap: var(--space-4);
 }
 
-.soft-item {
+.work-card {
+  position: relative;
+  /* Aísla el brillo en z-index:-1 para que no se cuele bajo la tarjeta */
+  isolation: isolate;
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
   gap: var(--space-3);
-  padding: var(--space-4);
+  padding: var(--space-5);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   background: var(--bg-elev);
-  transition: border-color var(--transition), transform var(--transition);
+  overflow: hidden;
+  transition: border-color var(--transition), transform var(--transition),
+              box-shadow var(--transition);
 }
 
-.soft-item:hover {
+/* Brillo superior tenue. Para cambiar su intensidad basta ajustar el
+   color de --accent-soft o la altura de este pseudo-elemento. */
+.work-card::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -60% 25% auto;
+  height: 180px;
+  background: radial-gradient(closest-side, var(--accent-soft), transparent);
+  opacity: 0;
+  transition: opacity var(--transition);
+  pointer-events: none;
+}
+
+.work-card:hover,
+.work-card:focus-within {
   border-color: var(--border-strong);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
 }
 
-.soft-icon {
+.work-card:hover::before,
+.work-card:focus-within::before { opacity: 1; }
+
+.work-icon {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   flex-shrink: 0;
-  border-radius: 9px;
+  border-radius: 10px;
   background: rgba(187, 154, 247, 0.1);
   border: 1px solid rgba(187, 154, 247, 0.28);
   color: var(--purple);
 }
 
-.soft-icon svg { width: 17px; height: 17px; }
+/* La tarjeta principal usa el azul de acento para destacar sobre el resto */
+.work-icon-accent {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
 
-.soft-name {
-  font-size: 0.92rem;
+.work-icon svg { width: 18px; height: 18px; }
+
+.work-name {
+  font-size: 0.98rem;
+  font-weight: 620;
+}
+
+.work-text {
+  font-size: 0.86rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+.work-text em { color: var(--text); font-style: normal; font-weight: 550; }
+
+/* La tarjeta grande respira más y agranda su titular */
+.work-card-xl .work-name { font-size: 1.1rem; }
+.work-card-xl .work-text { font-size: 0.9rem; }
+
+/* Al ocupar dos filas del bento le sobra alto. El micro-gráfico toma ese
+   espacio y centra sus pasos: repartirlos de extremo a extremo estiraría
+   la secuencia y rompería su lectura como lista. */
+/* La separación se mantiene fija (no space-between): el conector la mide
+   con --flow-gap y una distribución elástica lo dejaría corto. */
+.work-card-xl .work-flow {
+  --flow-gap: var(--space-5);
+  flex: 1;
+  margin-top: var(--space-3);
+  align-content: start;
+}
+
+/* --- Micro-gráfico: secuencia de depuración --- */
+.work-flow {
+  /* La separación entre pasos se declara aquí porque el conector la
+     necesita para medir la distancia hasta el paso siguiente. */
+  --flow-gap: var(--space-3);
+
+  display: grid;
+  gap: var(--flow-gap);
+  /* margin-top: auto lo ancla al pie aunque la tarjeta crezca */
+  margin-top: auto;
+  padding: var(--space-4) 0 0;
+  list-style: none;
+  border-top: 1px dashed var(--border);
+}
+
+.work-flow-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  font-size: 0.83rem;
+  color: var(--text-dim);
+}
+
+.work-flow-body { display: grid; gap: 2px; }
+
+.work-flow-title { color: var(--text); font-weight: 550; }
+
+.work-flow-note {
+  font-size: 0.76rem;
+  color: var(--text-faint);
+  line-height: 1.45;
+}
+
+/* Conector: del centro de este dado (13 px) al del siguiente, que está a
+   una altura de tarjeta más la separación. El último paso no lo dibuja.
+   Al medirse desde arriba funciona aunque los textos ocupen varias
+   líneas y los pasos tengan alturas distintas. */
+.work-flow-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 13px;
+  height: calc(100% + var(--flow-gap));
+  width: 1px;
+  background: var(--border-strong);
+}
+
+.work-flow-step {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-strong);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
   font-weight: 600;
+  transition: border-color var(--transition), color var(--transition);
+}
+
+.work-card-xl:hover .work-flow-step { border-color: var(--accent-line); }
+
+/* --- Métricas reales --- */
+.work-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--border);
+}
+
+.work-metric dt {
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
   margin-bottom: var(--space-1);
 }
 
-.soft-text {
-  font-size: 0.84rem;
-  color: var(--text-dim);
-  line-height: 1.55;
+.work-metric dd {
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1;
 }
+
+.work-metric-unit { color: var(--text-faint); font-size: 0.85rem; }
+
+/* --- Chips de método de trabajo --- */
+.work-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding-top: var(--space-2);
+}
+
+.work-chips li {
+  padding: 0.22rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  background: var(--bg-inset);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-faint);
+  transition: border-color var(--transition), color var(--transition);
+}
+
+.work-card:hover .work-chips li {
+  border-color: var(--border-strong);
+  color: var(--text-dim);
+}
+
+/* --- Insignia de salto de versión --- */
+.work-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding-top: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+}
+
+.work-badge-from { color: var(--text-faint); text-decoration: line-through; }
+.work-badge-arrow { color: var(--border-strong); }
+.work-badge-to { color: var(--green); font-weight: 600; }
+
+/* --- Micro-gráfico: prioridad de fuentes ---
+   El relleno lo decide data-level en el HTML: cada nivel enciende
+   tantos segmentos como indique su valor. */
+.work-rank {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--border);
+}
+
+.work-rank-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  font-size: 0.82rem;
+}
+
+.work-rank-name { color: var(--text-dim); }
+
+.work-rank-tag {
+  grid-column: 2;
+  grid-row: 1;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-faint);
+  text-align: right;
+}
+
+.work-rank-bar {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 4px;
+}
+
+.work-rank-bar span {
+  height: 4px;
+  flex: 1;
+  border-radius: 99px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+/* Segmentos encendidos según el nivel declarado */
+.work-rank-item[data-level="3"] .work-rank-bar span,
+.work-rank-item[data-level="2"] .work-rank-bar span:nth-child(-n + 2),
+.work-rank-item[data-level="1"] .work-rank-bar span:nth-child(1) {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* El nivel más alto se distingue también por el texto */
+.work-rank-item[data-level="3"] .work-rank-name { color: var(--text); font-weight: 550; }
+.work-rank-item[data-level="3"] .work-rank-tag { color: var(--accent); }
 
 /* ---------- 10. Stack ---------- */
 .stack-grid {
@@ -975,67 +1222,244 @@ main,
   flex-shrink: 0;
 }
 
-/* ---------- 10b. Tecnologías conocidas ---------- */
-.tech-block { margin-top: var(--space-7); }
+/* ---------- 10b. Stack técnico — pestañas + logos de marca ---------- */
 
+/* Sprite de iconos: se saca del flujo sin display:none, que en algunos
+   motores rompe la resolución de <use>. */
+.icon-sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.tech-lab { margin-top: var(--space-7); }
+
+.tech-lab-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.tech-lab-intro .block-lead { margin-bottom: 0; }
+
+/* --- Pestañas de categoría --- */
+.tech-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.tech-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.4rem 0.78rem;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  background: var(--bg-elev);
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color var(--transition), border-color var(--transition),
+              background-color var(--transition);
+}
+
+.tech-tab:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.tech-tab.is-active {
+  color: var(--accent);
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.tech-tab-count {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-faint);
+}
+
+.tech-tab.is-active .tech-tab-count { color: var(--accent); }
+
+/* --- Rejilla de tecnologías --- */
 .tech-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: var(--space-3);
 }
 
+/* Cada tarjeta declara su color de marca en --brand (atributo style del
+   HTML). De ahí se derivan el brillo y el borde para no repetir el hex. */
 .tech-item {
-  display: flex;
+  --brand: var(--accent);
+  --brand-glow: color-mix(in srgb, var(--brand) 22%, transparent);
+  --brand-edge: color-mix(in srgb, var(--brand) 48%, var(--border));
+  --brand-wash: color-mix(in srgb, var(--brand) 13%, var(--bg-inset));
+  --brand-shade: color-mix(in srgb, var(--brand) 42%, transparent);
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "logo name tag"
+    "logo role role";
   align-items: center;
-  gap: var(--space-3);
+  column-gap: var(--space-3);
+  row-gap: 2px;
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg-elev);
-  transition: border-color var(--transition), background-color var(--transition),
+  transition: border-color var(--transition), transform var(--transition),
+              box-shadow var(--transition);
+}
+
+/* Navegadores sin color-mix: se cae a los tonos neutros del sistema */
+@supports not (color: color-mix(in srgb, red, blue)) {
+  .tech-item {
+    --brand-glow: var(--accent-soft);
+    --brand-edge: var(--border-strong);
+    --brand-wash: var(--bg-inset);
+    --brand-shade: rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* Filo superior con degradado, encendido al pasar el cursor */
+.tech-item::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--brand), transparent);
+  opacity: 0;
+  transition: opacity var(--transition);
+  pointer-events: none;
+}
+
+/* Brillo radial que sigue al cursor.
+   main.js escribe --mx/--my en píxeles al mover el ratón; sin JS o con
+   "movimiento reducido" el brillo se queda centrado y solo hace fundido.
+   Para cambiar su tamaño, ajusta el radio de 170px. */
+.tech-item::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: radial-gradient(170px circle at var(--mx, 50%) var(--my, 0%),
+                              var(--brand-glow), transparent 70%);
+  opacity: 0;
+  transition: opacity var(--transition);
+  pointer-events: none;
+}
+
+.tech-item:hover,
+.tech-item:focus-within {
+  border-color: var(--brand-edge);
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px -22px var(--brand-shade);
+}
+
+.tech-item:hover::before,
+.tech-item:hover::after,
+.tech-item:focus-within::before,
+.tech-item:focus-within::after { opacity: 1; }
+
+/* --- Logo de marca --- */
+.tech-logo {
+  grid-area: logo;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  color: var(--brand);
+  transition: background-color var(--transition), border-color var(--transition),
               transform var(--transition);
 }
 
-.tech-item:hover {
-  border-color: var(--border-strong);
-  background: var(--bg-elev-2);
-  transform: translateY(-2px);
+.tech-item:hover .tech-logo {
+  background: var(--brand-wash);
+  border-color: var(--brand-edge);
+  transform: scale(1.06);
 }
 
-.tech-mark {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  flex-shrink: 0;
-  border-radius: 8px;
-  background: var(--bg-inset);
-  border: 1px solid var(--border-strong);
-  color: var(--text-dim);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 600;
+/* fill: currentColor tiñe los logos macizos; los glifos de trazo
+   (SQL, APIs REST) traen su propio fill="none" en el <symbol>. */
+.tech-svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
 }
 
 .tech-name {
-  font-size: 0.86rem;
+  grid-area: name;
+  font-size: 0.88rem;
+  font-weight: 560;
   color: var(--text);
-  font-weight: 520;
+}
+
+/* Etiqueta secundaria: el papel real de la herramienta */
+.tech-role {
+  grid-area: role;
+  font-size: 0.74rem;
+  color: var(--text-faint);
+  line-height: 1.4;
+}
+
+/* Micro-badge de categoría */
+.tech-tag {
+  grid-area: tag;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: 0.12rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg-inset);
+  white-space: nowrap;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.tech-item:hover .tech-tag {
+  color: var(--text-dim);
+  border-color: var(--border-strong);
 }
 
 /* n8n destacado: es el eje del proyecto principal del portafolio */
 .tech-item-accent {
-  border-color: var(--accent-line);
-  background: linear-gradient(90deg, var(--accent-soft), transparent), var(--bg-elev);
+  border-color: var(--brand-edge);
+  background: linear-gradient(90deg, var(--brand-glow), transparent 60%), var(--bg-elev);
 }
 
-.tech-item-accent .tech-mark {
-  background: var(--accent-soft);
-  border-color: var(--accent-line);
-  color: var(--accent);
+.tech-item-accent .tech-logo { border-color: var(--brand-edge); }
+.tech-item-accent .tech-tag { color: var(--brand); border-color: var(--brand-edge); }
+
+/* --- Filtrado por pestaña --- */
+.tech-item.is-hidden { display: none; }
+
+/* Entrada escalonada de las tarjetas visibles tras filtrar.
+   El retardo lo reparte main.js en --d; con "movimiento reducido" la
+   regla global del bloque 16 anula la animación. */
+@keyframes tech-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
 }
 
-.tech-item-accent .tech-name { color: var(--accent); }
+.tech-grid.is-filtering .tech-item:not(.is-hidden) {
+  animation: tech-enter 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation-delay: var(--d, 0ms);
+}
 
 .stack-note {
   margin-top: var(--space-5);
@@ -1437,7 +1861,8 @@ main,
 .contact-card.is-copied .copy-btn .check-icon { opacity: 1; transform: scale(1); }
 
 /* Mensaje para lectores de pantalla */
-.copy-status {
+.copy-status,
+.sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -1517,7 +1942,12 @@ main,
   .modules-list { grid-template-columns: repeat(2, 1fr); gap: var(--space-4); }
   .contact-grid { grid-template-columns: repeat(2, 1fr); }
   .stack-grid { grid-template-columns: repeat(2, 1fr); }
-  .soft-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* Bento a 2 columnas: la tarjeta grande y las anchas ocupan la fila
+     entera; las simples se emparejan. */
+  .work-grid { grid-template-columns: repeat(2, 1fr); }
+  .work-card-xl,
+  .work-card-wide { grid-column: span 2; }
   .bio { grid-template-columns: 1.2fr 0.8fr; align-items: start; }
   .footer-inner { flex-direction: row; justify-content: space-between; align-items: center; }
 }
@@ -1594,7 +2024,34 @@ main,
 
   .focus-grid { grid-template-columns: repeat(3, 1fr); }
   .stack-grid { grid-template-columns: repeat(3, 1fr); }
-  .soft-grid { grid-template-columns: repeat(3, 1fr); }
+
+  /* Bento asimétrico definitivo, sobre 4 columnas:
+       [ XL  XL  wide wide ]
+       [ XL  XL  card card ]
+       [ wide wide wide wide ]
+     La tarjeta principal ocupa 2x2 y el resto encaja alrededor. */
+  .work-grid {
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: minmax(150px, auto);
+  }
+
+  .work-card-xl {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+
+  .work-card-wide { grid-column: span 2; }
+
+  /* Encabezado del stack: intro a la izquierda, pestañas a la derecha */
+  .tech-lab-head {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-6);
+  }
+
+  .tech-lab-intro { max-width: 46ch; }
+  .tech-tabs { justify-content: flex-end; }
   .projects-grid { grid-template-columns: repeat(2, 1fr); }
 
   /* El proyecto destacado ocupa la fila completa */

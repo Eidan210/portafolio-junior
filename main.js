@@ -416,6 +416,100 @@
   }
 
   /* ----------------------------------------------------------
+     5b. STACK TÉCNICO: pestañas de categoría y brillo del cursor
+
+     Sin JavaScript la rejilla se ve completa y estática: el filtrado y
+     el brillo son mejoras progresivas, nunca requisitos para leerla.
+     ---------------------------------------------------------- */
+  function initTechLab() {
+    const grid = document.getElementById('techGrid');
+    if (!grid) return;
+
+    const items = Array.prototype.slice.call(grid.querySelectorAll('.tech-item'));
+    const tabs = Array.prototype.slice.call(document.querySelectorAll('.tech-tab'));
+    const status = document.getElementById('techStatus');
+    if (!items.length || !tabs.length) return;
+
+    /* ---- Filtrado por categoría ---- */
+    let finAnimacion = 0;
+
+    const filtrar = function (categoria, etiqueta) {
+      let visibles = 0;
+
+      items.forEach(function (item) {
+        const coincide = categoria === 'todo' || item.dataset.stack === categoria;
+        item.classList.toggle('is-hidden', !coincide);
+
+        if (coincide) {
+          // Entrada escalonada: 30 ms por tarjeta, con tope de 240 ms para
+          // que el último elemento no se haga esperar.
+          item.style.setProperty('--d', Math.min(visibles * 30, 240) + 'ms');
+          visibles += 1;
+        }
+      });
+
+      // Quitar y reponer la clase reinicia la animación en cada filtrado.
+      // La lectura de offsetWidth fuerza el reflujo intermedio.
+      grid.classList.remove('is-filtering');
+      void grid.offsetWidth;
+      grid.classList.add('is-filtering');
+
+      window.clearTimeout(finAnimacion);
+      finAnimacion = window.setTimeout(function () {
+        grid.classList.remove('is-filtering');
+      }, 600);
+
+      if (status) {
+        status.textContent = visibles + ' tecnologías en ' + etiqueta + '.';
+      }
+    };
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        tabs.forEach(function (otro) {
+          const activo = otro === tab;
+          otro.classList.toggle('is-active', activo);
+          otro.setAttribute('aria-pressed', String(activo));
+        });
+
+        // El primer nodo de texto es el rótulo; el <span> lleva el contador.
+        const rotulo = tab.firstChild ? tab.firstChild.textContent.trim() : '';
+        filtrar(tab.dataset.stack, rotulo || tab.dataset.stack);
+      });
+    });
+
+    /* ---- Brillo radial que sigue al cursor ----
+       Se descarta con "movimiento reducido" y en punteros gruesos
+       (táctil), donde el hover no existe. En ese caso el CSS deja el
+       brillo centrado y solo hace fundido. */
+    const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const punteroFino = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (quieto || !punteroFino) return;
+
+    let pendiente = false;
+    let ultimo = null;
+
+    grid.addEventListener('pointermove', function (evento) {
+      const item = evento.target.closest && evento.target.closest('.tech-item');
+      if (!item) return;
+
+      ultimo = { item: item, x: evento.clientX, y: evento.clientY };
+      if (pendiente) return;
+
+      // Una sola escritura por fotograma: getBoundingClientRect fuerza
+      // cálculo de estilo y no conviene repetirlo en cada pointermove.
+      pendiente = true;
+      window.requestAnimationFrame(function () {
+        pendiente = false;
+        if (!ultimo) return;
+        const caja = ultimo.item.getBoundingClientRect();
+        ultimo.item.style.setProperty('--mx', (ultimo.x - caja.left) + 'px');
+        ultimo.item.style.setProperty('--my', (ultimo.y - caja.top) + 'px');
+      });
+    });
+  }
+
+  /* ----------------------------------------------------------
      6. NAVEGACIÓN MÓVIL
      ---------------------------------------------------------- */
   function initNav() {
@@ -1076,6 +1170,7 @@
 
     try { renderProjects(); } catch (e) { console.error('Error renderProjects:', e); }
     try { initFilters(); } catch (e) { console.error('Error initFilters:', e); }
+    try { initTechLab(); } catch (e) { console.error('Error initTechLab:', e); }
     try { initNav(); } catch (e) { console.error('Error initNav:', e); }
     try { initHeaderScroll(); } catch (e) { console.error('Error initHeaderScroll:', e); }
     try { initScrollSpy(); } catch (e) { console.error('Error initScrollSpy:', e); }
