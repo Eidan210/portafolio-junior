@@ -4,7 +4,7 @@ Portafolio personal de **Eidan Cuadros**, Junior Software Developer y Apprentice
 Software en **Campuslands**. Sitio *one-page* construido con HTML5, CSS3 y JavaScript puro, sin
 frameworks, librerías ni dependencias externas.
 
-> **Primera entrega del portafolio** — versión auditada contra los criterios de evaluación del programa.
+> Link Portafolio: https://eidan210.github.io/portafolio-junior/
 
 ---
 
