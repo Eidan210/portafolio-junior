@@ -1149,8 +1149,9 @@
     let hayCursor = false;
     let opacidad = 0.58;
     let factorDesaturacion = 0;
-    let tiempo = 0;
     let animando = false;
+    let rafId = 0;
+    let ultimoInstante = 0;
     let redimensionPendiente = false;
 
     // Inicialización de las gotas de lluvia con profundidad 3D
@@ -1172,7 +1173,6 @@
       p.longitud = Math.max(longitud, grosor * 2);
       p.velocidad = velocidad;
       p.derivaX = (Math.random() * 0.3 - 0.15);
-      p.fase = Math.random() * Math.PI * 2;
       p.deflexionX = 0;
       p.deflexionY = 0;
       p.colorOffset = (Math.random() * 0.06 - 0.03);
@@ -1205,21 +1205,48 @@
     function arrancar() {
       if (animando) return;
       animando = true;
-      window.requestAnimationFrame(paso);
+      // Sin marca previa, el primer fotograma calcularia un delta enorme
+      // y la lluvia daria un tiron al reanudarse.
+      ultimoInstante = 0;
+      rafId = window.requestAnimationFrame(paso);
     }
 
-    function paso() {
-      tiempo += 1;
+    function detener() {
+      animando = false;
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
+    }
+
+    function paso(instante) {
+      // Guarda de bucle unico. Sin ella, cada reanudacion encolaba un
+      // requestAnimationFrame nuevo encima del que seguia vivo: las gotas
+      // avanzaban una vez por bucle acumulado y la lluvia se aceleraba
+      // sola cuantas mas veces se saliera y volviera a la pestana.
+      if (!animando) return;
+
+      // Avance medido en tiempo real y no en fotogramas: a 120/144 Hz la
+      // lluvia cae a la misma velocidad que a 60 Hz. El tope de 2.5 corta
+      // el salto al volver de una pestana en segundo plano, donde el
+      // navegador entrega un delta acumulado muy grande.
+      const dt = ultimoInstante
+        ? Math.min((instante - ultimoInstante) / 16.667, 2.5)
+        : 1;
+      ultimoInstante = instante;
 
       // Seguimiento amortiguado de la posición del cursor para calcular la brisa
+      // Los suavizados se corrigen por dt para conservar la misma
+      // respuesta temporal sea cual sea la tasa de refresco.
+      const suavCursor = 1 - Math.pow(0.8, dt);
       const dxCursor = targetCursorX - cursorX;
       const dyCursor = targetCursorY - cursorY;
-      cursorX += dxCursor * 0.2;
-      cursorY += dyCursor * 0.2;
+      cursorX += dxCursor * suavCursor;
+      cursorY += dyCursor * suavCursor;
 
       // Estimación de velocidad del cursor para generar estela aerodinámica
       const distMov = Math.sqrt((cursorX - ultimoCursorX) ** 2 + (cursorY - ultimoCursorY) ** 2);
-      cursorVelocidad += (Math.min(distMov, 35) - cursorVelocidad) * 0.12;
+      cursorVelocidad += (Math.min(distMov, 35) - cursorVelocidad) * (1 - Math.pow(0.88, dt));
       ultimoCursorX = cursorX;
       ultimoCursorY = cursorY;
 
@@ -1234,11 +1261,11 @@
       } else if (scrollY > inicioSobreMi * 0.35) {
         targetDesaturacion = (scrollY - inicioSobreMi * 0.35) / (inicioSobreMi * 0.65);
       }
-      factorDesaturacion += (targetDesaturacion - factorDesaturacion) * 0.08;
+      factorDesaturacion += (targetDesaturacion - factorDesaturacion) * (1 - Math.pow(0.92, dt));
 
       // Opacidad armónica: sutilmente templada en contenido denso, pero siempre activa
       const targetOpacidad = (hayCursor ? 0.64 : 0.54) * (1 - factorDesaturacion * 0.12);
-      opacidad += (targetOpacidad - opacidad) * 0.06;
+      opacidad += (targetOpacidad - opacidad) * (1 - Math.pow(0.94, dt));
 
       // 1. Limpieza física total del lienzo en coordenadas nativas del buffer
       ctx.save();
@@ -1260,8 +1287,8 @@
           const g = gotas[i];
 
           // Descenso y ligera deriva
-          g.y += g.velocidad * factorVel;
-          g.x += cosAngulo * g.velocidad * factorVel + g.derivaX;
+          g.y += g.velocidad * factorVel * dt;
+          g.x += (cosAngulo * g.velocidad * factorVel + g.derivaX) * dt;
 
           // Reacción física con el cursor (deflexión suave)
           if (hayCursor) {
@@ -1273,16 +1300,17 @@
             if (distSq < radioRepulsion * radioRepulsion && distSq > 1) {
               const dist = Math.sqrt(distSq);
               const fuerza = (1 - dist / radioRepulsion) * LLUVIA_CONFIG.fuerzaRepulsion;
-              g.deflexionX += (dx / dist) * fuerza;
-              g.deflexionY += (dy / dist) * fuerza * 0.5;
+              g.deflexionX += (dx / dist) * fuerza * dt;
+              g.deflexionY += (dy / dist) * fuerza * 0.5 * dt;
             }
           }
 
           // Aplicar y disipar la deflexión
-          g.x += g.deflexionX;
-          g.y += g.deflexionY;
-          g.deflexionX *= 0.88;
-          g.deflexionY *= 0.88;
+          g.x += g.deflexionX * dt;
+          g.y += g.deflexionY * dt;
+          const disipacion = Math.pow(0.88, dt);
+          g.deflexionX *= disipacion;
+          g.deflexionY *= disipacion;
 
           // Reciclaje al salir de la pantalla por abajo
           if (g.y > alto + 25) {
@@ -1344,7 +1372,7 @@
         ctx.globalCompositeOperation = 'source-over';
       }
 
-      window.requestAnimationFrame(paso);
+      rafId = window.requestAnimationFrame(paso);
     }
 
     window.addEventListener('mousemove', function (evento) {
@@ -1375,7 +1403,7 @@
 
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) {
-        animando = false;
+        detener();
       } else {
         arrancar();
       }
