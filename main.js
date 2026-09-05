@@ -63,6 +63,60 @@
           '',
           'Dashboard web  →  el reclutador decide  (human-in-the-loop)'
         ].join('\n')
+      },
+
+      /* Guion de la demo interactiva del caso de estudio: reproduce una
+         ejecución del flujo con datos de ejemplo, porque el flujo real
+         vive en n8n y no es desplegable desde una pagina estatica. Los
+         pesos de las competencias suman 100 y el porcentaje es su media
+         ponderada, igual que en el prompt real. */
+      demo: {
+        umbral: 65,
+        vacante: {
+          titulo: 'Desarrollador Junior Full Stack',
+          requisitos: ['JavaScript', 'Python', 'SQL', 'Git', 'Formación intensiva']
+        },
+        candidatos: [
+          {
+            id: 'apta',
+            nombre: 'Laura Restrepo',
+            archivo: 'CV-Laura-Restrepo.pdf',
+            titular: 'Bootcamp intensivo y cuatro proyectos publicados',
+            reintento: false,
+            competencias: [
+              { nombre: 'JavaScript', peso: 30, puntaje: 92 },
+              { nombre: 'Python', peso: 25, puntaje: 88 },
+              { nombre: 'SQL', peso: 20, puntaje: 80 },
+              { nombre: 'Git', peso: 15, puntaje: 95 },
+              { nombre: 'Formación', peso: 10, puntaje: 70 }
+            ],
+            justificacion: 'Cubre las cinco competencias del puesto. Aporta repositorios propios ' +
+              'con historial de commits y experiencia demostrable en consultas SQL.',
+            flags: []
+          },
+          {
+            id: 'descartada',
+            nombre: 'Andres Molina',
+            archivo: 'CV-Andres-Molina.pdf',
+            titular: 'Perfil de diseño gráfico, sin base de datos',
+            reintento: true,
+            competencias: [
+              { nombre: 'JavaScript', peso: 30, puntaje: 55 },
+              { nombre: 'Python', peso: 25, puntaje: 40 },
+              { nombre: 'SQL', peso: 20, puntaje: 20 },
+              { nombre: 'Git', peso: 15, puntaje: 60 },
+              { nombre: 'Formación', peso: 10, puntaje: 50 }
+            ],
+            justificacion: 'El formulario declara SQL, pero la hoja de vida no registra ninguna ' +
+              'experiencia con bases de datos. La discrepancia queda marcada para revisión.',
+            flags: ['sin_experiencia_sql', 'discrepancia_formulario_cv']
+          }
+        ],
+        campos_sheets: [
+          'marca_temporal', 'nombre', 'correo', 'telefono', 'vacante',
+          'anios_experiencia', 'stack_declarado', 'stack_detectado_cv',
+          'compatibilidad', 'justificacion', 'flags', 'estado', 'decision_rrhh'
+        ]
       }
     },
 
@@ -442,11 +496,65 @@
       '      <span><strong>Habilidad clave:</strong> ' + esc(project.habilidad_clave) + '</span>',
       '    </p>',
       codigo,
+      bloqueDemo(project),
       '  </div>',
       '</div>'
     ].join('\n');
 
     return dialog;
+  }
+
+  /* Demo interactiva del caso de estudio. Un flujo de n8n es un backend
+     invisible: sin esto el visitante solo ve una captura estatica. Aqui
+     reproduce una ejecucion con datos de ejemplo y ve la bifurcacion, el
+     reintento ante un error de la API y la decision humana del final.
+     Se declara como simulacion en la propia interfaz: el flujo real vive
+     en el repositorio. */
+  function bloqueDemo(project) {
+    const d = project.demo;
+    if (!d) return '';
+
+    const candidatos = d.candidatos.map(function (c, i) {
+      return [
+        '<button class="demo-cand" type="button" role="radio" data-cand="' + esc(c.id) + '"',
+        '        aria-checked="' + (i === 0 ? 'true' : 'false') + '" tabindex="' + (i === 0 ? '0' : '-1') + '">',
+        '  <span class="demo-cand-nombre">' + esc(c.nombre) + '</span>',
+        '  <span class="demo-cand-titular">' + esc(c.titular) + '</span>',
+        '  <span class="demo-cand-archivo">' + esc(c.archivo) + '</span>',
+        '</button>'
+      ].join('');
+    }).join('');
+
+    const requisitos = d.vacante.requisitos.map(function (r) {
+      return '<li>' + esc(r) + '</li>';
+    }).join('');
+
+    return [
+      '<div class="demo" data-demo>',
+      '  <div class="demo-head">',
+      '    <span class="project-block-label">Demo del flujo</span>',
+      '    <p class="demo-aviso">',
+      '      Simulación con datos de ejemplo para poder enseñar un backend que no se ve.',
+      '      El flujo real se ejecuta en n8n; su workflow está en',
+      '      <a class="link" href="' + esc(project.enlace_repo) + '" target="_blank" rel="noopener">el repositorio</a>.',
+      '    </p>',
+      '  </div>',
+
+      '  <div class="demo-vacante">',
+      '    <p class="demo-vacante-titulo">' + esc(d.vacante.titulo) + '</p>',
+      '    <ul class="demo-reqs">' + requisitos + '</ul>',
+      '    <p class="demo-umbral">Pasa a RRHH desde ' + d.umbral + ' % de compatibilidad</p>',
+      '  </div>',
+
+      '  <p class="demo-paso-label" id="demo-cand-label">Elige una postulación</p>',
+      '  <div class="demo-cands" role="radiogroup" aria-labelledby="demo-cand-label">' + candidatos + '</div>',
+
+      '  <button class="btn btn-primary demo-run" type="button">Ejecutar flujo</button>',
+
+      '  <ol class="demo-traza" aria-live="polite"></ol>',
+      '  <div class="demo-decision" hidden></div>',
+      '</div>'
+    ].join('\n');
   }
 
   function renderProjects() {
@@ -489,6 +597,177 @@
         if (evento.target === dialog) dialog.close();
       });
     });
+  }
+
+  /* ----------------------------------------------------------
+     4c. DEMO INTERACTIVA DEL FLUJO DE n8n
+     ---------------------------------------------------------- */
+  function initDemos() {
+    const proyecto = PROJECTS.filter(function (p) { return p.demo; })[0];
+    const raiz = document.querySelector('[data-demo]');
+    if (!proyecto || !raiz) return;
+
+    const d = proyecto.demo;
+    const calmado = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const traza = raiz.querySelector('.demo-traza');
+    const decision = raiz.querySelector('.demo-decision');
+    const boton = raiz.querySelector('.demo-run');
+    const cands = Array.prototype.slice.call(raiz.querySelectorAll('.demo-cand'));
+    let elegido = d.candidatos[0].id;
+    let corriendo = false;
+
+    function seleccionar(id) {
+      elegido = id;
+      cands.forEach(function (b) {
+        const activo = b.dataset.cand === id;
+        b.setAttribute('aria-checked', activo ? 'true' : 'false');
+        b.tabIndex = activo ? 0 : -1;
+      });
+    }
+
+    cands.forEach(function (b) {
+      b.addEventListener('click', function () { seleccionar(b.dataset.cand); });
+    });
+
+    // Navegación con flechas dentro del grupo, como espera un radiogroup.
+    raiz.querySelector('.demo-cands').addEventListener('keydown', function (e) {
+      const i = cands.findIndex(function (b) { return b.dataset.cand === elegido; });
+      let siguiente = -1;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') siguiente = (i + 1) % cands.length;
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') siguiente = (i - 1 + cands.length) % cands.length;
+      if (siguiente < 0) return;
+      e.preventDefault();
+      seleccionar(cands[siguiente].dataset.cand);
+      cands[siguiente].focus();
+    });
+
+    function espera(ms) {
+      return new Promise(function (r) { setTimeout(r, calmado ? 0 : ms); });
+    }
+
+    function nodo(titulo, servicio, detalle, estado) {
+      const li = document.createElement('li');
+      li.className = 'demo-nodo' + (estado ? ' demo-nodo-' + estado : '');
+      li.innerHTML = [
+        '<span class="demo-nodo-servicio">' + esc(servicio) + '</span>',
+        '<span class="demo-nodo-titulo">' + esc(titulo) + '</span>',
+        detalle ? '<div class="demo-nodo-detalle">' + detalle + '</div>' : ''
+      ].join('');
+      traza.appendChild(li);
+      return li;
+    }
+
+    function tabla(pares) {
+      return '<dl class="demo-datos">' + pares.map(function (par) {
+        return '<div><dt>' + esc(par[0]) + '</dt><dd>' + esc(par[1]) + '</dd></div>';
+      }).join('') + '</dl>';
+    }
+
+    async function ejecutar() {
+      if (corriendo) return;
+      corriendo = true;
+      boton.disabled = true;
+      boton.textContent = 'Ejecutando…';
+      traza.innerHTML = '';
+      decision.hidden = true;
+      decision.innerHTML = '';
+
+      const c = d.candidatos.filter(function (x) { return x.id === elegido; })[0];
+      const puntaje = Math.round(c.competencias.reduce(function (a, k) {
+        return a + k.peso * k.puntaje;
+      }, 0) / 100);
+      const apto = puntaje >= d.umbral;
+
+      await espera(200);
+      nodo('Postulación recibida', 'Webhook', tabla([
+        ['candidato', c.nombre],
+        ['vacante', d.vacante.titulo],
+        ['adjunto', c.archivo]
+      ]), 'ok');
+
+      await espera(650);
+      nodo('Texto extraído del PDF', 'Extract from File',
+        '<p class="demo-nodo-nota">' + esc(c.titular) + '</p>', 'ok');
+
+      // Un rate limit real de la API: el flujo reintenta en vez de caerse.
+      if (c.reintento) {
+        await espera(600);
+        nodo('429 Too Many Requests · reintento en 2 s', 'Google Gemini',
+          '<p class="demo-nodo-nota">La política de reintentos del nodo evita perder la postulación.</p>',
+          'aviso');
+      }
+
+      await espera(900);
+      const barras = c.competencias.map(function (k) {
+        return [
+          '<div class="demo-comp">',
+          '  <span class="demo-comp-nombre">' + esc(k.nombre) + '</span>',
+          '  <span class="demo-comp-barra"><span style="width:' + k.puntaje + '%"></span></span>',
+          '  <span class="demo-comp-cifra">' + k.puntaje + ' <small>×' + k.peso + '%</small></span>',
+          '</div>'
+        ].join('');
+      }).join('');
+      nodo('Evaluación del CV contra la vacante', 'Google Gemini',
+        barras +
+        '<p class="demo-nodo-nota">' + esc(c.justificacion) + '</p>' +
+        (c.flags.length
+          ? '<p class="demo-flags">' + c.flags.map(function (f) {
+              return '<span>' + esc(f) + '</span>';
+            }).join('') + '</p>'
+          : ''), 'ok');
+
+      await espera(700);
+      nodo(apto
+          ? 'compatibilidad ' + puntaje + ' % ≥ umbral ' + d.umbral + ' %'
+          : 'compatibilidad ' + puntaje + ' % < umbral ' + d.umbral + ' %',
+        'If',
+        '<p class="demo-nodo-nota">' + (apto ? 'Sigue por la rama de aptos.' : 'Sigue por la rama de descarte.') + '</p>',
+        apto ? 'ok' : 'corte');
+
+      await espera(600);
+      nodo('Fila añadida con ' + d.campos_sheets.length + ' campos', 'Google Sheets',
+        '<p class="demo-campos">' + d.campos_sheets.map(function (f) {
+          return '<span>' + esc(f) + '</span>';
+        }).join('') + '</p>', 'ok');
+
+      await espera(500);
+      if (apto) {
+        nodo('Ticket al candidato y reporte a RRHH', 'Gmail', '', 'ok');
+        await espera(450);
+        nodo('Alerta al canal de reclutamiento', 'Telegram',
+          '<p class="demo-nodo-nota">' + esc(c.nombre) + ' · ' + puntaje + ' % de compatibilidad</p>', 'ok');
+        await espera(450);
+        decision.innerHTML = [
+          '<p class="demo-decision-titulo">Decide el reclutador</p>',
+          '<p class="demo-decision-nota">El flujo no contrata ni descarta por su cuenta: la última palabra es de una persona.</p>',
+          '<div class="demo-decision-btns">',
+          '  <button class="btn btn-outline btn-sm" type="button" data-decide="Convocada a entrevista">Convocar a entrevista</button>',
+          '  <button class="btn btn-ghost btn-sm" type="button" data-decide="Descartada por RRHH">Descartar</button>',
+          '</div>'
+        ].join('');
+        decision.hidden = false;
+      } else {
+        nodo('Respuesta de descarte enviada al candidato', 'Gmail',
+          '<p class="demo-nodo-nota">La postulación queda registrada para futuras vacantes.</p>', 'ok');
+        await espera(400);
+        nodo('Flujo terminado sin intervención humana', 'Fin', '', 'corte');
+      }
+
+      boton.disabled = false;
+      boton.textContent = 'Ejecutar de nuevo';
+      corriendo = false;
+    }
+
+    decision.addEventListener('click', function (e) {
+      const b = e.target.closest('[data-decide]');
+      if (!b) return;
+      decision.innerHTML = '';
+      decision.hidden = true;
+      nodo('decision_rrhh actualizado a «' + b.dataset.decide + '»', 'Webhook de cierre',
+        '<p class="demo-nodo-nota">La fila del candidato queda cerrada en Google Sheets.</p>', 'ok');
+    });
+
+    boton.addEventListener('click', ejecutar);
   }
 
   /* ----------------------------------------------------------
@@ -1392,6 +1671,7 @@
 
     try { renderProjects(); } catch (e) { console.error('Error renderProjects:', e); }
     try { initCasos(); } catch (e) { console.error('Error initCasos:', e); }
+    try { initDemos(); } catch (e) { console.error('Error initDemos:', e); }
     try { initFilters(); } catch (e) { console.error('Error initFilters:', e); }
     try { initTechLab(); } catch (e) { console.error('Error initTechLab:', e); }
     try { initTerminal(); } catch (e) { console.error('Error initTerminal:', e); }
