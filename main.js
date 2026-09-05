@@ -416,11 +416,19 @@
       : '<a class="btn btn-outline btn-sm" href="' + esc(project.enlace_repo) + '" target="_blank" rel="noopener noreferrer" ' +
         'aria-label="Ver el código de ' + esc(project.nombre) + ' en GitHub">Ver código en GitHub</a>';
 
-    // Botón de demo: solo si existe una URL real desplegada.
-    const demoBtn = project.demo_url
-      ? '<a class="btn btn-primary btn-sm" href="' + esc(project.demo_url) + '" target="_blank" rel="noopener noreferrer" ' +
-        'aria-label="Ver la demo en vivo de ' + esc(project.nombre) + '">Ver demo</a>'
-      : '';
+    // Botón de demo. Con URL desplegada abre el sitio; con demo interna
+    // abre el caso de estudio y baja hasta ella. Mismo aspecto en ambos
+    // casos: para quien mira, las dos son "ver la demo".
+    let demoBtn = '';
+    if (project.demo_url) {
+      demoBtn =
+        '<a class="btn btn-primary btn-sm" href="' + esc(project.demo_url) + '" target="_blank" rel="noopener noreferrer" ' +
+        'aria-label="Ver la demo en vivo de ' + esc(project.nombre) + '">Ver demo</a>';
+    } else if (project.demo) {
+      demoBtn =
+        '<button class="btn btn-primary btn-sm project-caso-btn" type="button" data-caso="caso-' + slug + '" ' +
+        'data-ir-demo="1" aria-label="Probar la demo del flujo de ' + esc(project.nombre) + '">Ver demo</button>';
+    }
 
     // Abre el caso de estudio. Se marca con data-caso para que initCasos lo
     // enlace con su <dialog>; sin JavaScript el botón no llega a existir.
@@ -583,7 +591,17 @@
     botones.forEach(function (boton) {
       boton.addEventListener('click', function () {
         const dialog = document.getElementById(boton.dataset.caso);
-        if (dialog && typeof dialog.showModal === 'function') dialog.showModal();
+        if (!dialog || typeof dialog.showModal !== 'function') return;
+        dialog.showModal();
+
+        // El caso de estudio abre por arriba; si se entro por el boton de
+        // demo hay que llevar la vista hasta ella.
+        if (!boton.dataset.irDemo) return;
+        const demo = dialog.querySelector('[data-demo]');
+        if (!demo) return;
+        requestAnimationFrame(function () {
+          demo.scrollIntoView({ block: 'start', behavior: 'auto' });
+        });
       });
     });
 
