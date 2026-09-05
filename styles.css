@@ -1815,8 +1815,6 @@ main,
   flex-shrink: 0;
 }
 
-.project-body { padding: var(--space-5); display: grid; gap: var(--space-4); }
-
 .project-block-label {
   display: block;
   font-family: var(--font-display);
@@ -1829,8 +1827,6 @@ main,
 .project-text { color: var(--text-dim); font-size: 0.9rem; }
 
 
-.project-problem { border-left: 2px solid var(--border-strong); padding-left: var(--space-4); }
-.project-solution { border-left: 2px solid var(--accent-line); padding-left: var(--space-4); }
 
 .project-skill {
   display: flex;
