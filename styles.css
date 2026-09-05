@@ -358,6 +358,22 @@ main,
   transform-origin: left center;
 }
 
+/* Donde hay animaciones dirigidas por scroll, la barra la lleva el
+   compositor y el hilo principal se libera del cálculo por fotograma.
+   main.js consulta este mismo soporte y deja de escribir --scroll-progress;
+   donde no lo hay, manda la regla de arriba. */
+@supports (animation-timeline: scroll()) {
+  .header-progress-bar {
+    transform: scaleX(0);
+    animation: barra-de-lectura linear;
+    animation-timeline: scroll(root block);
+  }
+
+  @keyframes barra-de-lectura {
+    to { transform: scaleX(1); }
+  }
+}
+
 .header-inner {
   height: 100%;
   display: flex;

@@ -777,16 +777,25 @@
     const header = document.getElementById('siteHeader');
     if (!header) return;
 
+    // Si el navegador sabe animar con el scroll, la barra de lectura la
+    // resuelve el CSS en el compositor (bloque @supports de styles.css) y
+    // aquí nos ahorramos el cálculo en cada fotograma.
+    const barraEnCss = typeof CSS !== 'undefined' &&
+      typeof CSS.supports === 'function' &&
+      CSS.supports('animation-timeline', 'scroll()');
+
     let ticking = false;
     const update = function () {
       header.classList.toggle('is-scrolled', window.scrollY > 12);
 
-      // Progreso de lectura. El recorrido útil es la altura del documento
-      // menos una pantalla; si no hay scroll posible la barra queda a 0 en
-      // vez de dividir por cero.
-      const recorrido = document.documentElement.scrollHeight - window.innerHeight;
-      const avance = recorrido > 0 ? Math.min(window.scrollY / recorrido, 1) : 0;
-      header.style.setProperty('--scroll-progress', avance.toFixed(4));
+      if (!barraEnCss) {
+        // Progreso de lectura. El recorrido útil es la altura del documento
+        // menos una pantalla; si no hay scroll posible la barra queda a 0 en
+        // vez de dividir por cero.
+        const recorrido = document.documentElement.scrollHeight - window.innerHeight;
+        const avance = recorrido > 0 ? Math.min(window.scrollY / recorrido, 1) : 0;
+        header.style.setProperty('--scroll-progress', avance.toFixed(4));
+      }
 
       ticking = false;
     };
