@@ -889,9 +889,97 @@ main,
    Móvil: una columna. El bento asimétrico se arma en los breakpoints
    del bloque 15, donde .work-card-xl y .work-card-wide reclaman
    columnas y filas extra. */
-.work-block { margin-bottom: var(--space-6); }
+.work-block {
+  margin-block: var(--space-7) var(--space-7);
+  padding: clamp(var(--space-4), 4vw, var(--space-6));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  /* Superficie hundida: las tarjetas quedan por encima en --bg-elev y el
+     bloque se lee como una unidad propia dentro de 'Sobre mi', en vez de
+     diluirse entre la rejilla de enfoque y los modulos. */
+  background:
+    radial-gradient(130% 90% at 0% 0%, rgba(122, 162, 247, 0.08), transparent 60%),
+    var(--bg-inset);
+}
 
-.work-head { margin-bottom: var(--space-5); }
+.work-head {
+  margin-bottom: var(--space-5);
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--accent-line);
+}
+
+/* Etiqueta del bloque: nombra la competencia antes que el titular. */
+.block-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: var(--space-2);
+}
+
+.work-head .block-title { font-size: clamp(1.3rem, 3vw, 1.6rem); }
+.work-head .block-lead { margin-bottom: 0; }
+
+/* Un tono por habilidad blanda. La clase se declara en el <li> y de ahi
+   la heredan el icono y la etiqueta, asi que cada tarjeta tiene identidad
+   cromatica propia y su chip del indice combina con ella. Para anadir una
+   habilidad basta declarar aqui su terna de variables. */
+.work-block {
+  --tono: var(--accent);
+  --tono-soft: rgba(122, 162, 247, 0.14);
+  --tono-line: rgba(122, 162, 247, 0.42);
+}
+
+.tono-azul {
+  --tono: var(--accent);
+  --tono-soft: rgba(122, 162, 247, 0.14);
+  --tono-line: rgba(122, 162, 247, 0.42);
+}
+
+.tono-verde {
+  --tono: var(--green);
+  --tono-soft: rgba(158, 206, 106, 0.14);
+  --tono-line: rgba(158, 206, 106, 0.42);
+}
+
+.tono-violeta {
+  --tono: var(--purple);
+  --tono-soft: rgba(187, 154, 247, 0.14);
+  --tono-line: rgba(187, 154, 247, 0.42);
+}
+
+.tono-ambar {
+  --tono: var(--amber);
+  --tono-soft: rgba(224, 175, 104, 0.14);
+  --tono-line: rgba(224, 175, 104, 0.42);
+}
+
+.tono-rosa {
+  --tono: var(--red);
+  --tono-soft: rgba(247, 118, 142, 0.14);
+  --tono-line: rgba(247, 118, 142, 0.42);
+}
+
+/* Indice: las seis competencias juntas, antes de entrar al detalle. */
+.soft-index {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.soft-index li {
+  padding: 0.32rem 0.72rem;
+  border: 1px solid var(--tono-line);
+  border-radius: 99px;
+  background: var(--tono-soft);
+  color: var(--tono);
+  font-family: var(--font-mono);
+  font-size: 0.73rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
 
 .work-grid {
   display: grid;
@@ -927,7 +1015,7 @@ main,
   z-index: -1;
   inset: -60% 25% auto;
   height: 180px;
-  background: radial-gradient(closest-side, var(--accent-soft), transparent);
+  background: radial-gradient(closest-side, var(--tono-soft), transparent);
   opacity: 0;
   transition: opacity var(--transition);
   pointer-events: none;
@@ -935,13 +1023,41 @@ main,
 
 .work-card:hover,
 .work-card:focus-within {
-  border-color: var(--border-strong);
+  border-color: var(--tono-line);
   transform: translateY(-3px);
   box-shadow: var(--shadow);
 }
 
 .work-card:hover::before,
 .work-card:focus-within::before { opacity: 1; }
+
+/* El icono comparte fila con la etiqueta de la habilidad blanda. Envuelve
+   en flex para que en tarjetas estrechas la etiqueta caiga a la linea
+   siguiente en lugar de comprimir el icono. */
+.work-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* Nombre de la habilidad blanda. Es lo que hace legible el bloque de un
+   vistazo: el titular cuenta la practica, esta etiqueta la clasifica. */
+.work-kicker {
+  padding: 0.3rem 0.72rem;
+  border: 1px solid var(--tono-line);
+  border-radius: 99px;
+  background: var(--tono-soft);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--tono);
+}
+
+.work-card-xl .work-kicker { font-size: 0.86rem; }
 
 .work-icon {
   display: grid;
@@ -950,16 +1066,9 @@ main,
   height: 34px;
   flex-shrink: 0;
   border-radius: 10px;
-  background: rgba(187, 154, 247, 0.1);
-  border: 1px solid rgba(187, 154, 247, 0.28);
-  color: var(--purple);
-}
-
-/* La tarjeta principal usa el azul de acento para destacar sobre el resto */
-.work-icon-accent {
-  background: var(--accent-soft);
-  border-color: var(--accent-line);
-  color: var(--accent);
+  background: var(--tono-soft);
+  border: 1px solid var(--tono-line);
+  color: var(--tono);
 }
 
 .work-icon svg { width: 18px; height: 18px; }
