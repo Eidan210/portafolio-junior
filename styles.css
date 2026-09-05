@@ -6,14 +6,16 @@
 /* ---------- 1. Tokens de diseño ---------- */
 :root {
   /* Superficies */
-  --bg:            #0D0F14;
-  --bg-elev:       #14171F;
-  --bg-elev-2:     #1A1E28;
-  --bg-inset:      #0A0C11;
+  --bg:            #0B0D12;
+  /* Translucidas a proposito: dejan intuir la lluvia por detras en vez de
+     taparla con plastas opacas, que era lo que rompia la escena. */
+  --bg-elev:       rgba(21, 25, 34, 0.72);
+  --bg-elev-2:     rgba(29, 34, 45, 0.72);
+  --bg-inset:      rgba(8, 10, 15, 0.55);
 
-  /* Bordes */
-  --border:        #232936;
-  --border-strong: #2F3746;
+  /* Bordes en alfa: reaccionan a lo que pasa por detras */
+  --border:        rgba(233, 237, 245, 0.09);
+  --border-strong: rgba(233, 237, 245, 0.18);
 
   /* Texto */
   /* Contraste verificado contra WCAG AA (>= 4.5:1) sobre todas las
@@ -22,19 +24,28 @@
   --text-dim:      #99A1B3; /*  7.40:1 sobre --bg */
   --text-faint:    #8791A5; /*  5.26:1 en el peor fondo (--bg-elev-2) */
 
-  /* Acentos */
-  --accent:        #7AA2F7;
-  --accent-hover:  #9DBAFA;
-  --accent-soft:   rgba(122, 162, 247, 0.12);
-  --accent-line:   rgba(122, 162, 247, 0.35);
+  /* Acento del chrome: monocromo. La lluvia es lo unico que grita color,
+     asi que botones, foco y enlaces se callan y la dejan cantar. */
+  --accent:        #E9EDF5;
+  --accent-hover:  #FFFFFF;
+  --accent-soft:   rgba(233, 237, 245, 0.10);
+  --accent-line:   rgba(233, 237, 245, 0.26);
+
+  /* Colores de informacion: solo donde clasifican algo real (habilidad,
+     estado, lenguaje). Nunca como decoracion. */
+  --blue:          #7AA2F7;
   --green:         #9ECE6A;
   --purple:        #BB9AF7;
   --amber:         #E0AF68;
   --red:           #F7768E;
 
   /* Tipografía */
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-               "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  /* Space Grotesk nace de una monoespaciada: sus cortes rectos hablan el
+     mismo idioma que la terminal del hero sin disfrazarse de cartel.
+     IBM Plex Sans sostiene la lectura larga con la misma raiz tecnica. */
+  --font-display: "Space Grotesk", "Segoe UI", sans-serif;
+  --font-sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont,
+               "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono",
                Consolas, "Liberation Mono", monospace;
 
@@ -119,9 +130,10 @@ button {
 ul { list-style: none; padding: 0; }
 
 h1, h2, h3, h4 {
-  line-height: 1.2;
-  letter-spacing: -0.025em;
-  font-weight: 650;
+  font-family: var(--font-display);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 700;
   /* Reparte las líneas del titular para evitar palabras huérfanas */
   text-wrap: balance;
 }
@@ -183,26 +195,29 @@ main,
   z-index: 1;
 }
 
-/* ---------- Animaciones de entrada al hacer scroll (.reveal) ---------- */
-.reveal {
-  opacity: 0;
-  transform: translateY(22px);
-  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
-}
-
-.reveal.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .reveal {
-    opacity: 1;
-    transform: none;
-    transition: none;
+/* ---------- Entrada del hero ----------
+   El sitio tiene un solo momento con movimiento propio: la llegada.
+   Las secciones ya no se desvanecen al entrar en pantalla; ese efecto
+   repetido retrasaba la lectura y dejaba huecos en blanco al saltar
+   por un ancla. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-content > *,
+  .hero-visual {
+    animation: entrada 620ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
   }
+
+  .status-badge   { animation-delay: 60ms; }
+  .hero-title     { animation-delay: 120ms; }
+  .hero-role      { animation-delay: 190ms; }
+  .hero-summary   { animation-delay: 250ms; }
+  .hero-actions   { animation-delay: 310ms; }
+  .hero-stats     { animation-delay: 370ms; }
+  .hero-visual    { animation-delay: 260ms; }
+}
+
+@keyframes entrada {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
 }
 
 .section-alt {
@@ -213,15 +228,6 @@ main,
 .section-head {
   max-width: 640px;
   margin-bottom: var(--space-7);
-}
-
-.section-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: var(--space-3);
 }
 
 .section-title {
@@ -425,12 +431,11 @@ main,
 /* El rol bajo el nombre ocupa espacio muerto del header y deja claro el
    perfil sin necesidad de llegar al hero. */
 .brand-role {
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   font-size: clamp(0.55rem, 2vw, 0.64rem);
   font-weight: 500;
   line-height: 1.35;
   letter-spacing: 0.05em;
-  text-transform: uppercase;
   color: var(--text-faint);
   white-space: nowrap;
 }
@@ -792,9 +797,8 @@ main,
 
 .modules-title {
   font-size: 0.78rem;
-  font-family: var(--font-mono);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
   color: var(--text-faint);
   margin-bottom: var(--space-4);
   font-weight: 600;
@@ -863,11 +867,10 @@ main,
 .bio-goal-label {
   display: block;
   margin-bottom: var(--space-2);
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-faint);
 }
 
 /* ---------- 9c. Títulos de bloque ---------- */
@@ -908,13 +911,13 @@ main,
   border-left: 2px solid var(--accent-line);
 }
 
-/* Etiqueta del bloque: nombra la competencia antes que el titular. */
+/* Etiqueta del bloque. Sin versalitas ni monoespaciada: nombra la
+   competencia sin el sello de plantilla. */
 .block-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-faint);
   margin-bottom: var(--space-2);
 }
 
@@ -926,13 +929,13 @@ main,
    cromatica propia y su chip del indice combina con ella. Para anadir una
    habilidad basta declarar aqui su terna de variables. */
 .work-block {
-  --tono: var(--accent);
+  --tono: var(--blue);
   --tono-soft: rgba(122, 162, 247, 0.14);
   --tono-line: rgba(122, 162, 247, 0.42);
 }
 
 .tono-azul {
-  --tono: var(--accent);
+  --tono: var(--blue);
   --tono-soft: rgba(122, 162, 247, 0.14);
   --tono-line: rgba(122, 162, 247, 0.42);
 }
@@ -1183,7 +1186,6 @@ main,
 .work-metric dt {
   font-size: 0.7rem;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: var(--text-faint);
   margin-bottom: var(--space-1);
 }
@@ -1613,10 +1615,9 @@ main,
 
 .stack-note-label {
   display: block;
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   font-size: 0.7rem;
   letter-spacing: 0.09em;
-  text-transform: uppercase;
   color: var(--text-faint);
   margin-bottom: var(--space-2);
 }
@@ -1818,15 +1819,15 @@ main,
 
 .project-block-label {
   display: block;
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--text-faint);
   margin-bottom: var(--space-2);
 }
 
 .project-text { color: var(--text-dim); font-size: 0.9rem; }
+
 
 .project-problem { border-left: 2px solid var(--border-strong); padding-left: var(--space-4); }
 .project-solution { border-left: 2px solid var(--accent-line); padding-left: var(--space-4); }
@@ -1991,10 +1992,9 @@ main,
 }
 
 .caso-eyebrow {
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--accent);
   margin-bottom: var(--space-2);
 }
@@ -2070,9 +2070,8 @@ main,
 
 .contact-label {
   font-size: 0.72rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--text-faint);
 }
 
@@ -2218,18 +2217,6 @@ main,
   font-family: var(--font-mono);
 }
 
-/* ---------- 14. Animaciones de entrada ---------- */
-.reveal {
-  opacity: 0;
-  transform: translateY(16px);
-  transition: opacity 520ms ease, transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.reveal.is-visible {
-  opacity: 1;
-  transform: none;
-}
-
 /* ---------- 15. Breakpoints ---------- */
 
 /* Tablet — 641px a 1024px */
@@ -2355,7 +2342,7 @@ main,
     gap: var(--space-6);
   }
 
-  .tech-lab-intro { max-width: 46ch; }
+  .tech-lab-intro { max-width: 38ch; }
   .tech-tabs { justify-content: flex-end; }
   .projects-grid { grid-template-columns: repeat(2, 1fr); }
 
@@ -2385,9 +2372,6 @@ main,
                          box-shadow, text-decoration-color !important;
     transition-duration: 240ms !important;
   }
-
-  /* Las secciones entran con un fundido, sin deslizarse. */
-  .reveal { transform: none; }
 
   /* La corona del cursor NO se oculta aquí: main.js detecta esta misma
      preferencia y la dibuja en modo calmado — sin órbita, sin

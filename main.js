@@ -333,7 +333,7 @@
 
   function buildProjectCard(project, index) {
     const article = document.createElement('article');
-    article.className = 'card project-card reveal' + (project.destacado ? ' project-card-featured' : '');
+    article.className = 'card project-card' + (project.destacado ? ' project-card-featured' : '');
     article.dataset.tech = project.tecnologias.join(',');
 
     // Cada tarjeta necesita un nombre propio para que la View Transition
@@ -834,39 +834,7 @@
   }
 
   /* ----------------------------------------------------------
-     9. ANIMACIONES DE ENTRADA
-     ---------------------------------------------------------- */
-  function initReveal() {
-    const items = document.querySelectorAll('.reveal');
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    // Sin IntersectionObserver no hay forma de detectar la entrada:
-    // se muestra todo de una vez.
-    if (!('IntersectionObserver' in window)) {
-      items.forEach(function (item) { item.classList.add('is-visible'); });
-      return;
-    }
-
-    // Con movimiento reducido el CSS ya deja solo el fundido (sin
-    // desplazamiento), así que la entrada se mantiene: únicamente se
-    // recorta el escalonado para que no se alargue.
-    const escalonado = reducedMotion ? 25 : 70;
-
-    const observer = new IntersectionObserver(function (entries, obs) {
-      entries.forEach(function (entry, i) {
-        if (!entry.isIntersecting) return;
-        // Escalonado suave entre elementos del mismo bloque.
-        entry.target.style.transitionDelay = (i * escalonado) + 'ms';
-        entry.target.classList.add('is-visible');
-        obs.unobserve(entry.target);
-      });
-    }, { rootMargin: '0px 0px -60px 0px', threshold: 0.08 });
-
-    items.forEach(function (item) { observer.observe(item); });
-  }
-
-  /* ----------------------------------------------------------
-     10. NAVEGACIÓN SUAVE ENTRE SECCIONES
+     9. NAVEGACIÓN SUAVE ENTRE SECCIONES
 
      El navegador suprime `scroll-behavior: smooth` (y también la
      opción `behavior: 'smooth'` de scrollTo) cuando el sistema tiene
@@ -1430,7 +1398,6 @@
     try { initNav(); } catch (e) { console.error('Error initNav:', e); }
     try { initHeaderScroll(); } catch (e) { console.error('Error initHeaderScroll:', e); }
     try { initScrollSpy(); } catch (e) { console.error('Error initScrollSpy:', e); }
-    try { initReveal(); } catch (e) { console.error('Error initReveal:', e); }
     try { initSmoothScroll(); } catch (e) { console.error('Error initSmoothScroll:', e); }
     try { initCopyEmail(); } catch (e) { console.error('Error initCopyEmail:', e); }
     try { initParticles(); } catch (e) { console.error('Error initParticles:', e); }
