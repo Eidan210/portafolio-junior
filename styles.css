@@ -900,6 +900,11 @@ main,
 
 .work-card {
   position: relative;
+  /* Contenedor de consulta: los micro-gráficos de dentro se reorganizan
+     según el ancho REAL de la tarjeta en el bento, no según el viewport.
+     Una tarjeta estrecha en pantalla grande se adapta igual que en móvil. */
+  container-type: inline-size;
+  container-name: tarjeta;
   /* Aísla el brillo en z-index:-1 para que no se cuele bajo la tarjeta */
   isolation: isolate;
   display: flex;
@@ -1180,6 +1185,16 @@ main,
 /* El nivel más alto se distingue también por el texto */
 .work-rank-item[data-level="3"] .work-rank-name { color: var(--text); font-weight: 550; }
 .work-rank-item[data-level="3"] .work-rank-tag { color: var(--accent); }
+
+/* En una tarjeta estrecha, tres métricas en fila quedan estranguladas y la
+   etiqueta de rango se pega al nombre. Con @container se reordenan por el
+   ancho de la propia tarjeta. Sin soporte se mantiene el diseño ancho. */
+@container tarjeta (max-width: 330px) {
+  .work-metrics { grid-template-columns: 1fr 1fr; }
+
+  .work-rank-item { grid-template-columns: 1fr; }
+  .work-rank-tag { grid-column: 1; grid-row: auto; text-align: left; }
+}
 
 /* ---------- 10. Stack ---------- */
 .stack-grid {
