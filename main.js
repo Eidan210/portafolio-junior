@@ -28,6 +28,10 @@
       repo: 'Proyecto_n8n',
       enlace_repo: 'https://github.com/Eidan210/Proyecto_n8n',
       demo_url: '',
+      // Captura real de la interfaz. Es opcional: sin `imagen`, la tarjeta
+      // muestra la vista previa de código como portada.
+      imagen: 'img/proyectos/preseleccion-n8n.webp',
+      imagen_alt: 'Formulario de postulación del portal: datos del candidato, vacante y carga del CV en PDF.',
       privado: false,
       destacado: true,
       tecnologias: ['n8n', 'Google Gemini', 'JavaScript', 'HTML5', 'CSS3'],
@@ -67,6 +71,8 @@
       repo: 'Proyecto-Automatizacion-mym',
       enlace_repo: 'https://github.com/Eidan210/Proyecto-Automatizacion-mym',
       demo_url: 'https://eidan210.github.io/Proyecto-Automatizacion-mym/',
+      imagen: 'img/proyectos/mym-designsx.webp',
+      imagen_alt: 'Portada de la tienda: titular, catálogo destacado y accesos a personalizar el producto.',
       privado: false,
       tecnologias: ['JavaScript', 'HTML5', 'CSS3', 'n8n'],
       descripcion_corta:
@@ -304,15 +310,51 @@
   /* ----------------------------------------------------------
      4. RENDER DE PROYECTOS
      ---------------------------------------------------------- */
+  /* Identificador seguro para view-transition-name y para los id del DOM:
+     los nombres de repo traen puntos y mayúsculas que no son válidos como
+     custom-ident de CSS. */
+  function idSeguro(texto) {
+    return String(texto).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  function bloqueCodigo(project) {
+    return [
+      '<div class="project-preview">',
+      '  <div class="preview-bar">',
+      '    <span class="dot dot-red"></span>',
+      '    <span class="dot dot-yellow"></span>',
+      '    <span class="dot dot-green"></span>',
+      '    <span class="preview-file">' + esc(project.preview.file) + '</span>',
+      '  </div>',
+      '  <pre class="preview-code"><code>' + highlight(project.preview.code, project.preview.lang) + '</code></pre>',
+      '</div>'
+    ].join('\n');
+  }
+
   function buildProjectCard(project, index) {
     const article = document.createElement('article');
     article.className = 'card project-card reveal' + (project.destacado ? ' project-card-featured' : '');
     article.dataset.tech = project.tecnologias.join(',');
 
+    // Cada tarjeta necesita un nombre propio para que la View Transition
+    // sepa qué elemento se mueve a dónde al filtrar.
+    const slug = idSeguro(project.repo);
+    article.style.viewTransitionName = 'proyecto-' + slug;
+
     const num = String(index + 1).padStart(2, '0');
     const tags = project.tecnologias.map(function (tech) {
       return '<li class="tag">' + esc(tech) + '</li>';
     }).join('');
+
+    // Portada: la captura real si existe; si no, la vista previa de código.
+    // width/height evitan el salto de maquetación mientras carga la imagen.
+    const portada = project.imagen
+      ? '<div class="project-cover">' +
+        '<img class="project-shot" src="' + esc(project.imagen) + '" ' +
+        'alt="' + esc(project.imagen_alt || ('Captura de ' + project.nombre)) + '" ' +
+        'width="960" height="600" loading="lazy" decoding="async">' +
+        '</div>'
+      : bloqueCodigo(project);
 
     // Botón de código: si el repo es privado no generamos un enlace muerto.
     const codeBtn = project.privado
@@ -326,8 +368,13 @@
         'aria-label="Ver la demo en vivo de ' + esc(project.nombre) + '">Ver demo</a>'
       : '';
 
-    // Badges de cabecera: destacado y/o repositorio privado; si no hay
-    // ninguno, se muestra el número de orden.
+    // Abre el caso de estudio. Se marca con data-caso para que initCasos lo
+    // enlace con su <dialog>; sin JavaScript el botón no llega a existir.
+    const casoBtn =
+      '<button class="btn btn-ghost btn-sm project-caso-btn" type="button" data-caso="caso-' + slug + '" ' +
+      'aria-label="Abrir el caso de estudio de ' + esc(project.nombre) + '">' +
+      '<span aria-hidden="true">◆</span> Caso de estudio</button>';
+
     const badges = [];
     if (project.destacado) badges.push('<span class="tag-featured">★ destacado</span>');
     if (project.privado) badges.push('<span class="tag-private">repo privado</span>');
@@ -336,6 +383,8 @@
       : '<span class="project-index">' + num + '</span>';
 
     article.innerHTML = [
+      portada,
+
       '<header class="project-head">',
       '  <div>',
       '    <h3 class="project-title">' + esc(project.nombre) + '</h3>',
@@ -347,35 +396,57 @@
 
       '<ul class="project-tags">' + tags + '</ul>',
 
-      '<div class="project-preview">',
-      '  <div class="preview-bar">',
-      '    <span class="dot dot-red"></span>',
-      '    <span class="dot dot-yellow"></span>',
-      '    <span class="dot dot-green"></span>',
-      '    <span class="preview-file">' + esc(project.preview.file) + '</span>',
-      '  </div>',
-      '  <pre class="preview-code"><code>' + highlight(project.preview.code, project.preview.lang) + '</code></pre>',
-      '</div>',
-
-      '<div class="project-body">',
-      '  <div class="project-problem">',
-      '    <span class="project-block-label">El problema</span>',
-      '    <p class="project-text">' + esc(project.problema_resuelto) + '</p>',
-      '  </div>',
-      '  <div class="project-solution">',
-      '    <span class="project-block-label">La solución</span>',
-      '    <p class="project-text">' + esc(project.solucion) + '</p>',
-      '  </div>',
-      '  <p class="project-skill">',
-      '    <span class="project-skill-icon" aria-hidden="true">◆</span>',
-      '    <span><strong>Habilidad clave:</strong> ' + esc(project.habilidad_clave) + '</span>',
-      '  </p>',
-      '</div>',
-
-      '<footer class="project-actions">' + codeBtn + demoBtn + '</footer>'
+      '<footer class="project-actions">' + casoBtn + codeBtn + demoBtn + '</footer>'
     ].join('\n');
 
     return article;
+  }
+
+  /* El detalle largo (problema, solución y habilidad clave) vive aquí en vez
+     de en la tarjeta: la rejilla queda escaneable y la profundidad está a un
+     clic. <dialog> aporta gratis la captura de foco y el cierre con Escape. */
+  function buildProjectDialog(project) {
+    const slug = idSeguro(project.repo);
+    const dialog = document.createElement('dialog');
+    dialog.className = 'caso';
+    dialog.id = 'caso-' + slug;
+    dialog.setAttribute('aria-labelledby', 'caso-titulo-' + slug);
+
+    // El código solo se repite aquí si la tarjeta lo cedió a la captura.
+    const codigo = project.imagen ? bloqueCodigo(project) : '';
+
+    dialog.innerHTML = [
+      '<div class="caso-panel">',
+      '  <header class="caso-head">',
+      '    <div>',
+      '      <p class="caso-eyebrow">Caso de estudio</p>',
+      '      <h3 class="caso-titulo" id="caso-titulo-' + slug + '">' + esc(project.nombre) + '</h3>',
+      '      <p class="caso-repo">Eidan210/' + esc(project.repo) + '</p>',
+      '    </div>',
+      '    <button class="caso-cerrar" type="button" aria-label="Cerrar el caso de estudio">',
+      '      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>',
+      '    </button>',
+      '  </header>',
+
+      '  <div class="caso-cuerpo">',
+      '    <div class="caso-bloque">',
+      '      <span class="project-block-label">El problema</span>',
+      '      <p class="project-text">' + esc(project.problema_resuelto) + '</p>',
+      '    </div>',
+      '    <div class="caso-bloque">',
+      '      <span class="project-block-label">La solución</span>',
+      '      <p class="project-text">' + esc(project.solucion) + '</p>',
+      '    </div>',
+      '    <p class="project-skill">',
+      '      <span class="project-skill-icon" aria-hidden="true">◆</span>',
+      '      <span><strong>Habilidad clave:</strong> ' + esc(project.habilidad_clave) + '</span>',
+      '    </p>',
+      codigo,
+      '  </div>',
+      '</div>'
+    ].join('\n');
+
+    return dialog;
   }
 
   function renderProjects() {
@@ -383,10 +454,41 @@
     if (!grid) return;
 
     const fragment = document.createDocumentFragment();
+    const casos = document.createDocumentFragment();
+
     PROJECTS.forEach(function (project, i) {
       fragment.appendChild(buildProjectCard(project, i));
+      casos.appendChild(buildProjectDialog(project));
     });
+
     grid.appendChild(fragment);
+    document.body.appendChild(casos);
+  }
+
+  /* ----------------------------------------------------------
+     4b. CASOS DE ESTUDIO EN <dialog>
+     ---------------------------------------------------------- */
+  function initCasos() {
+    const botones = document.querySelectorAll('.project-caso-btn');
+    if (!botones.length) return;
+
+    botones.forEach(function (boton) {
+      boton.addEventListener('click', function () {
+        const dialog = document.getElementById(boton.dataset.caso);
+        if (dialog && typeof dialog.showModal === 'function') dialog.showModal();
+      });
+    });
+
+    document.querySelectorAll('dialog.caso').forEach(function (dialog) {
+      const cerrar = dialog.querySelector('.caso-cerrar');
+      if (cerrar) cerrar.addEventListener('click', function () { dialog.close(); });
+
+      // Clic en el fondo: el <dialog> ocupa toda la ventana y el panel va
+      // dentro, así que un clic cuyo destino sea el propio dialog cae fuera.
+      dialog.addEventListener('click', function (evento) {
+        if (evento.target === dialog) dialog.close();
+      });
+    });
   }
 
   /* ----------------------------------------------------------
@@ -396,21 +498,38 @@
     const chips = document.querySelectorAll('.filter-chip');
     if (!chips.length) return;
 
+    // El navegador anima el reflujo de la rejilla comparando el antes y el
+    // después de este callback. Cada tarjeta lleva su view-transition-name
+    // (lo asigna buildProjectCard), así que las que siguen visibles se
+    // deslizan a su nueva posición en lugar de saltar.
+    const aplicar = function (filter) {
+      document.querySelectorAll('.project-card').forEach(function (card) {
+        const techs = (card.dataset.tech || '').split(',');
+        const visible = filter === 'todos' || techs.indexOf(filter) !== -1;
+        card.classList.toggle('is-hidden', !visible);
+      });
+    };
+
+    // Sin soporte de View Transitions —o con movimiento reducido— se aplica
+    // el filtro directamente: mismo resultado, sin animación.
+    const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const conTransicion = function (filter) {
+      if (quieto || typeof document.startViewTransition !== 'function') {
+        aplicar(filter);
+        return;
+      }
+      document.startViewTransition(function () { aplicar(filter); });
+    };
+
     chips.forEach(function (chip) {
       chip.addEventListener('click', function () {
-        const filter = chip.dataset.filter;
-
         chips.forEach(function (other) {
           const active = other === chip;
           other.classList.toggle('is-active', active);
           other.setAttribute('aria-pressed', String(active));
         });
 
-        document.querySelectorAll('.project-card').forEach(function (card) {
-          const techs = (card.dataset.tech || '').split(',');
-          const visible = filter === 'todos' || techs.indexOf(filter) !== -1;
-          card.classList.toggle('is-hidden', !visible);
-        });
+        conTransicion(chip.dataset.filter);
       });
     });
   }
@@ -1169,6 +1288,7 @@
     inicializado = true;
 
     try { renderProjects(); } catch (e) { console.error('Error renderProjects:', e); }
+    try { initCasos(); } catch (e) { console.error('Error initCasos:', e); }
     try { initFilters(); } catch (e) { console.error('Error initFilters:', e); }
     try { initTechLab(); } catch (e) { console.error('Error initTechLab:', e); }
     try { initNav(); } catch (e) { console.error('Error initNav:', e); }

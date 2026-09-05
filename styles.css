@@ -1516,6 +1516,19 @@ main,
   gap: var(--space-5);
 }
 
+/* Al examinar una tarjeta, las demás se atenúan para no competir por la
+   atención. Se apoya en :has(), así que sin soporte simplemente no ocurre
+   nada: ninguna tarjeta queda inaccesible ni ilegible. */
+.projects-grid:has(.project-card:hover) .project-card:not(:hover),
+.projects-grid:has(.project-card:focus-within) .project-card:not(:focus-within) {
+  opacity: 0.58;
+}
+
+.projects-grid .project-card {
+  transition: opacity var(--transition), border-color var(--transition),
+              box-shadow var(--transition);
+}
+
 .project-card {
   display: flex;
   flex-direction: column;
@@ -1529,6 +1542,52 @@ main,
 }
 
 .project-card.is-hidden { display: none; }
+
+/* ---------- 11b. Portada del proyecto ---------- */
+/* Alto fijo en vez de aspect-ratio: la tarjeta destacada ocupa el doble de
+   ancho y una proporción libre la convertiría en un cartel de 700 px que se
+   come la sección. Fijar el alto también evita el salto de maquetación. */
+.project-cover {
+  position: relative;
+  height: 190px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-inset);
+  overflow: hidden;
+}
+
+.project-shot {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  /* Las capturas son de interfaces claras y deslumbran sobre el fondo
+     oscuro: se atenúan en reposo y recuperan su color al acercarse. */
+  filter: saturate(0.82) brightness(0.86);
+  transform: scale(1.01);
+  transition: filter var(--transition), transform 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.project-card:hover .project-shot,
+.project-card:focus-within .project-shot {
+  filter: none;
+  transform: scale(1.04);
+}
+
+/* Degradado inferior: funde la captura con la tarjeta en vez de cortarla.
+   Se mantiene bajo para no tapar el contenido útil de la interfaz. */
+.project-cover::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 30%;
+  background: linear-gradient(180deg, transparent, rgba(20, 23, 31, 0.85));
+  pointer-events: none;
+}
+
+/* La destacada ocupa el doble de ancho: con 190 px la captura queda en una
+   franja demasiado estrecha para leerse. */
+.project-card-featured .project-cover { height: 250px; }
 
 .project-head {
   display: flex;
@@ -1732,6 +1791,109 @@ main,
   color: var(--text-dim);
   text-align: center;
 }
+
+/* ---------- 11c. Caso de estudio en <dialog> ----------
+   <dialog> aporta de serie la captura de foco, el cierre con Escape y el
+   fondo inerte. Aquí solo se le da forma. */
+.caso {
+  /* El reset del bloque 2 (* { margin: 0 }) anula el `margin: auto` con el
+     que el navegador centra un dialog modal: hay que devolvérselo. */
+  margin: auto;
+  width: min(720px, calc(100vw - 2 * var(--space-4)));
+  max-height: calc(100vh - 2 * var(--space-5));
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elev);
+  color: var(--text);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.caso::backdrop {
+  background: rgba(10, 12, 17, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+/* Entrada del panel y del fondo. @starting-style define el estado desde el
+   que se anima al pasar de display:none a visible. Sin soporte, el diálogo
+   simplemente aparece. */
+@starting-style {
+  .caso[open] { opacity: 0; transform: translateY(12px) scale(0.98); }
+  .caso[open]::backdrop { opacity: 0; }
+}
+
+.caso[open] {
+  opacity: 1;
+  transform: none;
+  transition: opacity 220ms ease, transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.caso[open]::backdrop {
+  opacity: 1;
+  transition: opacity 220ms ease;
+}
+
+.caso-panel {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 2 * var(--space-5));
+}
+
+.caso-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elev-2);
+}
+
+.caso-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: var(--space-2);
+}
+
+.caso-titulo { font-size: 1.2rem; font-weight: 640; }
+
+.caso-repo {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--text-faint);
+  margin-top: var(--space-1);
+}
+
+.caso-cerrar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-inset);
+  color: var(--text-dim);
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.caso-cerrar:hover { color: var(--text); border-color: var(--border-strong); }
+.caso-cerrar svg { width: 17px; height: 17px; }
+
+.caso-cuerpo {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  overflow-y: auto;
+}
+
+/* La vista previa dentro del diálogo no necesita los márgenes laterales
+   que lleva dentro de la tarjeta. */
+.caso-cuerpo .project-preview { margin: 0; }
 
 /* ---------- 12. Contacto ---------- */
 .contact-grid { display: grid; gap: var(--space-4); }
