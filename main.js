@@ -629,6 +629,104 @@
   }
 
   /* ----------------------------------------------------------
+     5c. TERMINAL DEL HERO: EFECTO DE TECLEO
+
+     El HTML ya trae la sesión completa escrita: esto solo la vacía y la
+     vuelve a componer. Si no hay JavaScript, si el usuario pidió movimiento
+     reducido o si algo falla, la terminal se queda tal cual, legible.
+     ---------------------------------------------------------- */
+  function initTerminal() {
+    const code = document.querySelector('.terminal-body code');
+    if (!code) return;
+
+    const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (quieto || !('IntersectionObserver' in window)) return;
+
+    const completo = code.innerHTML;
+
+    // Se descompone el árbol original en piezas. Los nodos de texto son lo
+    // que el usuario "escribe"; los <span> son prompts y salidas, que en una
+    // terminal real aparecen de golpe.
+    const piezas = [];
+    let cursor = null;
+
+    Array.prototype.slice.call(code.childNodes).forEach(function (nodo) {
+      if (nodo.nodeType === 3) {
+        piezas.push({ texto: nodo.nodeValue });
+        return;
+      }
+      const clase = nodo.className || '';
+      // El cursor no es una pieza: vive al final durante toda la animación.
+      if (/t-cursor/.test(clase)) { cursor = nodo.cloneNode(true); return; }
+      piezas.push({ nodo: nodo.cloneNode(true), salida: /t-(out|ok)/.test(clase) });
+    });
+
+    if (!piezas.length) return;
+
+    const insertar = function (nodo) {
+      if (cursor && cursor.parentNode === code) code.insertBefore(nodo, cursor);
+      else code.appendChild(nodo);
+    };
+
+    const cuerpo = code.parentNode;
+
+    const teclear = function () {
+      try {
+        // Se reserva el alto que ocupa la sesión completa antes de vaciarla:
+        // si no, la caja crece línea a línea y arrastra al resto del hero.
+        // Se mide aquí y no en el arranque porque para este momento las
+        // fuentes ya están aplicadas.
+        if (cuerpo) cuerpo.style.minHeight = cuerpo.getBoundingClientRect().height + 'px';
+
+        code.textContent = '';
+        if (cursor) code.appendChild(cursor);
+
+        let i = 0;
+        const siguiente = function () {
+          if (i >= piezas.length) return;
+          const pieza = piezas[i++];
+
+          if (pieza.nodo) {
+            // La salida espera un instante, como si el comando tardara.
+            window.setTimeout(function () {
+              insertar(pieza.nodo);
+              siguiente();
+            }, pieza.salida ? 220 : 0);
+            return;
+          }
+
+          const destino = document.createTextNode('');
+          insertar(destino);
+          let j = 0;
+          const letra = function () {
+            if (j >= pieza.texto.length) { siguiente(); return; }
+            destino.nodeValue += pieza.texto.charAt(j++);
+            window.setTimeout(letra, 26);
+          };
+          letra();
+        };
+
+        siguiente();
+      } catch (e) {
+        // Ante cualquier fallo se restituye la sesión entera: más vale
+        // estática que a medio escribir.
+        code.innerHTML = completo;
+      }
+    };
+
+    // Solo arranca cuando la terminal está a la vista, y una única vez.
+    const observer = new IntersectionObserver(function (entradas, obs) {
+      entradas.forEach(function (entrada) {
+        if (!entrada.isIntersecting) return;
+        obs.disconnect();
+        teclear();
+      });
+    }, { threshold: 0.35 });
+
+    observer.observe(code);
+  }
+
+  /* ----------------------------------------------------------
      6. NAVEGACIÓN MÓVIL
      ---------------------------------------------------------- */
   function initNav() {
@@ -1291,6 +1389,7 @@
     try { initCasos(); } catch (e) { console.error('Error initCasos:', e); }
     try { initFilters(); } catch (e) { console.error('Error initFilters:', e); }
     try { initTechLab(); } catch (e) { console.error('Error initTechLab:', e); }
+    try { initTerminal(); } catch (e) { console.error('Error initTerminal:', e); }
     try { initNav(); } catch (e) { console.error('Error initNav:', e); }
     try { initHeaderScroll(); } catch (e) { console.error('Error initHeaderScroll:', e); }
     try { initScrollSpy(); } catch (e) { console.error('Error initScrollSpy:', e); }
