@@ -2134,6 +2134,9 @@ main,
   .focus-grid { grid-template-columns: repeat(2, 1fr); }
   .modules-list { grid-template-columns: repeat(2, 1fr); gap: var(--space-4); }
   .contact-grid { grid-template-columns: repeat(2, 1fr); }
+  /* La hoja de vida ocupa la fila entera bajo GitHub y el correo:
+     es la acción con la que un reclutador cierra la visita. */
+  .contact-card-cv { grid-column: 1 / -1; }
   .stack-grid { grid-template-columns: repeat(2, 1fr); }
 
   /* Bento a 2 columnas: la tarjeta grande y las anchas ocupan la fila
