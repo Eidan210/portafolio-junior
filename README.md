@@ -13,7 +13,8 @@ frameworks, librerías ni dependencias externas.
 | Capa | Tecnología | Detalle |
 |------|-----------|---------|
 | Estructura | **HTML5 semántico** | `header`, `nav`, `main`, `section`, `article`, `aside`, `footer` |
-| Estilos | **CSS3 puro** | Variables custom, Grid, Flexbox, `clamp()`, media queries |
+| Estilos | **CSS3 puro** | Variables custom, Grid, Flexbox, `clamp()`, `backdrop-filter`, 3D (`preserve-3d`) |
+| Tipografía | **SF Pro / Inter** | SF Pro del sistema en Apple; Inter variable self-hosted en el resto |
 | Comportamiento | **JavaScript ES6+** | Sin dependencias; render dinámico, IntersectionObserver |
 | Iconografía | **SVG inline** | Cero archivos de imagen, cero peticiones extra |
 
@@ -49,18 +50,28 @@ sin configuración adicional ni paso de build.
 
 ### 2. Contraste y paleta (WCAG AA)
 
-Paleta oscura sobria con acento azul controlado. Todos los pares texto/fondo fueron medidos
-y superan el mínimo AA de **4.5:1**:
+Estilo de cristal esmerilado a la manera de Apple: superficies translúcidas con `backdrop-filter`,
+filo de luz superior, sombras en capas y una paleta sobria de tres tonos, **azul acero, plata y
+dorado champán**, que comparten la interfaz y la lluvia de fondo. Como el cristal deja pasar lo que
+hay detrás, el contraste se midió sobre el **peor fondo real**: una tarjeta en hover encima del halo
+azul ambiental (`#252E3E`). Todos los pares superan el mínimo AA de **4.5:1**:
 
-| Token | Color | Sobre `--bg` | Estado |
-|-------|-------|--------------|--------|
-| `--text` | `#E4E7EE` | 15.48:1 | AAA |
-| `--text-dim` | `#99A1B3` | 7.40:1 | AAA |
-| `--text-faint` | `#8791A5` | 5.26:1 (peor fondo) | AA |
-| `--accent` | `#7AA2F7` | 7.61:1 | AAA |
-| Botón primario | `#0B1020` sobre acento | 7.52:1 | AAA |
+| Token | Color | Sobre `--bg` | Peor fondo | Estado |
+|-------|-------|--------------|------------|--------|
+| `--text` | `#F5F5F7` | 18.60:1 | 12.31:1 | AAA |
+| `--text-dim` | `#A1A1A6` | 7.87:1 | 5.21:1 | AA |
+| `--text-faint` | `#98989E` | 7.06:1 | 4.67:1 | AA |
+| `--accent` (azul acero) | `#A7C0E6` | 10.92:1 | 7.36:1 | AAA |
+| `--gold-text` (dorado) | `#DCC08A` | 11.52:1 | 7.76:1 | AAA |
+| `--silver` (plata) | `#C8CDD6` | 12.69:1 | 8.55:1 | AAA |
+| Botón primario | `#05060A` sobre `#E3E5EC` | 16.09:1 | — | AAA |
 
-> `--text-faint` era `#6B7387` y fallaba AA (3.51:1 sobre `--bg-elev-2`). Se corrigió en la auditoría.
+- El texto siempre va en color sólido. El degradado metálico azul → plata → oro (`--sheen`) solo
+  pinta filos, líneas y barras.
+- Verde, ámbar y rojo quedan fuera de la paleta a propósito: solo marcan estados reales
+  (disponible o correcto, aviso, error).
+- Si el sistema pide **reducir la transparencia** (`prefers-reduced-transparency`), el cristal pasa
+  a superficies sólidas; sin soporte de `backdrop-filter`, las superficies suben su opacidad.
 
 Estados `:hover` y `:focus-visible` explícitos en todos los elementos interactivos.
 
