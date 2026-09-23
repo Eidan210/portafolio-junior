@@ -395,6 +395,9 @@
     const slug = idSeguro(project.repo);
     article.style.viewTransitionName = 'proyecto-' + slug;
 
+    // Se inclina en 3D siguiendo al puntero (initTilt).
+    article.setAttribute('data-tilt', '');
+
     const num = String(index + 1).padStart(2, '0');
     const tags = project.tecnologias.map(function (tech) {
       return '<li class="tag">' + esc(tech) + '</li>';
@@ -926,6 +929,232 @@
   }
 
   /* ----------------------------------------------------------
+     5b-2. DESLIZADOR DE LOS CONTROLES SEGMENTADOS
+
+     Una píldora de cristal (.glider) se coloca detrás de la opción
+     activa del menú, de las pestañas del stack y de los filtros de
+     proyectos, y se desliza hasta la nueva cuando cambia. Cada grupo
+     sigue marcando su opción activa con su propia clase; esto solo
+     observa esa clase y mueve la píldora, sin acoplarse a su lógica.
+
+     Las medidas salen de offsetLeft/offsetTop, que ignoran transform:
+     el panel del menú móvil entra con translateY y getBoundingClientRect
+     daría posiciones desplazadas mientras se anima.
+     ---------------------------------------------------------- */
+  function crearGlider(contenedor, selectorActivo, claseExtra) {
+    const glider = document.createElement('span');
+    glider.className = 'glider' + (claseExtra ? ' ' + claseExtra : '');
+    glider.setAttribute('aria-hidden', 'true');
+    contenedor.insertBefore(glider, contenedor.firstChild);
+    contenedor.classList.add('has-glider');
+
+    let primera = true;
+    let pendiente = false;
+
+    // Suma los desplazamientos hasta llegar al contenedor. Si la cadena
+    // no pasa por él (no está posicionado), no hay referencia fiable.
+    function posicionDentro(el) {
+      let x = 0;
+      let y = 0;
+      let nodo = el;
+      while (nodo && nodo !== contenedor) {
+        x += nodo.offsetLeft;
+        y += nodo.offsetTop;
+        nodo = nodo.offsetParent;
+      }
+      return nodo === contenedor ? { x: x, y: y } : null;
+    }
+
+    function colocar() {
+      pendiente = false;
+      const activo = contenedor.querySelector(selectorActivo);
+      const pos = activo && activo.offsetWidth ? posicionDentro(activo) : null;
+
+      if (!pos) {
+        glider.style.opacity = '0';
+        return;
+      }
+
+      // La primera colocación no se anima: la píldora aparece en su sitio
+      // en vez de llegar deslizándose desde la esquina.
+      if (primera) glider.style.transition = 'none';
+
+      glider.style.width = activo.offsetWidth + 'px';
+      glider.style.height = activo.offsetHeight + 'px';
+      glider.style.transform = 'translate(' + pos.x + 'px, ' + pos.y + 'px)';
+      glider.style.opacity = '1';
+
+      if (primera) {
+        void glider.offsetWidth;
+        glider.style.transition = '';
+        primera = false;
+      }
+    }
+
+    function programar() {
+      if (pendiente) return;
+      pendiente = true;
+      window.requestAnimationFrame(colocar);
+    }
+
+    // Solo se observa el atributo class: los cambios de estilo de la
+    // propia píldora no vuelven a disparar el observador.
+    if ('MutationObserver' in window) {
+      new MutationObserver(programar).observe(contenedor, {
+        attributes: true,
+        attributeFilter: ['class'],
+        subtree: true
+      });
+    }
+
+    // Cambios de ancho (fuentes que terminan de cargar, giro del móvil,
+    // paso de panel a barra horizontal) recolocan la píldora.
+    if ('ResizeObserver' in window) {
+      new ResizeObserver(programar).observe(contenedor);
+    }
+    window.addEventListener('resize', programar, { passive: true });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(programar);
+
+    programar();
+  }
+
+  function initGliders() {
+    const nav = document.getElementById('primaryNav');
+    if (nav) crearGlider(nav, '.nav-link.is-current', 'nav-glider');
+
+    const tabs = document.querySelector('.tech-tabs');
+    if (tabs) crearGlider(tabs, '.tech-tab.is-active');
+
+    const filtros = document.querySelector('.filters');
+    if (filtros) crearGlider(filtros, '.filter-chip.is-active');
+  }
+
+  /* ----------------------------------------------------------
+     5b-3. INCLINACIÓN 3D DE LAS TARJETAS
+
+     Las tarjetas marcadas con [data-tilt] se inclinan unos grados hacia
+     donde está el puntero, como si se presionaran, y un reflejo de luz
+     lo sigue por la superficie. Aquí solo se escriben cuatro variables
+     (--rx, --ry, --gx, --gy); el CSS decide cómo se pintan.
+
+     Se descarta con "movimiento reducido" y en punteros gruesos
+     (táctil), donde no hay hover: la tarjeta se queda plana.
+     ---------------------------------------------------------- */
+  function initTilt() {
+    const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const punteroFino = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (quieto || !punteroFino) return;
+
+    const GRADOS = 5;
+    let actual = null;
+    let caja = null;
+    let ultimo = null;
+    let pendiente = false;
+
+    function soltar() {
+      if (!actual) return;
+      actual.classList.remove('is-tilting');
+      ['--rx', '--ry', '--gx', '--gy'].forEach(function (prop) {
+        actual.style.removeProperty(prop);
+      });
+      actual = null;
+      caja = null;
+    }
+
+    function pintar() {
+      pendiente = false;
+      if (!actual || !caja || !ultimo) return;
+
+      // Posición del puntero dentro de la tarjeta, de 0 a 1 en cada eje.
+      const nx = Math.min(Math.max((ultimo.x - caja.left) / caja.width, 0), 1);
+      const ny = Math.min(Math.max((ultimo.y - caja.top) / caja.height, 0), 1);
+      const max = parseFloat(actual.dataset.tilt) || GRADOS;
+
+      // El lado bajo el puntero se hunde: rotateY positivo aleja el borde
+      // derecho y rotateX negativo aleja el inferior.
+      actual.style.setProperty('--ry', ((nx - 0.5) * 2 * max).toFixed(2) + 'deg');
+      actual.style.setProperty('--rx', ((0.5 - ny) * 2 * max).toFixed(2) + 'deg');
+      actual.style.setProperty('--gx', (nx * 100).toFixed(1) + '%');
+      actual.style.setProperty('--gy', (ny * 100).toFixed(1) + '%');
+    }
+
+    document.addEventListener('pointermove', function (evento) {
+      const tarjeta = evento.target.closest ? evento.target.closest('[data-tilt]') : null;
+
+      if (tarjeta !== actual) {
+        soltar();
+        if (!tarjeta) return;
+        actual = tarjeta;
+        // La caja se mide al entrar, antes de inclinarla: medirla en cada
+        // fotograma incluiría la propia rotación y la haría temblar.
+        caja = tarjeta.getBoundingClientRect();
+        tarjeta.classList.add('is-tilting');
+      }
+
+      ultimo = { x: evento.clientX, y: evento.clientY };
+      if (pendiente) return;
+      pendiente = true;
+      window.requestAnimationFrame(pintar);
+    }, { passive: true });
+
+    // Con la rueda la tarjeta se mueve bajo un cursor quieto: la caja
+    // guardada deja de valer.
+    window.addEventListener('scroll', function () {
+      if (actual) caja = actual.getBoundingClientRect();
+    }, { passive: true });
+
+    document.documentElement.addEventListener('mouseleave', soltar);
+    window.addEventListener('blur', soltar);
+  }
+
+  /* ----------------------------------------------------------
+     5b-4. ESCENARIO 3D DEL HERO
+
+     El escenario gira para "mirar" hacia el puntero mientras este se
+     mueve por el hero. Como sus capas están a distintas profundidades,
+     el giro produce paralaje: los chips cercanos se desplazan más que
+     la terminal y el flujo del fondo. Al salir vuelve a su pose.
+     ---------------------------------------------------------- */
+  function initHeroStage() {
+    const hero = document.querySelector('.hero');
+    const stage = document.querySelector('.hero-stage');
+    if (!hero || !stage) return;
+
+    const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const punteroFino = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (quieto || !punteroFino) return;
+
+    let ultimo = null;
+    let pendiente = false;
+
+    function pintar() {
+      pendiente = false;
+      if (!ultimo) return;
+      const caja = hero.getBoundingClientRect();
+      // De -1 a 1 en cada eje, con el centro del hero en 0.
+      const nx = ((ultimo.x - caja.left) / caja.width) * 2 - 1;
+      const ny = ((ultimo.y - caja.top) / caja.height) * 2 - 1;
+      stage.style.setProperty('--ry', (-6 + nx * 14).toFixed(2) + 'deg');
+      stage.style.setProperty('--rx', (6 - ny * 10).toFixed(2) + 'deg');
+    }
+
+    hero.addEventListener('pointermove', function (evento) {
+      ultimo = { x: evento.clientX, y: evento.clientY };
+      stage.classList.add('is-tilting');
+      if (pendiente) return;
+      pendiente = true;
+      window.requestAnimationFrame(pintar);
+    }, { passive: true });
+
+    hero.addEventListener('pointerleave', function () {
+      ultimo = null;
+      stage.classList.remove('is-tilting');
+      stage.style.removeProperty('--rx');
+      stage.style.removeProperty('--ry');
+    });
+  }
+
+  /* ----------------------------------------------------------
      5c. TERMINAL DEL HERO: EFECTO DE TECLEO
 
      El HTML ya trae la sesión completa escrita: esto solo la vacía y la
@@ -1331,8 +1560,8 @@
   /* ----------------------------------------------------------
      13. MODO LLUVIA DE PARTÍCULAS ESTILO GOOGLE ANTIGRAVITY
      - Descenso fluido y atmosférico de cápsulas/guiones en pantalla completa.
-     - Paleta cromática oficial de Google distribuida horizontalmente
-       (azul real a la izquierda, violeta/rojo al centro, oro a la derecha).
+     - Paleta del sitio distribuida horizontalmente: azul profundo a la
+       izquierda, azul acero y plata al centro, dorado champán a la derecha.
      - Profundidad multicapa 3D (gotas de fondo suaves y lentas;
        gotas de primer plano nítidas y esbeltas con leve destello).
      - Interacción física suave: deflexión aerodinámica al pasar el cursor
@@ -1353,26 +1582,26 @@
     fuerzaRepulsion: 1.6 // Fuerza de deflexión sutil
   };
 
-  // Paleta cromática oficial de Google Antigravity
-  const GOOGLE_PALETTE = [
-    { stop: 0.00, r: 52,  g: 118, b: 246 }, // Izquierda: Azul Google (#3476F6)
-    { stop: 0.18, r: 105, g: 95,  b: 248 }, // Índigo (#695FF8)
-    { stop: 0.36, r: 165, g: 75,  b: 240 }, // Violeta / Púrpura (#A54BF0)
-    { stop: 0.52, r: 238, g: 68,  b: 60  }, // Centro: Rojo Coral Google (#EE443C)
-    { stop: 0.70, r: 252, g: 135, b: 25  }, // Naranja cálido (#FC8719)
-    { stop: 0.86, r: 252, g: 205, b: 25  }, // Derecha: Amarillo Oro Google (#FCCD19)
-    { stop: 1.00, r: 255, g: 220, b: 50  }  // Destello dorado suave
+  // Paleta de la lluvia: los mismos tres tonos que la interfaz
+  // (azul acero, plata y dorado champán). Los colores de la hoja de
+  // estilos (--sheen, --gold-text...) salen de estas paradas.
+  const PALETA_LLUVIA = [
+    { stop: 0.00, r: 61,  g: 111, b: 196 }, // Izquierda: azul profundo (#3D6FC4)
+    { stop: 0.25, r: 111, g: 147, b: 204 }, // Azul acero (#6F93CC)
+    { stop: 0.50, r: 200, g: 205, b: 214 }, // Centro: plata (#C8CDD6)
+    { stop: 0.75, r: 214, g: 181, b: 116 }, // Dorado champán (#D6B574)
+    { stop: 1.00, r: 232, g: 199, b: 126 }  // Derecha: oro claro (#E8C77E)
   ];
 
-  function interpolarColorGoogle(u, desaturacion) {
+  function interpolarColorLluvia(u, desaturacion) {
     u = Math.max(0, Math.min(1, u));
     desaturacion = desaturacion || 0;
-    let c1 = GOOGLE_PALETTE[0];
-    let c2 = GOOGLE_PALETTE[GOOGLE_PALETTE.length - 1];
-    for (let i = 0; i < GOOGLE_PALETTE.length - 1; i++) {
-      if (u >= GOOGLE_PALETTE[i].stop && u <= GOOGLE_PALETTE[i + 1].stop) {
-        c1 = GOOGLE_PALETTE[i];
-        c2 = GOOGLE_PALETTE[i + 1];
+    let c1 = PALETA_LLUVIA[0];
+    let c2 = PALETA_LLUVIA[PALETA_LLUVIA.length - 1];
+    for (let i = 0; i < PALETA_LLUVIA.length - 1; i++) {
+      if (u >= PALETA_LLUVIA[i].stop && u <= PALETA_LLUVIA[i + 1].stop) {
+        c1 = PALETA_LLUVIA[i];
+        c2 = PALETA_LLUVIA[i + 1];
         break;
       }
     }
@@ -1599,7 +1828,7 @@
 
           // Cálculo del color de la gota: modula 40% menos colorido en 'Sobre mí' hacia abajo
           const uColor = Math.min(Math.max((g.x / (ancho || 1)) + g.colorOffset, 0), 1);
-          const colorRGB = interpolarColorGoogle(uColor, factorDesaturacion);
+          const colorRGB = interpolarColorLluvia(uColor, factorDesaturacion);
 
           // Opacidad según profundidad (presencia visible y clara en todo el recorrido)
           const alfaGota = opacidad * (0.45 + g.profundidad * 0.55) * fadeBorde;
@@ -1692,6 +1921,9 @@
     try { initDemos(); } catch (e) { console.error('Error initDemos:', e); }
     try { initFilters(); } catch (e) { console.error('Error initFilters:', e); }
     try { initTechLab(); } catch (e) { console.error('Error initTechLab:', e); }
+    try { initGliders(); } catch (e) { console.error('Error initGliders:', e); }
+    try { initTilt(); } catch (e) { console.error('Error initTilt:', e); }
+    try { initHeroStage(); } catch (e) { console.error('Error initHeroStage:', e); }
     try { initTerminal(); } catch (e) { console.error('Error initTerminal:', e); }
     try { initNav(); } catch (e) { console.error('Error initNav:', e); }
     try { initHeaderScroll(); } catch (e) { console.error('Error initHeaderScroll:', e); }
