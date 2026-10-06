@@ -1,44 +1,22 @@
 import { motion, useReducedMotionConfig } from "motion/react";
-import { ArrowUpRight, Download, Mail, MapPin } from "lucide-react";
+import { ArrowUpRight, Download, Mail } from "lucide-react";
 import { profile } from "@/data/profile";
 import { HeroBuddy } from "@/buddy/HeroBuddy";
 import { useBuddy } from "@/buddy/BuddyProvider";
 import { GitHubIcon } from "@/components/icons";
-import { Magnetic, TiltCard } from "@/components/interactive";
+import { Magnetic } from "@/components/interactive";
+import { ProfileCode } from "@/components/ProfileCode";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
-/** Ocupa el sitio de Buddy cuando ya voló al HUD: ficha rápida del perfil. */
-function ProfileCard() {
-  return (
-    <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.35, duration: 0.5, ease }} className="w-full max-w-sm">
-      <TiltCard className="rounded-3xl p-6">
-        <p className="mb-4 font-mono text-xs text-subtle">
-          <span className="text-claude-light">const</span> eidan <span className="text-subtle">=</span> {"{"}
-        </p>
-        <dl className="grid grid-cols-2 gap-3">
-          {profile.facts.map((f) => (
-            <div key={f.label} className="rounded-2xl border border-white/8 bg-white/[0.04] p-3">
-              <dt className="text-[0.7rem] text-subtle">{f.label}</dt>
-              <dd className="mt-0.5 font-display text-lg font-bold">{f.value}</dd>
-            </div>
-          ))}
-        </dl>
-        <p className="mt-4 flex items-center gap-1.5 text-sm text-muted">
-          <MapPin className="size-4 text-claude-light" aria-hidden="true" /> {profile.location}
-        </p>
-        <p className="mt-3 font-mono text-xs text-subtle">{"}"}</p>
-      </TiltCard>
-    </motion.div>
-  );
-}
-
 export function Hero() {
-  const { stage } = useBuddy();
+  const { stage, intro } = useBuddy();
   const reduce = useReducedMotionConfig();
+  const hidden = { opacity: 0, y: reduce ? 0 : 24 };
+  // Con la intro de escritorio en pantalla el texto espera: aparece mientras Clawd vuela hacia aquí.
   const rise = (delay: number) => ({
-    initial: { opacity: 0, y: reduce ? 0 : 24 },
-    animate: { opacity: 1, y: 0 },
+    initial: hidden,
+    animate: intro === "play" ? hidden : { opacity: 1, y: 0 },
     transition: { duration: 0.8, delay, ease },
   });
 
@@ -53,19 +31,23 @@ export function Hero() {
           {profile.availability}
         </motion.p>
 
-        <motion.p {...rise(0.2)} className="eyebrow mb-3">
-          {profile.name} · {profile.role}
+        <motion.p {...rise(0.2)} className="eyebrow mb-2">
+          {profile.role}
         </motion.p>
 
-        <motion.h1 {...rise(0.3)} id="hero-title" className="font-display text-4xl leading-[1.05] font-extrabold tracking-tight text-balance sm:text-6xl lg:text-7xl">
+        <motion.p {...rise(0.25)} className="mb-4 font-display text-2xl font-bold tracking-tight sm:text-3xl">
+          {profile.name}
+        </motion.p>
+
+        <motion.h1 {...rise(0.35)} id="hero-title" className="font-display text-4xl leading-[1.05] font-extrabold tracking-tight text-balance sm:text-6xl lg:text-7xl">
           {profile.headline} <span className="text-gradient">{profile.headlineAccent}</span>
         </motion.h1>
 
-        <motion.p {...rise(0.45)} className="mt-6 max-w-xl text-base leading-relaxed text-muted sm:text-lg">
+        <motion.p {...rise(0.5)} className="mt-6 max-w-xl text-base leading-relaxed text-muted sm:text-lg">
           <strong className="font-semibold text-fg">{profile.tagline}.</strong> {profile.valueProp}
         </motion.p>
 
-        <motion.div {...rise(0.6)} className="mt-8 flex flex-wrap items-center gap-3">
+        <motion.div {...rise(0.65)} className="mt-8 flex flex-wrap items-center gap-3">
           <Magnetic>
             <a href={profile.cv} download className="btn btn-primary">
               <Download className="size-4" aria-hidden="true" /> Descargar CV
@@ -85,7 +67,7 @@ export function Hero() {
         </motion.div>
       </div>
 
-      <div className="order-1 flex justify-center lg:order-2">{stage === "hero" ? <HeroBuddy /> : <ProfileCard />}</div>
+      <div className="order-1 flex justify-center lg:order-2">{stage === "hero" ? <HeroBuddy /> : <ProfileCode />}</div>
     </section>
   );
 }

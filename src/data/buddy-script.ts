@@ -6,6 +6,13 @@
 import { techs } from "@/data/skills";
 import type { BuddyMood, FaqEntry, SectionId } from "@/lib/types";
 
+/** Intro de escritorio a pantalla completa, antes de que Clawd vuele a su sitio del hero. */
+export const intro = {
+  hello: "¡HOLA!",
+  line: "Soy Buddy, el guía del portafolio de Eidan",
+  skip: "Saltar intro",
+} as const;
+
 export const welcome = {
   title: "¡Hola! Soy Buddy 👋",
   body: "Soy el guía de este portafolio. Eidan es desarrollador de software junior: automatiza procesos con IA, construye en Python y JavaScript, y cuida los detalles. ¿Te lo enseño en un recorrido de un minuto?",

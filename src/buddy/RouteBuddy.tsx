@@ -11,6 +11,10 @@
  * El bucle rAF escribe `transform` directamente; React solo se entera cuando
  * cambia la dirección, el lado de la burbuja o el ánimo.
  *
+ * Guiado (tour y botones de Buddy): se invierte la relación. Clawd camina a su
+ * ritmo hasta el destino y la cámara (el scroll) le sigue con un muelle, así la
+ * página baja suave y al paso de Clawd; los cruces los salta de una voltereta.
+ *
  * Diversión: huellas al caminar, estela al correr, una chispa coleccionable por
  * parada (con ráfaga y salto al recogerla), polvo al frenar, mareo tras un
  * viaje largo, travesuras en reposo, mira hacia el cursor y bandera de meta
@@ -25,23 +29,30 @@ import { BuddyBubble } from "@/buddy/BuddyBubble";
 import { SECTION_IDS, useBuddy } from "@/buddy/BuddyProvider";
 import { FxLayer } from "@/buddy/fx";
 import { PixelFlag, PixelSpark } from "@/buddy/pixel-props";
-import { buildRoute, lengthAtY, sampleAt } from "@/buddy/route-geometry";
-import type { Route, SectionBox, Side } from "@/buddy/route-geometry";
+import { anchorYAt, buildRoute, effortAt, lengthAtEffort, lengthAtY, sampleAt } from "@/buddy/route-geometry";
+import type { Route, RouteSample, SectionBox, Side } from "@/buddy/route-geometry";
 import { STATION_LABELS, stationNumber } from "@/buddy/stations";
+import { animateScroll, cancelScrollAnimation, easeInOutSine, jumpTo, watchScrollIntent } from "@/lib/scroll";
 import type { BuddyMood } from "@/lib/types";
 
 /** Altura del viewport (fracción) donde Clawd "quiere" estar. */
 const ANCHOR = 0.72;
 /** Recorrido de un solo viaje a partir del cual llega mareado. */
 const DIZZY_AFTER = 2600;
+/** Últimos px de scroll en los que el ancla se estira para alcanzar la meta (ver `anchorPy`). */
+const BOTTOM_RAMP = 400;
+/** Rigidez (rad/s) del muelle con el que la cámara del guiado sigue a Clawd: ~0.12 s de retardo. */
+const CAMERA_STIFFNESS = 16;
+/** Polvo al frenar tras un viaje largo. */
+const DUST = { count: 8, spread: 36, size: 5, colors: ["#e8e6dc", "#b0aea5"], upward: true } as const;
 
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
-type Geo = { route: Route; width: number; height: number; size: number; mainTop: number };
+type Geo = { route: Route; width: number; height: number; size: number; mainTop: number; maxScroll: number };
 
 function RouteLayer() {
-  const { mood, view, muted, toggleMenu, visit, visited, consumeLaunch } = useBuddy();
+  const { mood, view, muted, toggleMenu, visit, visited, consumeLaunch, registerGuide } = useBuddy();
   const layerRef = useRef<HTMLDivElement>(null);
   const walkerRef = useRef<HTMLDivElement>(null);
   const rotorRef = useRef<HTMLDivElement>(null);
@@ -93,7 +104,8 @@ function RouteLayer() {
       const size = clamp(laneWidth * 0.74, 112, 168);
       const amp = clamp((laneWidth - size) / 2 - 4, 6, 56);
       const route = buildRoute(boxes, { left: contentLeft / 2, right: contentRight + (mainRect.width - contentRight) / 2, amp }, window.innerHeight * ANCHOR);
-      setGeo(route ? { route, width: mainRect.width, height: mainRect.height, size, mainTop: mainRect.top + window.scrollY } : null);
+      const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      setGeo(route ? { route, width: mainRect.width, height: mainRect.height, size, mainTop: mainRect.top + window.scrollY, maxScroll } : null);
     };
     build();
     const rebuild = () => {
@@ -118,16 +130,24 @@ function RouteLayer() {
     const fxRoot = fxRootRef.current;
     const el = actor.current;
     if (!geo || !walker || !rotor || !fxRoot || !el) return;
-    const { route, size, mainTop } = geo;
+    const { route, size, mainTop, maxScroll } = geo;
     const fx = new FxLayer(fxRoot);
     const reached = new Set<number>();
 
-    const targetLen = () => lengthAtY(route, window.scrollY - mainTop + window.innerHeight * ANCHOR);
+    // Altura de ruta que corresponde a un scroll. Con viewports altos el ancla del final de la
+    // página se queda por debajo de la meta (en 1864×983 faltaban 22 px: ni bandera ni confeti),
+    // así que en los últimos BOTTOM_RAMP px de scroll se estira hasta alcanzarla.
+    const vhAnchor = window.innerHeight * ANCHOR;
+    const shortfall = Math.max(0, route.ymax[route.ymax.length - 1]! - (maxScroll - mainTop + vhAnchor));
+    const anchorPy = (scroll: number) =>
+      scroll - mainTop + vhAnchor + shortfall * clamp((scroll - (maxScroll - BOTTOM_RAMP)) / BOTTOM_RAMP, 0, 1);
+    const targetLen = () => lengthAtY(route, anchorPy(window.scrollY));
     let cur = targetLen();
     let target = cur;
     let p = sampleAt(route, cur);
     let raf = 0;
     let running = false;
+    let guiding = false;
     let last = 0;
     let trip = 0;
     let foot = 0;
@@ -177,33 +197,8 @@ function RouteLayer() {
       }
     };
 
-    const tick = (now: number) => {
-      const dt = last ? Math.min(0.1, (now - last) / 1000) : 1 / 60;
-      last = now;
-      const diff = target - cur;
-      if (Math.abs(diff) < 0.6) {
-        cur = target;
-        place();
-        checkStations(false);
-        if (lastWalk) {
-          lastWalk = null;
-          setWalk(null);
-        }
-        if (trip > 900) fx.burst(p.x, p.y - 4, { count: 8, spread: 36, size: 5, colors: ["#e8e6dc", "#b0aea5"], upward: true });
-        if (trip > DIZZY_AFTER) flash("dizzy", 1500);
-        trip = 0;
-        running = false;
-        last = 0;
-        return;
-      }
-      // Aproximación exponencial con suelo: lejos corre, cerca camina y frena suave.
-      const step = Math.sign(diff) * Math.min(Math.abs(diff), Math.max(140, Math.abs(diff) * 2.6) * dt);
-      const prev = p;
-      cur += step;
-      trip += Math.abs(step);
-      place();
-      checkStations(false);
-
+    /** Tras un paso de `step` px: fotograma según la dirección, huellas al caminar y estela al correr o cruzar. */
+    const stride = (prev: RouteSample, step: number, dt: number) => {
       const dx = p.x - prev.x;
       const dy = p.y - prev.y;
       const dir: Direction = p.cross || Math.abs(dx) > Math.abs(dy) ? (dx >= 0 ? "right" : "left") : dy >= 0 ? "down" : "up";
@@ -224,6 +219,38 @@ function RouteLayer() {
         ghostClock = 0;
         fx.ghost(p.x - size / 2, p.y - size, size, el.querySelector("img")?.src ?? "", p.flip);
       }
+    };
+
+    const halt = () => {
+      if (!lastWalk) return;
+      lastWalk = null;
+      setWalk(null);
+    };
+
+    const tick = (now: number) => {
+      const dt = last ? Math.min(0.1, (now - last) / 1000) : 1 / 60;
+      last = now;
+      const diff = target - cur;
+      if (Math.abs(diff) < 0.6) {
+        cur = target;
+        place();
+        checkStations(false);
+        halt();
+        if (trip > 900) fx.burst(p.x, p.y - 4, DUST);
+        if (trip > DIZZY_AFTER) flash("dizzy", 1500);
+        trip = 0;
+        running = false;
+        last = 0;
+        return;
+      }
+      // Aproximación exponencial con suelo: lejos corre, cerca camina y frena suave.
+      const step = Math.sign(diff) * Math.min(Math.abs(diff), Math.max(140, Math.abs(diff) * 2.6) * dt);
+      const prev = p;
+      cur += step;
+      trip += Math.abs(step);
+      place();
+      checkStations(false);
+      stride(prev, step, dt);
       raf = requestAnimationFrame(tick);
     };
 
@@ -233,8 +260,95 @@ function RouteLayer() {
       raf = requestAnimationFrame(tick);
     };
 
+    // Guiado: Clawd recorre la ruta hasta el destino con easing y la cámara busca el scroll
+    // que le deja en el ancla (inversa de `targetLen`). La cámara le sigue a él, no al revés.
+    let guideRaf = 0;
+    let stopIntent = () => {};
+    const stopGuide = () => {
+      if (!guiding) return;
+      guiding = false;
+      cancelAnimationFrame(guideRaf);
+      stopIntent();
+      halt();
+    };
+
+    const guide = (top: number) => {
+      stopGuide();
+      cancelScrollAnimation();
+      cancelAnimationFrame(raf);
+      running = false;
+      last = 0;
+      trip = 0;
+      const camera = (l: number) => anchorYAt(route, l) + mainTop - vhAnchor;
+      const from = cur;
+      const to = lengthAtY(route, anchorPy(top));
+      if (Math.abs(to - from) < 2) {
+        animateScroll(top);
+        return;
+      }
+      // El tiempo se reparte por esfuerzo (los cruces pesan poco): ritmo de paseo en los carriles
+      // y voltereta rápida al cruzar, sin que la cámara se quede parada esperándole.
+      const w0 = effortAt(route, from);
+      const w1 = effortAt(route, to);
+      // Desfases de cámara en origen y destino (Clawd recolocado tras un cruce, redondeo de la
+      // malla): se reparten a lo largo del viaje para arrancar y terminar exactamente donde toca.
+      const off0 = window.scrollY - camera(from);
+      const off1 = top - camera(to);
+      const duration = clamp(600 + Math.abs(w1 - w0) * 0.75, 1100, 2600);
+      const start = performance.now();
+      let prevNow = start;
+      let walking = true;
+      let camY = window.scrollY;
+      let camV = 0;
+      guiding = true;
+      const frame = (now: number) => {
+        const dt = clamp((now - prevNow) / 1000, 1 / 240, 0.1);
+        prevNow = now;
+        const t = Math.min(1, (now - start) / duration);
+        const e = easeInOutSine(t);
+        if (walking) {
+          const prev = p;
+          const step = lengthAtEffort(route, w0 + (w1 - w0) * e) - cur;
+          cur += step;
+          place();
+          checkStations(false);
+          stride(prev, step, dt);
+          if (t >= 1) {
+            walking = false;
+            halt();
+            fx.burst(p.x, p.y - 4, DUST);
+          }
+        }
+        // La cámara va tras Clawd con un muelle críticamente amortiguado (solución exacta por
+        // frame): sin él frenaría en seco al empezar cada cruce, donde Clawd avanza en horizontal.
+        const goal = camera(cur) + off0 * (1 - e) + off1 * e;
+        const y = camY - goal;
+        const b = camV + CAMERA_STIFFNESS * y;
+        const decay = Math.exp(-CAMERA_STIFFNESS * dt);
+        camY = goal + (y + b * dt) * decay;
+        camV = (camV - CAMERA_STIFFNESS * b * dt) * decay;
+        jumpTo(camY);
+        if (walking || Math.abs(camY - top) > 0.5 || Math.abs(camV) > 5) {
+          guideRaf = requestAnimationFrame(frame);
+          return;
+        }
+        jumpTo(top);
+        stopGuide();
+        target = cur;
+      };
+      // Si el visitante toma el control (rueda, toque, tecla, clic), Clawd vuelve a seguir su scroll.
+      stopIntent = watchScrollIntent(() => {
+        stopGuide();
+        target = targetLen();
+        kick();
+      });
+      guideRaf = requestAnimationFrame(frame);
+    };
+    registerGuide(guide);
+
     let settle = 0;
     const onScroll = () => {
+      if (guiding) return; // el scroll lo está moviendo el propio guiado
       target = targetLen();
       kick();
       // Al soltar el scroll, nunca quedarse en mitad de un cruce: al extremo más cercano.
@@ -252,7 +366,10 @@ function RouteLayer() {
 
     // Al volver a la pestaña, Clawd ya está donde toca (no caminar lo que no se vio).
     const onVisibility = () => {
-      if (document.hidden) return;
+      if (document.hidden) {
+        stopGuide();
+        return;
+      }
       cur = target = targetLen();
       place();
     };
@@ -264,7 +381,7 @@ function RouteLayer() {
     const updateLook = () => {
       lookFrame = 0;
       let dirLook: Direction | null = null;
-      if (pointer && !running) {
+      if (pointer && !running && !guiding) {
         const r = walker.getBoundingClientRect();
         const dx = pointer.x - (r.left + size / 2);
         const dy = pointer.y - (r.top + size / 2);
@@ -284,7 +401,7 @@ function RouteLayer() {
     // Travesuras en reposo cada 9–15 s: saltito, giro, meneo o estiramiento sorprendido.
     let nextAntic = performance.now() + rand(7000, 11000);
     const antics = window.setInterval(() => {
-      if (running || busy.current || viewRef.current || document.hidden || performance.now() < nextAntic) return;
+      if (running || guiding || busy.current || viewRef.current || document.hidden || performance.now() < nextAntic) return;
       nextAntic = performance.now() + rand(9000, 15000);
       busy.current = true;
       const done = () => {
@@ -334,6 +451,8 @@ function RouteLayer() {
     window.addEventListener("pointermove", onPointer, { passive: true });
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
+      registerGuide(null);
+      stopGuide();
       cancelAnimationFrame(raf);
       cancelAnimationFrame(lookFrame);
       window.clearTimeout(settle);
@@ -343,7 +462,7 @@ function RouteLayer() {
       document.removeEventListener("visibilitychange", onVisibility);
       fx.destroy();
     };
-  }, [geo, actor, animate, consumeLaunch, visit, flash]);
+  }, [geo, actor, animate, consumeLaunch, visit, flash, registerGuide]);
 
   useEffect(() => () => window.clearTimeout(overrideTimer.current), []);
 

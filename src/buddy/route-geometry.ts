@@ -30,6 +30,8 @@ export type Route = {
   flip: Float32Array;
   /** 1 si el punto pertenece a un cruce entre carriles. */
   cross: Uint8Array;
+  /** "Esfuerzo" acumulado: como `len`, pero los cruces pesan CROSS_EFFORT. Reparte el tiempo del guiado. */
+  effort: Float32Array;
   total: number;
   stations: Station[];
   /** Rangos de longitud [inicio, fin] de cada cruce. */
@@ -47,6 +49,12 @@ const STEP = 4;
 const STATION_INSET = 44;
 /** Estilo de tramo por sección, en orden. */
 const STYLES: readonly LaneStyle[] = ["wave", "zigzag", "hops", "wave", "zigzag"];
+/**
+ * Peso de los cruces en el esfuerzo. Un cruce son ~1500 px de ruta casi en
+ * horizontal para ~90 px de scroll: a ritmo de carril la cámara se quedaría
+ * parada mientras Clawd cruza. Con 0.2 lo salta de una voltereta rápida.
+ */
+const CROSS_EFFORT = 0.2;
 
 const smooth = (u: number) => u * u * (3 - 2 * u);
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
@@ -150,14 +158,18 @@ export function buildRoute(sections: readonly SectionBox[], lanes: Lanes, startY
   const ymax = new Float32Array(n);
   const flip = new Float32Array(n);
   const cross = new Uint8Array(n);
+  const effort = new Float32Array(n);
   let acc = 0;
+  let work = 0;
   let top = -Infinity;
   let d = "";
   for (let i = 0; i < n; i++) {
     const p = pts[i]!;
     if (i > 0) {
       const q = pts[i - 1]!;
-      acc += Math.hypot(p.x - q.x, p.y - q.y);
+      const seg = Math.hypot(p.x - q.x, p.y - q.y);
+      acc += seg;
+      work += p.cross ? seg * CROSS_EFFORT : seg;
     }
     top = Math.max(top, p.y);
     x[i] = p.x;
@@ -166,6 +178,7 @@ export function buildRoute(sections: readonly SectionBox[], lanes: Lanes, startY
     ymax[i] = top;
     flip[i] = p.flip;
     cross[i] = p.cross;
+    effort[i] = work;
     // Trazo SVG con 1 de cada 2 puntos (y siempre el último): suficiente a 8 px de resolución.
     if (i === 0) d = `M${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
     else if (i % 2 === 0 || i === n - 1) d += `L${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
@@ -179,6 +192,7 @@ export function buildRoute(sections: readonly SectionBox[], lanes: Lanes, startY
     ymax,
     flip,
     cross,
+    effort,
     total: acc,
     stations: marks.map((m) => ({ id: m.id, index: m.index, len: len[Math.min(m.at, n - 1)]!, x: m.x, y: m.y, side: m.side })),
     crossings: crossIdx.map(([a, b]) => [len[a]!, len[b]!]),
@@ -204,20 +218,62 @@ export function lengthAtY(r: Route, py: number): number {
 
 export type RouteSample = { x: number; y: number; flip: number; cross: boolean };
 
-/** Punto interpolado a una longitud dada. */
-export function sampleAt(r: Route, l: number): RouteSample {
-  const n = r.len.length;
-  if (l <= 0) return { x: r.x[0]!, y: r.y[0]!, flip: 0, cross: false };
-  if (l >= r.total) return { x: r.x[n - 1]!, y: r.y[n - 1]!, flip: 0, cross: false };
+/** Puntos [lo, hi] que encierran la longitud `l` y la fracción `t` entre ambos. Requiere 0 < l < total. */
+function locate(r: Route, l: number): { lo: number; hi: number; t: number } {
   let lo = 0;
-  let hi = n - 1;
+  let hi = r.len.length - 1;
   while (hi - lo > 1) {
     const mid = (lo + hi) >> 1;
     if (r.len[mid]! <= l) lo = mid;
     else hi = mid;
   }
   const span = r.len[hi]! - r.len[lo]! || 1;
-  const t = (l - r.len[lo]!) / span;
+  return { lo, hi, t: (l - r.len[lo]!) / span };
+}
+
+/**
+ * Inversa de `lengthAtY`: la altura de ancla (`ymax`) a una longitud dada. Con
+ * ella la cámara del guiado sigue a Clawd, en lugar de que Clawd persiga al scroll.
+ */
+export function anchorYAt(r: Route, l: number): number {
+  const n = r.len.length;
+  if (l <= 0) return r.ymax[0]!;
+  if (l >= r.total) return r.ymax[n - 1]!;
+  const { lo, hi, t } = locate(r, l);
+  return r.ymax[lo]! + (r.ymax[hi]! - r.ymax[lo]!) * t;
+}
+
+/** Esfuerzo acumulado a una longitud dada. */
+export function effortAt(r: Route, l: number): number {
+  const n = r.len.length;
+  if (l <= 0) return 0;
+  if (l >= r.total) return r.effort[n - 1]!;
+  const { lo, hi, t } = locate(r, l);
+  return r.effort[lo]! + (r.effort[hi]! - r.effort[lo]!) * t;
+}
+
+/** Inversa de `effortAt`: longitud a la que se alcanza un esfuerzo dado. */
+export function lengthAtEffort(r: Route, w: number): number {
+  const n = r.effort.length;
+  if (w <= 0) return 0;
+  if (w >= r.effort[n - 1]!) return r.total;
+  let lo = 0;
+  let hi = n - 1;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (r.effort[mid]! <= w) lo = mid;
+    else hi = mid;
+  }
+  const span = r.effort[hi]! - r.effort[lo]! || 1;
+  return r.len[lo]! + (r.len[hi]! - r.len[lo]!) * ((w - r.effort[lo]!) / span);
+}
+
+/** Punto interpolado a una longitud dada. */
+export function sampleAt(r: Route, l: number): RouteSample {
+  const n = r.len.length;
+  if (l <= 0) return { x: r.x[0]!, y: r.y[0]!, flip: 0, cross: false };
+  if (l >= r.total) return { x: r.x[n - 1]!, y: r.y[n - 1]!, flip: 0, cross: false };
+  const { lo, hi, t } = locate(r, l);
   return {
     x: r.x[lo]! + (r.x[hi]! - r.x[lo]!) * t,
     y: r.y[lo]! + (r.y[hi]! - r.y[lo]!) * t,
