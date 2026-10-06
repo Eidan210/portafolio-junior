@@ -1,0 +1,344 @@
+@import "tailwindcss";
+
+/*
+ * Tokens: paleta de marca de Anthropic.
+ *   Dark #141413 · Light #faf9f5 · Mid Gray #b0aea5 · Light Gray #e8e6dc
+ *   Orange #d97757 · Blue #6a9bcc · Green #788c5d
+ * Tailwind v4 genera utilidades desde @theme (bg-ink, text-claude, font-pixel…).
+ * El vidrio vive en custom properties normales: es un material, no una escala.
+ *
+ * Contraste WCAG medido sobre el peor caso (vidrio 5 % sobre el pico del orbe
+ * naranja al 28 % ≈ #54392f): fg 9.9:1 · muted 7.1:1 · subtle 4.7:1 ·
+ * claude-light 5.0:1 · claude 3.3:1. Por eso el naranja base (#d97757) es para
+ * rellenos, iconos y titulares ≥ 24 px; el texto pequeño naranja usa
+ * `claude-light`. Si subes la opacidad de un orbe, vuelve a medir.
+ */
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  /*
+   * Solo para micro-etiquetas (paradas, contadores, badges): eco del pixel art de
+   * Clawd. Silkscreen y no Pixelify: a 12 px sus dígitos y la "C" no se confunden
+   * (Pixelify convertía "02" en "08" y "TÉCNICO" en "TÉONIOO"). Mínimo 12 px.
+   */
+  --font-pixel: "Silkscreen", ui-monospace, monospace;
+
+  --color-ink: #141413;
+  --color-ink-2: #1c1b19;
+  --color-ink-3: #262522;
+  --color-fg: #faf9f5;
+  --color-sand: #e8e6dc;
+  --color-muted: #d9d6cc;
+  --color-stone: #b0aea5;
+  --color-subtle: #b0aea5;
+  --color-claude: #d97757;
+  --color-claude-light: #eba487;
+  --color-claude-deep: #c15f3c;
+  --color-sky: #6a9bcc;
+  --color-sky-light: #9cc0e4;
+  --color-olive: #788c5d;
+  --color-olive-light: #a9bd8b;
+  --color-danger: #e8877e;
+
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root {
+  --glass-bg: rgb(250 249 245 / 0.035);
+  --glass-bg-strong: rgb(250 249 245 / 0.065);
+  --glass-border: rgb(250 249 245 / 0.1);
+  --glass-highlight: rgb(250 249 245 / 0.2);
+  --glass-blur: 16px;
+  --glass-shadow: 0 1px 0 0 rgb(250 249 245 / 0.06) inset, 0 20px 50px -20px rgb(0 0 0 / 0.65),
+    0 0 40px -20px rgb(217 119 87 / 0.3);
+  --focus: 0 0 0 2px var(--color-ink), 0 0 0 4px var(--color-claude);
+  /* Esquinas escalonadas de 4 px: el borde "pixelado" de Clawd. */
+  --pixel-corners: polygon(
+    0 4px, 4px 4px, 4px 0, calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px,
+    100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%,
+    4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px)
+  );
+  color-scheme: dark;
+}
+
+@keyframes orb-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(6vw, -4vh, 0) scale(1.08); }
+  66% { transform: translate3d(-4vw, 5vh, 0) scale(0.95); }
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: -100% 50%; }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--color-ink);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Las secciones dejan hueco para la barra de navegación fija al saltar a un ancla. */
+  section[id] {
+    scroll-margin-top: 5.5rem;
+  }
+
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--focus);
+    border-radius: 0.75rem;
+  }
+
+  ::selection {
+    background: rgb(217 119 87 / 0.38);
+  }
+}
+
+@layer components {
+  /* Material de vidrio esmerilado: base para paneles, tarjetas y HUD. */
+  .glass {
+    position: relative;
+    background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg) 60%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(var(--glass-blur)) saturate(130%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(130%);
+  }
+
+  /* Borde con resplandor que sigue al puntero (--mx/--my los escribe `trackGlow`). */
+  .glow-border::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: radial-gradient(
+      260px circle at var(--mx, 50%) var(--my, 0%),
+      var(--glow-color, rgb(217 119 87 / 0.95)),
+      color-mix(in srgb, var(--glow-color, rgb(217 119 87)) 45%, transparent) 40%,
+      transparent 70%
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: var(--glow, 0);
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+  }
+
+  /* Reflejo interior que acompaña al borde. */
+  .glow-border::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), rgb(250 249 245 / 0.06), transparent 60%);
+    opacity: var(--glow, 0);
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+  }
+
+  /*
+   * Contenedor de sección. En modo ruta se estrecha para abrir dos carriles
+   * laterales de 12rem por donde camina Clawd (ver RouteBuddy).
+   */
+  .shell {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 72rem;
+  }
+
+  /* `route-lanes` lo pone BuddyProvider cuando la ruta de carriles está activa. */
+  .route-lanes .shell {
+    max-width: min(72rem, calc(100vw - 24rem));
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 999px;
+    border: 1px solid var(--glass-border);
+    background: rgb(250 249 245 / 0.05);
+    padding: 0.3rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-muted);
+    transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  }
+
+  .btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    border-radius: 999px;
+    padding: 0.65rem 1.25rem;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    white-space: nowrap;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.3s ease, color 0.2s ease;
+  }
+
+  /* Texto oscuro sobre naranja: 5.9:1. No degradar hacia #c15f3c bajo el texto (bajaría de 4.5). */
+  .btn-primary {
+    color: var(--color-ink);
+    background: linear-gradient(135deg, var(--color-claude-light), var(--color-claude) 55%);
+    box-shadow: 0 10px 30px -12px rgb(217 119 87 / 0.75), inset 0 1px 0 rgb(255 255 255 / 0.35);
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 14px 40px -10px rgb(217 119 87 / 0.95), inset 0 1px 0 rgb(255 255 255 / 0.45);
+  }
+
+  .btn-ghost {
+    color: var(--color-fg);
+    background: rgb(250 249 245 / 0.05);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .btn-ghost:hover {
+    background: rgb(250 249 245 / 0.1);
+    border-color: var(--glass-highlight);
+  }
+
+  .eyebrow {
+    font-family: var(--font-pixel);
+    font-size: 0.8125rem;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-claude-light);
+  }
+
+  /* Acento de titulares: naranja Claude con un destello que lo recorre cada pocos segundos. */
+  .text-gradient {
+    background: linear-gradient(
+      110deg,
+      var(--color-claude) 0%,
+      var(--color-claude-light) 30%,
+      var(--color-fg) 38%,
+      var(--color-claude-light) 46%,
+      var(--color-claude) 70%,
+      var(--color-claude-deep) 100%
+    );
+    background-size: 250% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer 7s ease-in-out infinite;
+  }
+
+  /* Bordes escalonados estilo pixel art. `clip-path` recorta sombras externas: usar solo con sombras inset. */
+  .pixel-corners {
+    clip-path: var(--pixel-corners);
+  }
+
+  /* Slot del stack: logo en tono arena que toma el color de marca (--brand) al activarse. */
+  .tech-slot {
+    --glow-color: var(--brand);
+  }
+
+  .tech-logo {
+    color: var(--color-sand);
+    box-shadow: inset 0 0 0 1px rgb(250 249 245 / 0.1);
+    transition: color 0.3s ease, box-shadow 0.3s ease, transform 0.35s var(--ease-spring);
+  }
+
+  .tech-slot:hover .tech-logo,
+  .tech-slot:focus-visible .tech-logo {
+    color: var(--brand);
+    transform: translateY(-3px) rotate(-4deg);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 65%, transparent),
+      inset 0 0 22px color-mix(in srgb, var(--brand) 28%, transparent);
+  }
+
+  .pixel-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1rem 0.45rem;
+    font-family: var(--font-pixel);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--tag-fg, var(--color-sand));
+    background: var(--tag-bg, rgb(250 249 245 / 0.07));
+    clip-path: polygon(0 2px, 2px 2px, 2px 0, calc(100% - 2px) 0, calc(100% - 2px) 2px, 100% 2px, 100% calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%, 2px calc(100% - 2px), 0 calc(100% - 2px));
+  }
+
+  /*
+   * Orbes del mesh gradient: derivan lentamente (solo transform). Sin
+   * `filter: blur`: el radial-gradient ya es difuso y el blur sobre capas de
+   * 50vmax animadas cuesta un pase de GPU por frame.
+   */
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    will-change: transform;
+    animation: orb-drift 28s ease-in-out infinite;
+  }
+
+  .grain {
+    position: absolute;
+    inset: 0;
+    opacity: 0.05;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .skip-link {
+    position: fixed;
+    left: 1rem;
+    top: 1rem;
+    z-index: 100;
+    transform: translateY(-200%);
+    transition: transform 0.2s ease;
+  }
+
+  .skip-link:focus-visible {
+    transform: translateY(0);
+  }
+}
+
+/*
+ * Movimiento reducido: sin deriva de orbes, sin flotación ni scroll suave.
+ * `html.motion-ok` lo levanta cuando el visitante activa el movimiento completo
+ * desde el menú de Buddy (BuddyProvider gestiona la clase).
+ */
+@media (prefers-reduced-motion: reduce) {
+  html:not(.motion-ok) {
+    scroll-behavior: auto;
+  }
+
+  html:not(.motion-ok) *,
+  html:not(.motion-ok) *::before,
+  html:not(.motion-ok) *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Sin soporte de backdrop-filter el vidrio se vuelve más opaco para mantener el contraste. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --glass-bg: rgb(28 27 25 / 0.94);
+    --glass-bg-strong: rgb(38 37 34 / 0.96);
+  }
+}
