@@ -3,7 +3,7 @@
  * tanto el HUD de esquina como Clawd caminando por la ruta; solo cambia dónde
  * se ancla (`className`) y desde qué esquina crece (`origin`).
  */
-import { AnimatePresence, motion, useReducedMotionConfig } from "motion/react";
+import { AnimatePresence, animate, motion, useReducedMotionConfig } from "motion/react";
 import { MessageCircle, MessageCircleOff, Minus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BuddyPanel } from "@/buddy/BuddyPanel";
@@ -26,6 +26,14 @@ export function BuddyBubble({ className = "", origin }: Props) {
     const t = window.setTimeout(close, 6500 + view.text.length * 35);
     return () => window.clearTimeout(t);
   }, [view, holding, close]);
+
+  // Clawd cruzó de carril y la burbuja cambia de lado: reaparece con un fundido en vez de teletransportarse.
+  const lastOrigin = useRef(origin);
+  useEffect(() => {
+    if (lastOrigin.current === origin) return;
+    lastOrigin.current = origin;
+    if (!reduce && ref.current) void animate(ref.current, { opacity: [0, 1] }, { duration: 0.24, ease: "easeOut" });
+  }, [origin, reduce]);
 
   return (
     <AnimatePresence>

@@ -18,6 +18,7 @@ import { MotionConfig } from "motion/react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useActiveSection, useMediaQuery } from "@/lib/hooks";
+import { animateScroll, jumpTo, scrollTopFor } from "@/lib/scroll";
 import { readPref, writePref } from "@/lib/storage";
 import type { BuddyMood, SectionId } from "@/lib/types";
 import { completion, idleQuips, sectionLines, tour } from "@/data/buddy-script";
@@ -39,6 +40,8 @@ type Stage = "hero" | "hud";
 export type RouteMode = "lanes" | "track";
 /** Rectángulo (viewport) del Clawd del hero en el momento de saltar a la ruta. */
 export type LaunchRect = { x: number; y: number; w: number; h: number };
+/** Lleva al visitante hasta `top` (px de scroll) con Clawd caminando y la cámara siguiéndole. */
+export type Guide = (top: number) => void;
 
 type BuddyContextValue = {
   stage: Stage;
@@ -69,6 +72,8 @@ type BuddyContextValue = {
   setMuted: (v: boolean) => void;
   setMinimized: (v: boolean) => void;
   scrollTo: (id: string) => void;
+  /** La ruta de carriles registra aquí su guiado; sin él, `scrollTo` usa un scroll con easing. */
+  registerGuide: (guide: Guide | null) => void;
 };
 
 const BuddyContext = createContext<BuddyContextValue | null>(null);
@@ -147,9 +152,20 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
   const talkTimer = useRef<number>(0);
   const ambientTimer = useRef<number>(0);
   const launchRef = useRef<LaunchRect | null>(null);
+  const guideRef = useRef<Guide | null>(null);
+
+  const registerGuide = useCallback((guide: Guide | null) => {
+    guideRef.current = guide;
+  }, []);
 
   const scrollTo = useCallback((id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: reducedRef.current ? "auto" : "smooth", block: "start" });
+    const el = document.getElementById(id);
+    if (!el) return;
+    const top = scrollTopFor(el);
+    if (reducedRef.current) jumpTo(top);
+    // En carriles Clawd camina hasta allí y la cámara le sigue; en la barra, scroll con easing.
+    else if (guideRef.current) guideRef.current(top);
+    else animateScroll(top);
   }, []);
 
   const say = useCallback((next: BuddyView) => {
@@ -346,6 +362,7 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
       setMuted,
       setMinimized,
       scrollTo,
+      registerGuide,
     }),
     [
       stage,
@@ -372,6 +389,7 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
       setMuted,
       setMinimized,
       scrollTo,
+      registerGuide,
     ],
   );
 
