@@ -112,8 +112,21 @@
     background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg) 60%);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
-    backdrop-filter: blur(var(--glass-blur)) saturate(130%);
+    /*
+     * Prefijado SIEMPRE antes del estándar: Lightning CSS (minificador del build)
+     * trata ambos como la misma propiedad y conserva solo el último. En el orden
+     * inverso el CSS de producción perdía `backdrop-filter` y Chrome/Edge
+     * pintaban el vidrio sin blur.
+     */
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(130%);
+    backdrop-filter: blur(var(--glass-blur)) saturate(130%);
+  }
+
+  /* Cromo (nav, barra y píldora de Buddy): vidrio denso; lo que pasa por debajo no compite con el texto. */
+  .glass-dense {
+    --glass-bg: rgb(24 23 21 / 0.76);
+    --glass-bg-strong: rgb(38 36 33 / 0.82);
+    --glass-blur: 20px;
   }
 
   /* Borde con resplandor que sigue al puntero (--mx/--my los escribe `trackGlow`). */
@@ -208,8 +221,8 @@
     color: var(--color-fg);
     background: rgb(250 249 245 / 0.05);
     border: 1px solid var(--glass-border);
-    backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
   }
 
   .btn-ghost:hover {

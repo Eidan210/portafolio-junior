@@ -37,10 +37,11 @@
     animation: clawd-walk 0.36s steps(2, jump-none) infinite;
   }
 
-  /* Burbuja de diálogo: vidrio más denso para que el texto largo se lea bien. */
+  /* Burbuja de diálogo: vidrio casi opaco; el texto largo no compite con lo que pasa por debajo. */
   .buddy-bubble {
-    --glass-bg: rgb(31 30 28 / 0.84);
-    --glass-bg-strong: rgb(44 42 38 / 0.9);
+    --glass-bg: rgb(28 27 25 / 0.9);
+    --glass-bg-strong: rgb(42 40 37 / 0.94);
+    --glass-blur: 24px;
   }
 
   .typing-caret {
