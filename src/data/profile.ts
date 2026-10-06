@@ -3,7 +3,7 @@
  * (verificado 2026-09-23). Sin LinkedIn: confirmado por Eidan, se omite a
  * propósito — el CTA del hero no lo muestra.
  */
-import type { Milestone, Principle } from "@/lib/types";
+import type { CodeEntry, Milestone, Principle } from "@/lib/types";
 
 export const profile = {
   name: "Eidan Alexander Carreño",
@@ -28,13 +28,22 @@ export const profile = {
   ],
   objective:
     "Seguir creciendo como desarrollador, entrar en proyectos que me obliguen a aprender y aportar mientras consolido bases de datos relacionales, metodologías ágiles y testing automatizado.",
-  facts: [
-    { label: "Módulos Campuslands", value: "4/4 al 100 %" },
-    { label: "Repos públicos", value: "24" },
-    { label: "Contribuciones (año)", value: "269" },
-    { label: "Inglés", value: "B2 → C1" },
-  ],
 } as const;
+
+/**
+ * Ficha del hero escrita como objeto TypeScript (`ProfileCode`), visible cuando
+ * Buddy salta a su ruta. Mismos datos que el CV; valores cortos para que cada
+ * línea quepa en 360 px sin scroll horizontal.
+ */
+export const profileCode: readonly CodeEntry[] = [
+  { key: "rol", label: "Rol", value: "Dev Junior" },
+  { key: "base", label: "Ubicación", value: "Floridablanca, CO" },
+  { key: "campuslands", label: "Módulos de Campuslands", value: "4/4 al 100 %" },
+  { key: "repos", label: "Repositorios públicos", value: 24, comment: "públicos" },
+  { key: "contribuciones", label: "Contribuciones en el último año", value: 269, comment: "último año" },
+  { key: "ingles", label: "Inglés", value: "B2 → C1" },
+  { key: "disponible", label: "Disponible", value: true, live: true },
+];
 
 /** Filosofía de trabajo: qué hago, no qué adjetivo soy. */
 export const principles: readonly Principle[] = [

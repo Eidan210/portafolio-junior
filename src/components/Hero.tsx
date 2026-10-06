@@ -1,37 +1,13 @@
 import { motion, useReducedMotionConfig } from "motion/react";
-import { ArrowUpRight, Download, Mail, MapPin } from "lucide-react";
+import { ArrowUpRight, Download, Mail } from "lucide-react";
 import { profile } from "@/data/profile";
 import { HeroBuddy } from "@/buddy/HeroBuddy";
 import { useBuddy } from "@/buddy/BuddyProvider";
 import { GitHubIcon } from "@/components/icons";
-import { Magnetic, TiltCard } from "@/components/interactive";
+import { Magnetic } from "@/components/interactive";
+import { ProfileCode } from "@/components/ProfileCode";
 
 const ease = [0.16, 1, 0.3, 1] as const;
-
-/** Ocupa el sitio de Buddy cuando ya voló al HUD: ficha rápida del perfil. */
-function ProfileCard() {
-  return (
-    <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.35, duration: 0.5, ease }} className="w-full max-w-sm">
-      <TiltCard className="rounded-3xl p-6">
-        <p className="mb-4 font-mono text-xs text-subtle">
-          <span className="text-claude-light">const</span> eidan <span className="text-subtle">=</span> {"{"}
-        </p>
-        <dl className="grid grid-cols-2 gap-3">
-          {profile.facts.map((f) => (
-            <div key={f.label} className="rounded-2xl border border-white/8 bg-white/[0.04] p-3">
-              <dt className="text-[0.7rem] text-subtle">{f.label}</dt>
-              <dd className="mt-0.5 font-display text-lg font-bold">{f.value}</dd>
-            </div>
-          ))}
-        </dl>
-        <p className="mt-4 flex items-center gap-1.5 text-sm text-muted">
-          <MapPin className="size-4 text-claude-light" aria-hidden="true" /> {profile.location}
-        </p>
-        <p className="mt-3 font-mono text-xs text-subtle">{"}"}</p>
-      </TiltCard>
-    </motion.div>
-  );
-}
 
 export function Hero() {
   const { stage, intro } = useBuddy();
@@ -91,7 +67,7 @@ export function Hero() {
         </motion.div>
       </div>
 
-      <div className="order-1 flex justify-center lg:order-2">{stage === "hero" ? <HeroBuddy /> : <ProfileCard />}</div>
+      <div className="order-1 flex justify-center lg:order-2">{stage === "hero" ? <HeroBuddy /> : <ProfileCode />}</div>
     </section>
   );
 }

@@ -89,4 +89,15 @@ export type BuddyMood =
   /** Colgado con los brazos arriba (paracaídas). */
   | "hang";
 
+/** Una propiedad de la ficha `const eidan = {…}` del hero. */
+export type CodeEntry = {
+  key: string;
+  /** Versión legible para lectores de pantalla (el código es decorativo). */
+  label: string;
+  value: string | number | boolean;
+  comment?: string;
+  /** Punto verde latiendo junto al valor: algo que está "en vivo". */
+  live?: boolean;
+};
+
 export type FaqEntry = { q: string; a: string };
