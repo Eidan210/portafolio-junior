@@ -50,6 +50,14 @@
     filter: drop-shadow(0 0 1px rgb(255 255 255 / 0.85)) drop-shadow(0 3px 3px rgb(0 0 0 / 0.5));
   }
 
+  /* Telón de la intro de escritorio: tinta, resplandor naranja tras Clawd y la rejilla de puntos del fondo. */
+  .intro-backdrop {
+    background:
+      radial-gradient(circle at 50% 44%, rgb(217 119 87 / 0.3), transparent 45%),
+      radial-gradient(rgb(232 230 220 / 0.16) 1px, transparent 1.5px) 0 0 / 22px 22px,
+      var(--color-ink);
+  }
+
   .typing-caret {
     display: inline-block;
     width: 2px;

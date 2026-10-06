@@ -85,6 +85,8 @@ export type BuddyMood =
   | "love"
   | "cool"
   | "dizzy"
-  | "sad";
+  | "sad"
+  /** Colgado con los brazos arriba (paracaídas). */
+  | "hang";
 
 export type FaqEntry = { q: string; a: string };

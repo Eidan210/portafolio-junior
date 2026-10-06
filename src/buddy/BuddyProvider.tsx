@@ -11,6 +11,8 @@
  *  - muted     silencia los comentarios automáticos; lo pedido por el usuario
  *              (clic en un botón) siempre se muestra.
  *  - minimized Buddy duerme en una píldora; no habla solo.
+ *  - intro     intro de escritorio a pantalla completa: "play" (telón arriba),
+ *              "reveal" (Clawd vuela al hero y el contenido aparece), "done".
  *
  * Los componentes solo llaman acciones; el texto sale de `data/buddy-script`.
  */
@@ -38,10 +40,14 @@ export type BuddyView =
 
 type Stage = "hero" | "hud";
 export type RouteMode = "lanes" | "track";
+export type IntroPhase = "play" | "reveal" | "done";
 /** Rectángulo (viewport) del Clawd del hero en el momento de saltar a la ruta. */
 export type LaunchRect = { x: number; y: number; w: number; h: number };
 /** Lleva al visitante hasta `top` (px de scroll) con Clawd caminando y la cámara siguiéndole. */
 export type Guide = (top: number) => void;
+
+/** Intro a pantalla completa: escritorio con ratón (el hero va a dos columnas desde lg). */
+const DESKTOP_INTRO = "(min-width: 1024px) and (pointer: fine)";
 
 type BuddyContextValue = {
   stage: Stage;
@@ -72,6 +78,8 @@ type BuddyContextValue = {
   setMuted: (v: boolean) => void;
   setMinimized: (v: boolean) => void;
   scrollTo: (id: string) => void;
+  intro: IntroPhase;
+  setIntro: (phase: IntroPhase) => void;
   /** La ruta de carriles registra aquí su guiado; sin él, `scrollTo` usa un scroll con easing. */
   registerGuide: (guide: Guide | null) => void;
 };
@@ -127,6 +135,10 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
   const systemReduced = useMediaQuery("(prefers-reduced-motion: reduce)");
   const [fullMotion, setFullMotionState] = useState(() => readPref("buddy.fullMotion", false));
   const reducedMotion = systemReduced && !fullMotion;
+  // Se decide una vez al cargar. Con #seccion en la URL el navegador salta allí y el hero ni se ve.
+  const [intro, setIntro] = useState<IntroPhase>(() =>
+    !reducedMotion && window.matchMedia(DESKTOP_INTRO).matches && (!location.hash || location.hash === "#inicio") ? "play" : "done",
+  );
   const wide = useMediaQuery("(min-width: 1280px)");
   const routeMode: RouteMode = wide && !reducedMotion ? "lanes" : "track";
   const reducedRef = useRef(reducedMotion);
@@ -194,6 +206,8 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
   const dock = useCallback((from?: LaunchRect | null) => {
     launchRef.current = from ?? null;
     setStage("hud");
+    // Acoplarse siempre cierra la intro (p. ej. el navegador restauró el scroll a mitad de página).
+    setIntro("done");
   }, []);
 
   const consumeLaunch = useCallback(() => {
@@ -362,6 +376,8 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
       setMuted,
       setMinimized,
       scrollTo,
+      intro,
+      setIntro,
       registerGuide,
     }),
     [
@@ -389,6 +405,7 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
       setMuted,
       setMinimized,
       scrollTo,
+      intro,
       registerGuide,
     ],
   );

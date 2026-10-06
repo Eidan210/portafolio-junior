@@ -34,11 +34,13 @@ function ProfileCard() {
 }
 
 export function Hero() {
-  const { stage } = useBuddy();
+  const { stage, intro } = useBuddy();
   const reduce = useReducedMotionConfig();
+  const hidden = { opacity: 0, y: reduce ? 0 : 24 };
+  // Con la intro de escritorio en pantalla el texto espera: aparece mientras Clawd vuela hacia aquí.
   const rise = (delay: number) => ({
-    initial: { opacity: 0, y: reduce ? 0 : 24 },
-    animate: { opacity: 1, y: 0 },
+    initial: hidden,
+    animate: intro === "play" ? hidden : { opacity: 1, y: 0 },
     transition: { duration: 0.8, delay, ease },
   });
 

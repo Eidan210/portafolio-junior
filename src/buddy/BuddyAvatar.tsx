@@ -53,6 +53,7 @@ const SEQUENCES: Record<BuddyMood, { frames: readonly Frame[]; ms: number }> = {
   cool: { frames: ["clawd-sunglasses"], ms: 1000 },
   dizzy: { frames: ["clawd-dizzy"], ms: 1000 },
   sad: { frames: ["clawd-sad"], ms: 1000 },
+  hang: { frames: ["clawd-hands-up"], ms: 1000 },
 };
 
 const WALK_FRAME = {
@@ -76,6 +77,7 @@ export const AURA: Record<BuddyMood, string> = {
   cool: "#6a9bcc",
   dizzy: "#d4a27f",
   sad: "#5e5d59",
+  hang: "#eba487",
 };
 
 const src = (f: Frame) => `${import.meta.env.BASE_URL}clawd/${f}.png`;
