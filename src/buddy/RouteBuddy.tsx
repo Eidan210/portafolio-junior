@@ -39,6 +39,8 @@ import type { BuddyMood } from "@/lib/types";
 const ANCHOR = 0.72;
 /** Recorrido de un solo viaje a partir del cual llega mareado. */
 const DIZZY_AFTER = 2600;
+/** Últimos px de scroll en los que el ancla se estira para alcanzar la meta (ver `anchorPy`). */
+const BOTTOM_RAMP = 400;
 /** Rigidez (rad/s) del muelle con el que la cámara del guiado sigue a Clawd: ~0.12 s de retardo. */
 const CAMERA_STIFFNESS = 16;
 /** Polvo al frenar tras un viaje largo. */
@@ -47,7 +49,7 @@ const DUST = { count: 8, spread: 36, size: 5, colors: ["#e8e6dc", "#b0aea5"], up
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
-type Geo = { route: Route; width: number; height: number; size: number; mainTop: number };
+type Geo = { route: Route; width: number; height: number; size: number; mainTop: number; maxScroll: number };
 
 function RouteLayer() {
   const { mood, view, muted, toggleMenu, visit, visited, consumeLaunch, registerGuide } = useBuddy();
@@ -102,7 +104,8 @@ function RouteLayer() {
       const size = clamp(laneWidth * 0.74, 112, 168);
       const amp = clamp((laneWidth - size) / 2 - 4, 6, 56);
       const route = buildRoute(boxes, { left: contentLeft / 2, right: contentRight + (mainRect.width - contentRight) / 2, amp }, window.innerHeight * ANCHOR);
-      setGeo(route ? { route, width: mainRect.width, height: mainRect.height, size, mainTop: mainRect.top + window.scrollY } : null);
+      const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      setGeo(route ? { route, width: mainRect.width, height: mainRect.height, size, mainTop: mainRect.top + window.scrollY, maxScroll } : null);
     };
     build();
     const rebuild = () => {
@@ -127,12 +130,18 @@ function RouteLayer() {
     const fxRoot = fxRootRef.current;
     const el = actor.current;
     if (!geo || !walker || !rotor || !fxRoot || !el) return;
-    const { route, size, mainTop } = geo;
+    const { route, size, mainTop, maxScroll } = geo;
     const fx = new FxLayer(fxRoot);
     const reached = new Set<number>();
 
+    // Altura de ruta que corresponde a un scroll. Con viewports altos el ancla del final de la
+    // página se queda por debajo de la meta (en 1864×983 faltaban 22 px: ni bandera ni confeti),
+    // así que en los últimos BOTTOM_RAMP px de scroll se estira hasta alcanzarla.
     const vhAnchor = window.innerHeight * ANCHOR;
-    const targetLen = () => lengthAtY(route, window.scrollY - mainTop + vhAnchor);
+    const shortfall = Math.max(0, route.ymax[route.ymax.length - 1]! - (maxScroll - mainTop + vhAnchor));
+    const anchorPy = (scroll: number) =>
+      scroll - mainTop + vhAnchor + shortfall * clamp((scroll - (maxScroll - BOTTOM_RAMP)) / BOTTOM_RAMP, 0, 1);
+    const targetLen = () => lengthAtY(route, anchorPy(window.scrollY));
     let cur = targetLen();
     let target = cur;
     let p = sampleAt(route, cur);
@@ -272,7 +281,7 @@ function RouteLayer() {
       trip = 0;
       const camera = (l: number) => anchorYAt(route, l) + mainTop - vhAnchor;
       const from = cur;
-      const to = lengthAtY(route, top - mainTop + vhAnchor);
+      const to = lengthAtY(route, anchorPy(top));
       if (Math.abs(to - from) < 2) {
         animateScroll(top);
         return;
