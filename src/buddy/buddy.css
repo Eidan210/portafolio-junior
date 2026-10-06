@@ -1,0 +1,169 @@
+/*
+ * Animaciones de Buddy (Clawd). Solo transform/opacity; la regla global de
+ * prefers-reduced-motion las congela todas.
+ */
+@layer components {
+  /* Pixel art nítido + contorno claro para que los acentos negros se lean sobre fondo oscuro. */
+  .clawd-img {
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 1px rgb(255 255 255 / 0.95)) drop-shadow(0 0 1px rgb(255 255 255 / 0.6))
+      drop-shadow(0 10px 18px rgb(0 0 0 / 0.45));
+  }
+
+  .clawd-aura {
+    background: radial-gradient(circle, color-mix(in srgb, var(--aura) 55%, transparent), transparent 65%);
+    animation: clawd-pulse 3.6s ease-in-out infinite;
+    transition: background 0.4s ease;
+  }
+
+  .clawd-shadow {
+    animation: clawd-shadow 2.4s ease-in-out infinite;
+  }
+
+  /* Reposo: flota con un leve squash, como respirando. */
+  .clawd-bob {
+    transform-origin: 50% 100%;
+    animation: clawd-bob 2.4s ease-in-out infinite;
+  }
+
+  .clawd-breathe {
+    transform-origin: 50% 100%;
+    animation: clawd-breathe 3.2s ease-in-out infinite;
+  }
+
+  /* Caminando: saltitos en pasos discretos, coherentes con el pixel art. */
+  .clawd-walk {
+    transform-origin: 50% 100%;
+    animation: clawd-walk 0.36s steps(2, jump-none) infinite;
+  }
+
+  /* Burbuja de diálogo: vidrio más denso para que el texto largo se lea bien. */
+  .buddy-bubble {
+    --glass-bg: rgb(31 30 28 / 0.84);
+    --glass-bg-strong: rgb(44 42 38 / 0.9);
+  }
+
+  .typing-caret {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    margin-left: 2px;
+    vertical-align: -0.15em;
+    background: var(--color-claude);
+    animation: caret 0.9s steps(1) infinite;
+  }
+
+  /* Ruta: trazo punteado que "fluye" y estaciones que se encienden al llegar. */
+  .route-dash {
+    animation: route-flow 1.6s linear infinite;
+  }
+}
+
+@keyframes clawd-bob {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  50% { transform: translateY(-7%) scale(0.98, 1.02); }
+}
+
+@keyframes clawd-breathe {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.03, 0.97); }
+}
+
+@keyframes clawd-walk {
+  0% { transform: translateY(0) rotate(-4deg); }
+  100% { transform: translateY(-9%) rotate(4deg); }
+}
+
+@keyframes clawd-shadow {
+  0%, 100% { transform: translateX(-50%) scaleX(1); opacity: 0.45; }
+  50% { transform: translateX(-50%) scaleX(0.8); opacity: 0.25; }
+}
+
+@keyframes clawd-pulse {
+  0%, 100% { transform: scale(0.92); opacity: 0.75; }
+  50% { transform: scale(1.04); opacity: 1; }
+}
+
+@keyframes route-flow {
+  to { stroke-dashoffset: -24; }
+}
+
+@keyframes caret {
+  50% { opacity: 0; }
+}
+
+/* ── Ruta: paradas, chispas coleccionables y meta ─────────────────────── */
+@layer components {
+  .route-dot {
+    display: block;
+    width: 14px;
+    height: 14px;
+    background: var(--color-ink-3);
+    box-shadow: inset 0 0 0 2px rgb(232 230 220 / 0.35);
+    clip-path: var(--pixel-corners);
+    transition: background 0.4s ease, box-shadow 0.4s ease;
+  }
+
+  .route-dot.is-done {
+    background: var(--color-claude);
+    box-shadow: inset 0 0 0 2px rgb(250 249 245 / 0.5);
+  }
+
+  .station-label {
+    padding: 0.15rem 0.5rem;
+    font-family: var(--font-pixel);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    color: var(--color-sand);
+    background: rgb(20 20 19 / 0.82);
+    border: 1px solid rgb(232 230 220 / 0.12);
+    border-radius: 6px;
+    transition: color 0.4s ease, border-color 0.4s ease;
+  }
+
+  .station-label.is-done {
+    color: var(--color-claude-light);
+    border-color: rgb(217 119 87 / 0.45);
+  }
+
+  /* La chispa flota y titila hasta que Clawd la recoge. */
+  .route-spark {
+    animation: spark-bob 1.8s ease-in-out infinite;
+    filter: drop-shadow(0 0 6px rgb(217 119 87 / 0.7));
+  }
+
+  .flag-wave {
+    transform-box: fill-box;
+    transform-origin: 0% 50%;
+    animation: flag-wave 1.6s ease-in-out infinite;
+  }
+
+  .flag-wave-fast {
+    animation-duration: 0.5s;
+  }
+
+  /* Paradas de la barra móvil (el botón contenedor da el área táctil de 44 px: clip-path recorta el hit-test). */
+  .track-stop {
+    color: var(--color-sand);
+    background: var(--color-ink-3);
+    box-shadow: inset 0 0 0 2px rgb(232 230 220 / 0.3);
+    clip-path: var(--pixel-corners);
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  .track-stop.is-done {
+    color: var(--color-ink);
+    background: var(--color-claude);
+  }
+}
+
+@keyframes spark-bob {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-6px) scale(1.12); }
+}
+
+@keyframes flag-wave {
+  0%, 100% { transform: skewY(0deg) scaleX(1); }
+  50% { transform: skewY(-8deg) scaleX(0.92); }
+}

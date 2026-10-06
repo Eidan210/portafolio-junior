@@ -1,188 +1,95 @@
-# Portafolio — Eidan Cuadros
+# Portafolio Buddy — Eidan Alexander Carreño
 
-Portafolio personal de **Eidan Cuadros**, Junior Software Developer y Apprentice de Desarrollo de
-Software en **Campuslands**. Sitio *one-page* construido con HTML5, CSS3 y JavaScript puro, sin
-frameworks, librerías ni dependencias externas.
+Portafolio one-page con la paleta de Anthropic, estética glass + pixel art y una mascota guía, **Buddy** (Clawd). Buddy entra en escena con una de tres animaciones, salta a una ruta que recorre toda la página siguiendo el scroll, recoge una chispa por sección, comenta lo que hay y explica proyectos y tecnologías.
 
-> Link Portafolio: https://eidan210.github.io/portafolio-junior/
+**En vivo:** https://eidan210.github.io/portafolio-junior/
 
----
+**Stack:** Vite 8 · React 19 · TypeScript estricto · Tailwind CSS v4 · Motion 14 · Lucide. Sin backend.
 
-## Stack
-
-| Capa | Tecnología | Detalle |
-|------|-----------|---------|
-| Estructura | **HTML5 semántico** | `header`, `nav`, `main`, `section`, `article`, `aside`, `footer` |
-| Estilos | **CSS3 puro** | Variables custom, Grid, Flexbox, `clamp()`, `backdrop-filter`, 3D (`preserve-3d`) |
-| Tipografía | **SF Pro / Inter** | SF Pro del sistema en Apple; Inter variable self-hosted en el resto |
-| Comportamiento | **JavaScript ES6+** | Sin dependencias; render dinámico, IntersectionObserver |
-| Iconografía | **SVG inline** | Cero archivos de imagen, cero peticiones extra |
-
-**Dependencias externas: ninguna.** Ni CDN, ni fuentes remotas, ni frameworks. El sitio completo son
-tres archivos que funcionan abriendo `index.html`.
-
----
-
-## Estructura del proyecto
-
-```
-.
-├── index.html              -> Estructura semántica y contenido
-├── styles.css              -> Sistema de diseño completo (variables + layout)
-├── main.js                 -> Datos de proyectos, render e interacciones
-└── README.md               -> Este archivo
-```
-
-Los tres archivos viven en la **raíz del repositorio** justamente para que GitHub Pages funcione
-sin configuración adicional ni paso de build.
-
----
-
-## Criterios de evaluación cubiertos
-
-### 1. Diagramación semántica
-
-- Un único `<h1>` (nombre en el hero), `<h2>` por sección y `<h3>` en tarjetas de proyecto y stack.
-- Cada `<section>` tiene `id` y `aria-labelledby` apuntando a su propio título.
-- Las tarjetas de proyecto son `<article>`; la nota de conocimientos complementarios es un `<aside>`.
-- Enlaces externos con `rel="noopener noreferrer"` y `aria-label` descriptivo.
-- Enlace *skip to content* para navegación por teclado.
-
-### 2. Contraste y paleta (WCAG AA)
-
-Estilo de cristal esmerilado a la manera de Apple: superficies translúcidas con `backdrop-filter`,
-filo de luz superior, sombras en capas y una paleta sobria de tres tonos, **azul acero, plata y
-dorado champán**, que comparten la interfaz y la lluvia de fondo. Como el cristal deja pasar lo que
-hay detrás, el contraste se midió sobre el **peor fondo real**: una tarjeta en hover encima del halo
-azul ambiental (`#252E3E`). Todos los pares superan el mínimo AA de **4.5:1**:
-
-| Token | Color | Sobre `--bg` | Peor fondo | Estado |
-|-------|-------|--------------|------------|--------|
-| `--text` | `#F5F5F7` | 18.60:1 | 12.31:1 | AAA |
-| `--text-dim` | `#A1A1A6` | 7.87:1 | 5.21:1 | AA |
-| `--text-faint` | `#98989E` | 7.06:1 | 4.67:1 | AA |
-| `--accent` (azul acero) | `#A7C0E6` | 10.92:1 | 7.36:1 | AAA |
-| `--gold-text` (dorado) | `#DCC08A` | 11.52:1 | 7.76:1 | AAA |
-| `--silver` (plata) | `#C8CDD6` | 12.69:1 | 8.55:1 | AAA |
-| Botón primario | `#05060A` sobre `#E3E5EC` | 16.09:1 | — | AAA |
-
-- El texto siempre va en color sólido. El degradado metálico azul → plata → oro (`--sheen`) solo
-  pinta filos, líneas y barras.
-- Verde, ámbar y rojo quedan fuera de la paleta a propósito: solo marcan estados reales
-  (disponible o correcto, aviso, error).
-- Si el sistema pide **reducir la transparencia** (`prefers-reduced-transparency`), el cristal pasa
-  a superficies sólidas; sin soporte de `backdrop-filter`, las superficies suben su opacidad.
-
-Estados `:hover` y `:focus-visible` explícitos en todos los elementos interactivos.
-
-### 3. Responsive (mobile-first real)
-
-Los estilos base son los de móvil; los breakpoints solo **añaden** complejidad hacia arriba:
-
-| Rango | Breakpoint | Layout |
-|-------|-----------|--------|
-| Móvil | `< 641px` | Una columna, nav hamburguesa |
-| Tablet | `641px – 1024px` | Dos columnas en stack, contacto y módulos |
-| Desktop | `≥ 1025px` | Hero a dos columnas, nav horizontal, grids de 2–3 |
-
-- Tipografía fluida con `clamp()` y unidades relativas (`rem`, `ch`).
-- **Sin desbordamiento horizontal:** `overflow-x: clip` en `body` (para no anular `scroll-behavior: smooth`) y los bloques de código
-  llevan su propio `overflow-x: auto`.
-
-### 4. Rendimiento
-
-- **Cero imágenes.** Todos los iconos son SVG inline, así que no hay peticiones de red adicionales
-  ni necesidad de `loading="lazy"` / `width` / `height` (no existe ningún `<img>` ni `<video>`).
-- Cero JavaScript de terceros; el script propio pesa unos pocos KB.
-- Favicon embebido como data URI SVG.
-- Animaciones vía `transform`/`opacity` y desactivadas con `prefers-reduced-motion`.
-
-### 5. Navegabilidad
-
-- Header **fijo** con `backdrop-filter`, que marca su borde al hacer scroll.
-- Anclas suaves a `#inicio`, `#sobre-mi`, `#habilidades`, `#proyectos` y `#contacto`, con
-  `scroll-behavior: smooth` en CSS **y** refuerzo en JS que descuenta la altura del header
-  y devuelve el foco de teclado a la sección destino.
-- Scrollspy con `IntersectionObserver` que resalta la sección activa.
-- Menú móvil accesible: `aria-expanded`, cierre con `Escape` y al navegar.
-
-### 6. Contenido generado con Antigravity (agy)
-
-La selección de proyectos se hizo con **Antigravity CLI**, analizando el resumen de repositorios:
+## Comandos
 
 ```bash
-agy -p "Lee el resumen de repositorios. Extrae los 3 o 4 proyectos más sólidos
-que demuestren Python, JavaScript y HTML/CSS. Devuelve un JSON limpio con:
-nombre, tecnologias, descripcion_corta, enlace_repo, demo_url."
+npm install
+npm run dev        # http://localhost:5173
+npm run build      # typecheck + build estático en dist/
+npm run preview    # sirve dist/
 ```
 
-El JSON resultante alimenta el array `PROJECTS` de `main.js`, que renderiza las tarjetas de
-`#proyectos` de forma dinámica.
+### Despliegue
 
-**Nota de verificación:** la salida de agy se contrastó contra el código real de cada repositorio
-vía la API de GitHub antes de publicarla. En una de las pasadas, agy describió `CampusTech-V2.0`
-como un sistema de seguimiento académico cuando en realidad gestiona inventario de productos
-tecnológicos. El copy del sitio refleja el código real, no la inferencia del modelo.
+`.github/workflows/deploy.yml` compila en cada pull request (check de CI) y, al fusionar en `main`, publica `dist/` en GitHub Pages (origen de Pages: **GitHub Actions**). `base: "./"` deja las rutas relativas, así que el mismo build sirve en el subpath `/portafolio-junior/` o en un dominio propio.
 
----
+Se conservan las URL públicas del sitio anterior: `cv/CV-Eidan-Carreno.pdf` y `img/og-image.png`. La versión estática anterior (HTML, CSS y JS) queda en el tag [`v1-estatico`](https://github.com/Eidan210/portafolio-junior/tree/v1-estatico).
 
-## Metodología de trabajo
+## Arquitectura
 
-- **Entrega iterativa:** cada módulo de la formación se cierra con una aplicación funcional, no con
-  teoría. Los proyectos del portafolio salieron de esas entregas.
-- **Refactorización sobre versiones previas:** `CampusTech v2.0` y el gestor de gastos modular
-  (`Moneda`, seis módulos) son reescrituras de una primera versión más simple.
-- **Control de versiones disciplinado:** commits atómicos siguiendo
-  [Conventional Commits](https://www.conventionalcommits.org/), un repositorio por entregable.
-- **Fundamentos de Scrum y metodologías ágiles** vistos en formación (roles, ceremonias y trabajo
-  por iteraciones), actualmente en profundización.
-
----
-
-## Ejecutar en local
-
-No requiere instalación ni build. Basta con abrir `index.html` en el navegador.
-
-Para servirlo por HTTP (recomendado, evita restricciones de `file://`):
-
-```bash
-python -m http.server 8000
-# luego abre http://localhost:8000
+```
+src/
+  data/                   ← único sitio donde se edita contenido
+    profile.ts            Perfil, filosofía, trayectoria (fuente: CV + Portafolio v3)
+    projects.ts           Proyectos + bloque `buddy` (reto / arquitectura / opinión)
+    skills.ts             14 tecnologías (del portafolio original) con papel, evidencia y capacidades
+    buddy-script.ts       Todo lo que dice Buddy: bienvenida, tour, FAQ, secciones, "Sorpréndeme", meta
+  buddy/
+    BuddyProvider.tsx     Estado: hero→ruta, vista, mood, tour, narración, paradas visitadas, movimiento
+    BuddyAvatar.tsx       Clawd: secuencias de fotogramas PNG por ánimo + fotograma por dirección
+    HeroBuddy.tsx         3 entradas rotativas (ensamblado / caída / teletransporte) + bienvenida
+    PixelAssemble.tsx     Partículas que forman a Clawd desde los pixeles reales del PNG
+    route-geometry.ts     Geometría pura de la ruta (onda, zigzag, saltos, cruces con voltereta)
+    RouteBuddy.tsx        Ruta de carriles (escritorio ≥ 1280 px): caminata, huellas, estela, chispas, meta
+    RouteTrack.tsx        Ruta en barra inferior (móvil, tablet o movimiento reducido)
+    fx.ts                 Pools DOM + Web Animations: huellas, estela, ráfagas, confeti
+    BuddyBubble.tsx       Burbuja con controles (silenciar, minimizar, cerrar)
+    BuddyPanel.tsx        Vistas de la burbuja: hub del menú, FAQ, proyectos, tour, contacto
+    BuddyHUD.tsx          Región aria-live + píldora minimizada + barra de ruta
+    stations.ts · pixel-props.tsx · Typewriter.tsx · buddy.css
+  components/
+    PixelField.tsx        Fondo animado en canvas: brasas, estrellas, cometas, cuadrícula reactiva al cursor
+    Skills.tsx            Stack como inventario con filtros y evidencia
+    Nav · Hero · About · Projects · Contact · Background · TechIcon · interactive · icons
+  lib/                    types.ts (contratos), hooks.ts, storage.ts
+  styles/globals.css      Tokens (paleta Anthropic), vidrio, pixel-corners, reduced-motion
+public/clawd/             20 fotogramas de Clawd (Icons8)
 ```
 
-O con la extensión **Live Server** de VS Code: clic derecho en `index.html` → *Open with Live Server*.
+## Diseño
 
----
+- **Paleta de Anthropic:** Dark `#141413`, Light `#faf9f5`, Orange `#d97757`, Blue `#6a9bcc`, Green `#788c5d`, grises `#b0aea5` / `#e8e6dc`. Los tokens son semánticos (`claude`, `sky`, `olive`, `sand`, `stone`). El texto naranja pequeño usa `claude-light` por contraste (ver la nota medida en `globals.css`).
+- **Tipografía:** Plus Jakarta Sans para títulos, Inter para el texto y Silkscreen solo para micro-etiquetas pixel (paradas, badges, contadores; mínimo 12 px). Se descartó Pixelify Sans: a ese tamaño convertía "02" en "08".
+- **Fondo:** orbes CSS de la paleta + un canvas con brasas pixel que suben con parallax, estrellas de 4 puntas que titilan, cometas ocasionales y una cuadrícula que se enciende bajo el cursor. Se pausa con la pestaña oculta.
 
-## Activar GitHub Pages
+## Buddy
 
-El repositorio ya está listo para desplegarse sin pasos intermedios: los archivos están en la raíz
-y no hay proceso de build.
+1. **Entrada:** cada visita estrena una de tres, rotando con `localStorage`:
+   - **Ensamblado:** los pixeles reales del PNG vuelan hasta formarlo.
+   - **Caída:** estirado al caer, aplastado al aterrizar, con polvo y temblor.
+   - **Teletransporte:** un haz con scanlines lo materializa de arriba abajo.
+2. **Salto a la ruta:** al elegir tour o explorar, se mide el Clawd del hero y la ruta lo hace saltar en arco con voltereta desde ahí.
+3. **Ruta de escritorio:** un tramo por sección, alternando carril, con estilos distintos (onda, zigzag, saltos rebotando) y cruces en arco por el hueco entre secciones, donde da una voltereta.
+   - **Caminata:** el scroll fija un objetivo al 72 % del viewport y Clawd avanza *por el camino*: corre lejos, camina cerca y nunca queda parado en mitad de un cruce.
+   - **Efectos:** deja huellas y estela, recoge una chispa por parada, se marea tras viajes largos, hace travesuras en reposo, mira hacia el cursor y celebra en la meta con confeti.
+4. **Ruta móvil:** barra inferior con las 5 paradas. Clawd camina según el avance de lectura; tocar una parada lleva a su sección. Se oculta mientras escribes en el formulario.
+5. **Menú (clic en Clawd):** hub con el progreso de la ruta, tour, FAQ, skills, proyectos, contacto, "Sorpréndeme" y preferencias.
+6. **Nav:** cada enlace es una parada numerada que se marca al visitarla, con pill de hover, modo compacto y una vía de progreso de lectura por la que camina un mini Clawd.
 
-1. El repositorio debe ser **público** (GitHub Pages requiere plan de pago para repos privados).
-   ```bash
-   gh repo edit --visibility public
-   ```
-2. En GitHub: **Settings → Pages**.
-3. En *Source*, elige **Deploy from a branch**.
-4. Selecciona la rama **`main`** y la carpeta **`/ (root)`**. Guarda.
-5. En un par de minutos el sitio queda publicado en:
-   `https://eidan210.github.io/<nombre-del-repositorio>/`
+### Decisiones
 
-También desde la terminal:
+| Decisión | Por qué |
+|---|---|
+| Ruta como polilínea calculada en JS, no `getPointAtLength` | Permite formas arbitrarias (saltos, arcos) y colocar a Clawd antes del primer paint, que el salto desde el hero necesita. |
+| Búsqueda por `ymax` (máximo acumulado de y) | Los saltos y arcos hacen la ruta no monótona en y; el máximo acumulado sí lo es y admite búsqueda binaria. |
+| rAF que escribe `transform`; React solo recibe cambios de dirección | 60 fps sin re-render por frame. |
+| Efectos con pools DOM + Web Animations API | Cero nodos nuevos y cero renders por huella, chispa o confeti. |
+| Clawd self-hosted, no hotlink | Sin dependencia del CDN de Icons8; los fotogramas se precargan. |
+| Contacto vía `mailto:` | Ningún tercero recibe datos del visitante. |
 
-```bash
-gh api -X POST repos/Eidan210/<repo>/pages -f source[branch]=main -f source[path]=/
-```
+## Accesibilidad y movimiento
 
----
+- Por defecto se respeta `prefers-reduced-motion`: sin animaciones, con la ruta en barra y Clawd saltando sin caminar. El interruptor **"Animaciones completas"** (bienvenida y menú) lo anula a elección del visitante y lo aplica en tres capas: `MotionConfig`, la clase `html.motion-ok` y el modo de ruta.
+- Silenciar comentarios automáticos y minimizar a Buddy, ambos persistidos.
+- Una sola región `aria-live`. `Escape` cierra la burbuja.
+- Filtros con `aria-pressed` y resultado anunciado. Paradas con etiquetas descriptivas y áreas táctiles de 44 px.
 
-## Pendientes
+## Créditos
 
-- [ ] Activar GitHub Pages en los repositorios de los proyectos y rellenar `demo_url` en `main.js`
-      (el botón "Ver demo" aparece automáticamente cuando el campo tiene una URL).
-- [ ] Añadir descripciones y topics a los repositorios enlazados desde el portafolio.
-
----
-
-Construido con HTML, CSS y JavaScript puro.
+Ilustraciones de Clawd: [Icons by Icons8](https://icons8.com/icons/set/anthropic-claude-icon); la licencia gratuita exige este enlace, que está en el footer. Clawd es la mascota de Claude (Anthropic). Logos de tecnologías: Simple Icons y Devicon.
