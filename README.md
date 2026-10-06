@@ -1,6 +1,6 @@
 # Portafolio Buddy — Eidan Alexander Carreño
 
-Portafolio one-page con la paleta de Anthropic, estética glass + pixel art y una mascota guía, **Buddy** (Clawd). Buddy entra en escena con una de tres animaciones, salta a una ruta que recorre toda la página siguiendo el scroll, recoge una chispa por sección, comenta lo que hay y explica proyectos y tecnologías.
+Portafolio one-page con la paleta de Anthropic, estética glass + pixel art y una mascota guía, **Buddy** (Clawd). Buddy entra en escena (en escritorio, a pantalla completa con una de seis coreografías; en móvil, con una de cinco), salta a una ruta que recorre toda la página siguiendo el scroll, recoge una chispa por sección, comenta lo que hay y explica proyectos y tecnologías.
 
 **En vivo:** https://eidan210.github.io/portafolio-junior/
 
@@ -33,8 +33,10 @@ src/
   buddy/
     BuddyProvider.tsx     Estado: hero→ruta, vista, mood, tour, narración, paradas visitadas, movimiento
     BuddyAvatar.tsx       Clawd: secuencias de fotogramas PNG por ánimo + fotograma por dirección
-    HeroBuddy.tsx         3 entradas rotativas (ensamblado / caída / teletransporte) + bienvenida
-    PixelAssemble.tsx     Partículas que forman a Clawd desde los pixeles reales del PNG
+    HeroBuddy.tsx         Bienvenida: burbuja, tour/explorar y salto a la ruta
+    ClawdEntrance.tsx     Entradas: ensamblado, caída, teletransporte, lluvia, paracaídas, hiperespacio (a pantalla o en el hueco)
+    IntroStage.tsx        Intro a pantalla completa: entrada gigante, "¡HOLA!" y vuelo al hero
+    PixelAssemble.tsx     Partículas que forman a Clawd desde los pixeles reales del PNG (dispersos o en lluvia, local o a pantalla completa)
     route-geometry.ts     Geometría pura de la ruta (onda, zigzag, saltos, cruces con voltereta)
     RouteBuddy.tsx        Ruta de carriles (escritorio ≥ 1280 px): caminata, huellas, estela, chispas, meta
     RouteTrack.tsx        Ruta en barra inferior (móvil, tablet o movimiento reducido)
@@ -46,8 +48,9 @@ src/
   components/
     PixelField.tsx        Fondo animado en canvas: brasas, estrellas, cometas, cuadrícula reactiva al cursor
     Skills.tsx            Stack como inventario con filtros y evidencia
+    ProfileCode.tsx       Ficha `eidan.ts`: el perfil como archivo TypeScript en un editor
     Nav · Hero · About · Projects · Contact · Background · TechIcon · interactive · icons
-  lib/                    types.ts (contratos), hooks.ts, storage.ts
+  lib/                    types.ts (contratos), hooks.ts, storage.ts, scroll.ts (scroll con easing cancelable)
   styles/globals.css      Tokens (paleta Anthropic), vidrio, pixel-corners, reduced-motion
 public/clawd/             20 fotogramas de Clawd (Icons8)
 ```
@@ -60,17 +63,22 @@ public/clawd/             20 fotogramas de Clawd (Icons8)
 
 ## Buddy
 
-1. **Entrada:** cada visita estrena una de tres, rotando con `localStorage`:
+1. **Entrada:** cada visita estrena otra, rotando con `localStorage` (por plataforma). Con `?entrada=` se fuerza una: `ensamblado`, `caida`, `teletransporte`, `lluvia`, `paracaidas` o `hiperespacio`.
    - **Ensamblado:** los pixeles reales del PNG vuelan hasta formarlo.
-   - **Caída:** estirado al caer, aplastado al aterrizar, con polvo y temblor.
+   - **Caída:** estirado al caer, aplastado al aterrizar, con polvo y temblor (de pantalla, en escritorio).
    - **Teletransporte:** un haz con scanlines lo materializa de arriba abajo.
+   - **Lluvia:** bloques estilo Tetris que caen en columna y rebotan, fila a fila de los pies a la cabeza.
+   - **Paracaídas:** baja balanceándose bajo una cúpula pixel y la suelta al aterrizar.
+   - **Hiperespacio** (solo escritorio): estrellas que salen disparadas del centro mientras Clawd llega en espiral desde el fondo.
+   - **Escritorio (≥ 1024 px con ratón):** todo ocurre a pantalla completa con un Clawd gigante, que después saluda con un globo "¡HOLA!" y vuela en arco con voltereta hasta su sitio del hero mientras aparece el contenido. Cualquier tecla, clic o rueda la salta.
 2. **Salto a la ruta:** al elegir tour o explorar, se mide el Clawd del hero y la ruta lo hace saltar en arco con voltereta desde ahí.
 3. **Ruta de escritorio:** un tramo por sección, alternando carril, con estilos distintos (onda, zigzag, saltos rebotando) y cruces en arco por el hueco entre secciones, donde da una voltereta.
-   - **Caminata:** el scroll fija un objetivo al 72 % del viewport y Clawd avanza *por el camino*: corre lejos, camina cerca y nunca queda parado en mitad de un cruce.
+   - **Caminata:** el scroll fija un objetivo al 72 % del viewport y Clawd avanza *por el camino*: corre lejos, camina cerca y nunca queda parado en mitad de un cruce. Al final de la página el ancla se estira en los últimos 400 px de scroll: en viewports altos se quedaba corta y Clawd no llegaba a la meta (ni bandera ni confeti).
    - **Efectos:** deja huellas y estela, recoge una chispa por parada, se marea tras viajes largos, hace travesuras en reposo, mira hacia el cursor y celebra en la meta con confeti.
-4. **Ruta móvil:** barra inferior con las 5 paradas. Clawd camina según el avance de lectura; tocar una parada lleva a su sección. Se oculta mientras escribes en el formulario.
+   - **Guiado (tour y botones de Buddy):** se invierte la relación. Clawd camina a su ritmo hasta la sección y la cámara le sigue con un muelle amortiguado. El tiempo se reparte por "esfuerzo": los cruces pesan poco, así que los salta de una voltereta y la página no se queda parada. Rueda, toque, tecla o clic devuelven el control al visitante.
+4. **Ruta móvil:** barra inferior con las 5 paradas. Clawd camina según el avance de lectura; tocar una parada lleva a su sección con un scroll con easing. Se oculta mientras escribes en el formulario.
 5. **Menú (clic en Clawd):** hub con el progreso de la ruta, tour, FAQ, skills, proyectos, contacto, "Sorpréndeme" y preferencias.
-6. **Nav:** cada enlace es una parada numerada que se marca al visitarla, con pill de hover, modo compacto y una vía de progreso de lectura por la que camina un mini Clawd.
+6. **Nav:** cada enlace es una parada numerada que se marca al visitarla, con pill de hover y modo compacto. El progreso de lectura es el borde inferior del pill, que se llena; un mini Clawd cuelga de él como en una tirolesa y se balancea con la velocidad del scroll.
 
 ### Decisiones
 
@@ -82,6 +90,8 @@ public/clawd/             20 fotogramas de Clawd (Icons8)
 | Efectos con pools DOM + Web Animations API | Cero nodos nuevos y cero renders por huella, chispa o confeti. |
 | Clawd self-hosted, no hotlink | Sin dependencia del CDN de Icons8; los fotogramas se precargan. |
 | Contacto vía `mailto:` | Ningún tercero recibe datos del visitante. |
+| `-webkit-backdrop-filter` siempre **antes** de `backdrop-filter` | Lightning CSS (minificador del build) trata ambos como la misma propiedad y conserva solo el último. En el orden inverso, producción perdía el estándar y Chrome/Edge pintaban el vidrio sin blur. |
+| Scroll de Buddy propio (`lib/scroll.ts`), no `scrollIntoView` smooth | El smooth nativo es rápido y no se puede sincronizar con Clawd; el propio tiene duración y easing controlados y se cancela si el visitante toma el control. |
 
 ## Accesibilidad y movimiento
 
