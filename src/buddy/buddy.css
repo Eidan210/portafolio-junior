@@ -44,6 +44,12 @@
     --glass-blur: 24px;
   }
 
+  /* Mini Clawd de la tirolesa del nav: contorno fino; la sombra de .clawd-img no escala a 24 px. */
+  .nav-rider {
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 1px rgb(255 255 255 / 0.85)) drop-shadow(0 3px 3px rgb(0 0 0 / 0.5));
+  }
+
   .typing-caret {
     display: inline-block;
     width: 2px;

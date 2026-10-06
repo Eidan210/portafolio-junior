@@ -53,19 +53,23 @@ export function Hero() {
           {profile.availability}
         </motion.p>
 
-        <motion.p {...rise(0.2)} className="eyebrow mb-3">
-          {profile.name} · {profile.role}
+        <motion.p {...rise(0.2)} className="eyebrow mb-2">
+          {profile.role}
         </motion.p>
 
-        <motion.h1 {...rise(0.3)} id="hero-title" className="font-display text-4xl leading-[1.05] font-extrabold tracking-tight text-balance sm:text-6xl lg:text-7xl">
+        <motion.p {...rise(0.25)} className="mb-4 font-display text-2xl font-bold tracking-tight sm:text-3xl">
+          {profile.name}
+        </motion.p>
+
+        <motion.h1 {...rise(0.35)} id="hero-title" className="font-display text-4xl leading-[1.05] font-extrabold tracking-tight text-balance sm:text-6xl lg:text-7xl">
           {profile.headline} <span className="text-gradient">{profile.headlineAccent}</span>
         </motion.h1>
 
-        <motion.p {...rise(0.45)} className="mt-6 max-w-xl text-base leading-relaxed text-muted sm:text-lg">
+        <motion.p {...rise(0.5)} className="mt-6 max-w-xl text-base leading-relaxed text-muted sm:text-lg">
           <strong className="font-semibold text-fg">{profile.tagline}.</strong> {profile.valueProp}
         </motion.p>
 
-        <motion.div {...rise(0.6)} className="mt-8 flex flex-wrap items-center gap-3">
+        <motion.div {...rise(0.65)} className="mt-8 flex flex-wrap items-center gap-3">
           <Magnetic>
             <a href={profile.cv} download className="btn btn-primary">
               <Download className="size-4" aria-hidden="true" /> Descargar CV

@@ -1,9 +1,10 @@
 /**
  * Navegación principal. Cada enlace es una parada de la ruta de Buddy (mismo
  * número que en la ruta, en naranja cuando ya se visitó). En escritorio: pill
- * de hover que sigue al cursor, pill de sección activa, modo compacto al hacer
- * scroll y una barra de progreso de lectura que recorre un mini Clawd mirando
- * hacia donde va el scroll.
+ * de hover que sigue al cursor, pill de sección activa y modo compacto al hacer
+ * scroll. El progreso de lectura es el borde inferior del pill, que se llena;
+ * un mini Clawd viaja colgado de él, como en una tirolesa, y se balancea con la
+ * velocidad del scroll.
  */
 import {
   AnimatePresence,
@@ -19,8 +20,6 @@ import { Check, Download, FolderGit2, Layers, Mail, Menu, UserRound, X } from "l
 import type { LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { profile } from "@/data/profile";
-import { BuddyAvatar } from "@/buddy/BuddyAvatar";
-import type { Direction } from "@/buddy/BuddyAvatar";
 import { useBuddy } from "@/buddy/BuddyProvider";
 import { stationNumber } from "@/buddy/stations";
 import { GitHubIcon } from "@/components/icons";
@@ -34,6 +33,8 @@ const LINKS: readonly { id: SectionId; label: string; icon: LucideIcon }[] = [
 ];
 
 const SPRING = { type: "spring", stiffness: 420, damping: 34 } as const;
+/** Clawd con los brazos arriba: las manos (12 % superior del PNG) se agarran al borde del pill. */
+const RIDER_SRC = `${import.meta.env.BASE_URL}clawd/clawd-hands-up.png`;
 
 export function Nav() {
   const { activeSection, visited } = useBuddy();
@@ -41,40 +42,38 @@ export function Nav() {
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState<SectionId | null>(null);
   const [compact, setCompact] = useState(false);
-  const [riderDir, setRiderDir] = useState<Direction | null>(null);
 
   const { scrollY, scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 220, damping: 32, restDelta: 0.001 });
-  // El envoltorio mide lo mismo que la barra: trasladarlo un % de su propio ancho lo lleva a ese % de la barra.
+  // El envoltorio mide lo mismo que la vía: trasladarlo un % de su propio ancho lo lleva a ese % de la vía.
   const riderX = useTransform(progress, (v) => `${v * 100}%`);
   // En los extremos el mini Clawd taparía el logo o el botón de CV: aparece solo mientras avanza.
   const riderOpacity = useTransform(progress, [0, 0.03, 0.97, 1], [0, 1, 1, 0]);
+  // Péndulo: al avanzar, el cuerpo se queda atrás; al frenar oscila hasta parar (resorte poco amortiguado).
   const velocity = useVelocity(scrollY);
+  const swing = useSpring(useTransform(velocity, [-2400, 0, 2400], [-16, 0, 16]), { stiffness: 140, damping: 7 });
 
   useMotionValueEvent(scrollY, "change", (v) => setCompact(v > 24));
-  useMotionValueEvent(velocity, "change", (v) => {
-    const dir: Direction | null = reduce ? null : v > 40 ? "right" : v < -40 ? "left" : null;
-    setRiderDir((prev) => (prev === dir ? prev : dir));
-  });
 
   return (
     <header className="fixed inset-x-0 top-0 z-40 overflow-x-clip px-3 pt-3 sm:px-6 sm:pt-4">
       <nav
         aria-label="Principal"
-        className={`glass relative mx-auto flex max-w-6xl items-center gap-2 rounded-full pr-2 pl-2.5 transition-[padding,background-color] duration-300 sm:pl-3 ${
-          compact ? "bg-ink/75 py-1.5" : "py-2"
+        className={`glass glass-dense relative mx-auto flex max-w-6xl items-center gap-2 rounded-full pr-2 pl-2.5 transition-[padding,background-color] duration-300 sm:pl-3 ${
+          compact ? "bg-ink/50 py-1.5" : "py-2"
         }`}
       >
-        <a href="#inicio" className="flex items-center gap-2.5 rounded-full pr-2" aria-label="Ir al inicio">
-          <span className="pixel-corners grid size-9 place-items-center bg-claude font-pixel text-sm font-semibold text-ink">EC</span>
-          <span className="hidden leading-tight sm:block">
-            <span className="block font-display text-sm font-bold">{profile.shortName}</span>
-            <span className="hidden text-[0.7rem] text-subtle lg:block">{profile.role}</span>
+        <a href="#inicio" className="flex items-center gap-3 rounded-full pr-2" aria-label="Ir al inicio">
+          <span className="pixel-corners grid size-10 shrink-0 place-items-center bg-claude font-pixel text-sm font-semibold text-ink">EC</span>
+          {/* En md los 4 enlaces ocupan el ancho: solo queda sitio para el badge. */}
+          <span className="hidden leading-tight sm:block md:hidden lg:block">
+            <span className="block font-display text-base font-extrabold tracking-tight lg:text-[1.0625rem]">{profile.shortName}</span>
+            <span className="hidden text-xs text-subtle lg:block">{profile.role}</span>
           </span>
         </a>
 
         <ul className="mx-auto hidden items-center gap-0.5 md:flex" onMouseLeave={() => setHovered(null)}>
-          {LINKS.map(({ id, label, icon: Icon }) => {
+          {LINKS.map(({ id, label }) => {
             const active = activeSection === id;
             const done = visited.includes(id);
             return (
@@ -90,7 +89,6 @@ export function Nav() {
                   <span className={`font-pixel text-[0.8rem] leading-none transition-colors ${done ? "text-claude-light" : "text-stone"}`} aria-hidden="true">
                     {stationNumber(id)}
                   </span>
-                  <Icon className="size-4 opacity-80 lg:hidden" aria-hidden="true" />
                   {label}
                 </a>
                 {hovered === id && <motion.span layoutId="nav-hover" className="absolute inset-0 rounded-full bg-white/[0.06]" transition={SPRING} />}
@@ -126,14 +124,18 @@ export function Nav() {
           </button>
         </div>
 
-        {/* Progreso de lectura: una vía bajo el pill por la que camina un mini Clawd. */}
-        <div className="pointer-events-none absolute inset-x-8 -bottom-2 h-0.5" aria-hidden="true">
-          <span className="absolute inset-0 bg-white/8" />
-          <motion.div className="absolute inset-0 origin-left bg-gradient-to-r from-claude-light via-claude to-sky" style={{ scaleX: progress }} />
-          <motion.div className="absolute bottom-0 left-0 w-full" style={{ x: riderX, opacity: riderOpacity }}>
-            <span className="absolute bottom-0.5 left-0 block size-5 -translate-x-1/2">
-              <BuddyAvatar mood="idle" walking={riderDir} bare className="size-full" />
-            </span>
+        {/* Progreso de lectura: la vía es el tramo recto del borde inferior del pill (el radio mide la mitad del alto). */}
+        <div className="pointer-events-none absolute inset-x-7 -bottom-px h-0.5" aria-hidden="true">
+          <span className="absolute inset-0 rounded-full bg-white/10" />
+          <motion.span className="absolute inset-0 origin-left rounded-full bg-gradient-to-r from-claude-light via-claude to-sky" style={{ scaleX: progress }} />
+          <motion.div className="absolute top-0 left-0 w-full" style={{ x: riderX, opacity: riderOpacity }}>
+            <motion.img
+              src={RIDER_SRC}
+              alt=""
+              draggable={false}
+              className="nav-rider absolute -top-[3px] left-0 block size-6 max-w-none -translate-x-1/2 select-none"
+              style={{ rotate: reduce ? 0 : swing, transformOrigin: "50% 12%" }}
+            />
           </motion.div>
         </div>
       </nav>
@@ -145,7 +147,7 @@ export function Nav() {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="glass mx-auto mt-2 grid max-w-6xl gap-1 rounded-3xl p-2 md:hidden"
+            className="glass glass-dense mx-auto mt-2 grid max-w-6xl gap-1 rounded-3xl p-2 md:hidden"
           >
             {LINKS.map(({ id, label, icon: Icon }) => {
               const done = visited.includes(id);
