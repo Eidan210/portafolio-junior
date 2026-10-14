@@ -147,8 +147,8 @@
       <div class="clawd-stage">
         <span class="question-mark" aria-hidden="true">?</span>
         <div class="clawd-bob">
-          <img id="clawd-left" class="clawd-img clawd-left" src="" alt="" width="160" height="160" />
-          <img id="clawd-right" class="clawd-img clawd-right" src="" alt="" width="160" height="160" />
+          <img id="clawd-left" class="clawd-img clawd-left" src="" alt="Clawd mirando a la izquierda" width="160" height="160" />
+          <img id="clawd-right" class="clawd-img clawd-right" src="" alt="Clawd mirando a la derecha" width="160" height="160" />
         </div>
       </div>
       <h1>404 · Clawd se perdió</h1>
@@ -173,6 +173,30 @@
 
         var homeBtn = document.getElementById("home-btn");
         if (homeBtn) homeBtn.href = base;
+
+        var savedLang = null;
+        try {
+          savedLang = localStorage.getItem("portafolio.lang");
+        } catch (e) {}
+
+        var isEn = savedLang === "en" || (!savedLang && (!navigator.language || !navigator.language.toLowerCase().startsWith("es")));
+
+        if (isEn) {
+          document.documentElement.lang = "en";
+          document.title = "Page not found · Eidan Carreño";
+          var h1 = document.querySelector("h1");
+          if (h1) h1.textContent = "404 · Clawd got lost";
+          var p = document.querySelector("p");
+          if (p) p.textContent = "This page doesn't exist (or parachuted away).";
+          if (homeBtn) homeBtn.textContent = "Back to home";
+          if (leftImg) leftImg.alt = "Clawd looking left";
+          if (rightImg) rightImg.alt = "Clawd looking right";
+        } else {
+          document.documentElement.lang = "es";
+          document.title = "Página no encontrada · Eidan Carreño";
+          if (leftImg) leftImg.alt = "Clawd mirando a la izquierda";
+          if (rightImg) rightImg.alt = "Clawd mirando a la derecha";
+        }
       })();
     </script>
   </body>

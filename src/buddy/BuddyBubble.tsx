@@ -6,6 +6,7 @@
 import { AnimatePresence, animate, motion, useReducedMotionConfig } from "motion/react";
 import { MessageCircle, MessageCircleOff, Minus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { buddyUiCopy } from "@/data/ui";
 import { BuddyPanel } from "@/buddy/BuddyPanel";
 import { useBuddy } from "@/buddy/BuddyProvider";
 
@@ -48,7 +49,7 @@ export function BuddyBubble({ className = "", origin }: Props) {
         <motion.section
           ref={ref}
           key="bubble"
-          aria-label="Mensaje de Buddy"
+          aria-label={buddyUiCopy.messageAria}
           initial={{ opacity: 0, y: reduce ? 0 : 14, scale: reduce ? 1 : 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: reduce ? 0 : 10, scale: reduce ? 1 : 0.94 }}
@@ -68,16 +69,16 @@ export function BuddyBubble({ className = "", origin }: Props) {
               type="button"
               className={iconBtn}
               aria-pressed={muted}
-              aria-label={muted ? "Activar comentarios automáticos" : "Silenciar comentarios automáticos"}
-              title={muted ? "Activar comentarios automáticos" : "Silenciar comentarios automáticos"}
+              aria-label={muted ? buddyUiCopy.unmuteAuto : buddyUiCopy.muteAuto}
+              title={muted ? buddyUiCopy.unmuteAuto : buddyUiCopy.muteAuto}
               onClick={() => setMuted(!muted)}
             >
               {muted ? <MessageCircleOff className="size-4" aria-hidden="true" /> : <MessageCircle className="size-4" aria-hidden="true" />}
             </button>
-            <button type="button" className={iconBtn} aria-label="Minimizar a Buddy" title="Minimizar" onClick={() => setMinimized(true)}>
+            <button type="button" className={iconBtn} aria-label={buddyUiCopy.minimizeAria} title={buddyUiCopy.minimizeTitle} onClick={() => setMinimized(true)}>
               <Minus className="size-4" aria-hidden="true" />
             </button>
-            <button type="button" className={iconBtn} aria-label="Cerrar mensaje" title="Cerrar (Esc)" onClick={close}>
+            <button type="button" className={iconBtn} aria-label={buddyUiCopy.closeAria} title={buddyUiCopy.closeTitle} onClick={close}>
               <X className="size-4" aria-hidden="true" />
             </button>
           </header>

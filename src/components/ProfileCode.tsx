@@ -13,6 +13,7 @@ import { memo } from "react";
 import { Check, GitBranch } from "lucide-react";
 import type { ReactNode } from "react";
 import { profileCode } from "@/data/profile";
+import { heroCopy } from "@/data/ui";
 import type { CodeEntry } from "@/lib/types";
 import { TiltCard } from "@/components/interactive";
 
@@ -54,7 +55,7 @@ export const ProfileCode = memo(function ProfileCode() {
   return (
     <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.35, duration: 0.5, ease }} className="w-full max-w-sm">
       <TiltCard className="overflow-hidden rounded-3xl">
-        <figure aria-label="Ficha de Eidan">
+        <figure aria-label={heroCopy.cardAria}>
           {/* Barra de ventana: semáforo y pestaña del archivo. */}
           <div className="flex items-center gap-3 border-b border-white/8 bg-white/[0.03] px-4 py-2.5" aria-hidden="true">
             <span className="flex gap-1.5">
@@ -92,7 +93,7 @@ export const ProfileCode = memo(function ProfileCode() {
               <GitBranch className="size-3.5" /> main
             </span>
             <span className="flex items-center gap-1 text-olive-light">
-              <Check className="size-3.5" /> 0 problemas
+              <Check className="size-3.5" /> {heroCopy.statusProblems}
             </span>
             <span className="ml-auto">TypeScript</span>
           </div>
@@ -101,7 +102,7 @@ export const ProfileCode = memo(function ProfileCode() {
             {profileCode.map((e) => (
               <div key={e.key}>
                 <dt>{e.label}</dt>
-                <dd>{e.value === true ? "Sí" : e.value === false ? "No" : String(e.value)}</dd>
+                <dd>{e.value === true ? heroCopy.yes : e.value === false ? heroCopy.no : String(e.value)}</dd>
               </div>
             ))}
           </dl>

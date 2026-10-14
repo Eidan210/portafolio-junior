@@ -1,13 +1,24 @@
 import { Target } from "lucide-react";
 import { principles, profile, timeline } from "@/data/profile";
+import { aboutCopy } from "@/data/ui";
 import { GlowPanel, Reveal, TiltCard } from "@/components/interactive";
 import { SectionHeading } from "@/components/SectionHeading";
 
 export function About() {
   return (
     <section id="sobre-mi" aria-labelledby="about-title" className="shell px-4 py-24 sm:px-6">
-      <SectionHeading id="about-title" eyebrow="Sobre mí" title={<>Diagnóstico antes que <span className="text-gradient">parche</span>.</>}>
-        Cómo pienso, cómo trabajo y de dónde vengo.
+      <SectionHeading
+        id="about-title"
+        eyebrow={aboutCopy.eyebrow}
+        title={
+          <>
+            {aboutCopy.titleLead}
+            <span className="text-gradient">{aboutCopy.titleAccent}</span>
+            {aboutCopy.titleEnd}
+          </>
+        }
+      >
+        {aboutCopy.description}
       </SectionHeading>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_0.9fr]">
@@ -24,7 +35,7 @@ export function About() {
               <Target className="size-5" aria-hidden="true" />
             </span>
             <div>
-              <h3 className="font-display font-bold">Objetivo</h3>
+              <h3 className="font-display font-bold">{aboutCopy.objectiveTitle}</h3>
               <p className="mt-1 text-sm leading-relaxed text-muted">{profile.objective}</p>
             </div>
           </GlowPanel>
@@ -32,7 +43,7 @@ export function About() {
 
         <Reveal delay={0.1}>
           <GlowPanel className="h-full rounded-3xl p-6 sm:p-8">
-            <h3 className="mb-6 font-display text-lg font-bold">Trayectoria</h3>
+            <h3 className="mb-6 font-display text-lg font-bold">{aboutCopy.trajectoryTitle}</h3>
             <ol className="relative grid gap-6 border-l border-white/12 pl-6">
               {timeline.map((m) => (
                 <li key={m.title} className="relative">
@@ -48,7 +59,7 @@ export function About() {
         </Reveal>
       </div>
 
-      <h3 className="sr-only">Filosofía de trabajo</h3>
+      <h3 className="sr-only">{aboutCopy.philosophyTitle}</h3>
       <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {principles.map((p, i) => (
           <li key={p.claim}>

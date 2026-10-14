@@ -1,6 +1,7 @@
 import { motion, useReducedMotionConfig } from "motion/react";
 import { ArrowUpRight, Download, Mail } from "lucide-react";
 import { profile } from "@/data/profile";
+import { heroCopy } from "@/data/ui";
 import { HeroBuddy } from "@/buddy/HeroBuddy";
 import { useBuddyStage } from "@/buddy/BuddyProvider";
 import { GitHubIcon } from "@/components/icons";
@@ -50,17 +51,17 @@ export function Hero() {
         <motion.div {...rise(0.65)} className="mt-8 flex flex-wrap items-center gap-3">
           <Magnetic>
             <a href={profile.cv} download className="btn btn-primary">
-              <Download className="size-4" aria-hidden="true" /> Descargar CV
+              <Download className="size-4" aria-hidden="true" /> {heroCopy.downloadCv}
             </a>
           </Magnetic>
           <Magnetic>
             <a href="#contacto" className="btn btn-ghost">
-              <Mail className="size-4" aria-hidden="true" /> Contacto
+              <Mail className="size-4" aria-hidden="true" /> {heroCopy.contact}
             </a>
           </Magnetic>
           <Magnetic>
             <a href={profile.github} target="_blank" rel="noreferrer" className="btn btn-ghost">
-              <GitHubIcon className="size-4" /> GitHub
+              <GitHubIcon className="size-4" /> {heroCopy.github}
               <ArrowUpRight className="size-3.5 text-subtle" aria-hidden="true" />
             </a>
           </Magnetic>

@@ -10,6 +10,7 @@ import { useAnimate } from "motion/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { PixelParachute } from "@/buddy/pixel-props";
+import { buddyUiCopy, navCopy } from "@/data/ui";
 
 const HANDS_UP_SRC = `${import.meta.env.BASE_URL}clawd/clawd-hands-up.png`;
 const STANDING_SRC = `${import.meta.env.BASE_URL}clawd/clawd.png`;
@@ -85,7 +86,7 @@ export function NavParachute({ from, onDone }: NavParachuteProps) {
           const footer = document.querySelector("[data-landing]") ?? document.querySelector("footer");
           if (!footer) return undefined;
           const routeTrackTop = visibleTop(document.querySelector("[data-route-track]"));
-          const bubbleTop = visibleTop(document.querySelector('[data-route-track] [aria-label="Mensaje de Buddy"]'), true);
+          const bubbleTop = visibleTop(document.querySelector(`[data-route-track] [aria-label="${buddyUiCopy.messageAria}"]`), true);
           const ground = Math.min(
             footer.getBoundingClientRect().top,
             routeTrackTop !== undefined ? routeTrackTop - 12 : Infinity,
@@ -293,7 +294,7 @@ export function NavParachute({ from, onDone }: NavParachuteProps) {
               <span
                 className="pixel-corners font-pixel pointer-events-none absolute -top-5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-[#e8e6dc] px-1.5 py-0.5 text-[9px] text-[#141413] shadow-sm select-none"
               >
-                ¡Hola!
+                {navCopy.parachuteGreeting}
               </span>
             )}
             <img

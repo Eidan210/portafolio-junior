@@ -23,16 +23,18 @@ import type { LucideIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { profile } from "@/data/profile";
 import { useBuddyNav } from "@/buddy/BuddyProvider";
+import { langSwitch, navCopy, stationLabels } from "@/data/ui";
+import { lang, switchLang } from "@/i18n/lang";
 import { stationNumber } from "@/buddy/stations";
 import { GitHubIcon } from "@/components/icons";
 import { NavParachute } from "@/components/NavParachute";
 import type { SectionId } from "@/lib/types";
 
-const LINKS: readonly { id: SectionId; label: string; icon: LucideIcon }[] = [
-  { id: "sobre-mi", label: "Sobre mí", icon: UserRound },
-  { id: "stack", label: "Stack", icon: Layers },
-  { id: "proyectos", label: "Proyectos", icon: FolderGit2 },
-  { id: "contacto", label: "Contacto", icon: Mail },
+const LINKS: readonly { id: SectionId; icon: LucideIcon }[] = [
+  { id: "sobre-mi", icon: UserRound },
+  { id: "stack", icon: Layers },
+  { id: "proyectos", icon: FolderGit2 },
+  { id: "contacto", icon: Mail },
 ];
 
 const SPRING = { type: "spring", stiffness: 420, damping: 34 } as const;
@@ -113,12 +115,12 @@ export function Nav() {
   return (
     <header className="fixed inset-x-0 top-0 z-40 overflow-x-clip px-3 pt-3 sm:px-6 sm:pt-4">
       <nav
-        aria-label="Principal"
+        aria-label={navCopy.mainNavAria}
         className={`glass glass-dense relative mx-auto flex max-w-6xl items-center gap-2 rounded-full pr-2 pl-2.5 transition-[padding,background-color] duration-300 sm:pl-3 ${
           compact ? "bg-ink/50 py-1.5" : "py-2"
         }`}
       >
-        <a href="#inicio" className="flex items-center gap-3 rounded-full pr-2" aria-label="Ir al inicio">
+        <a href="#inicio" className="flex items-center gap-3 rounded-full pr-2" aria-label={navCopy.goToStartAria}>
           <span className="pixel-corners grid size-10 shrink-0 place-items-center bg-claude font-pixel text-sm font-semibold text-ink">EC</span>
           {/* En md los 4 enlaces ocupan el ancho: solo queda sitio para el badge. */}
           <span className="hidden leading-tight sm:block md:hidden lg:block">
@@ -128,7 +130,8 @@ export function Nav() {
         </a>
 
         <ul className="mx-auto hidden items-center gap-0.5 md:flex" onMouseLeave={() => setHovered(null)}>
-          {LINKS.map(({ id, label }) => {
+          {LINKS.map(({ id }) => {
+            const label = stationLabels[id];
             const active = activeSection === id;
             const done = visited.includes(id);
             return (
@@ -154,25 +157,35 @@ export function Nav() {
         </ul>
 
         <div className="ml-auto flex items-center gap-1.5 md:ml-0">
+          {/* Recarga en la misma sección con ?lang=: el enlace en el otro idioma se puede compartir. */}
+          <button
+            type="button"
+            onClick={() => switchLang(lang === "es" ? "en" : "es", activeSection)}
+            className="grid h-10 min-w-10 place-items-center rounded-full px-2 font-pixel text-xs text-muted transition-colors hover:bg-white/10 hover:text-fg"
+            aria-label={langSwitch.aria}
+            title={langSwitch.aria}
+          >
+            <span lang={lang === "es" ? "en" : "es"}>{langSwitch.label}</span>
+          </button>
           <a
             href={profile.github}
             target="_blank"
             rel="noreferrer"
             className="hidden size-10 place-items-center rounded-full text-muted transition-colors hover:bg-white/10 hover:text-fg sm:grid"
-            aria-label="GitHub de Eidan"
+            aria-label={navCopy.githubAria}
           >
             <GitHubIcon className="size-[1.125rem]" />
           </a>
           <a href={profile.cv} download className="btn btn-primary !min-h-10 !px-4 !text-sm">
             <Download className="size-4" aria-hidden="true" />
-            <span>CV</span>
+            <span>{navCopy.cv}</span>
           </a>
           <button
             type="button"
             className="grid size-10 place-items-center rounded-full text-fg hover:bg-white/10 md:hidden"
             aria-expanded={open}
             aria-controls="mobile-nav"
-            aria-label={open ? "Cerrar navegación" : "Abrir navegación"}
+            aria-label={open ? navCopy.closeNavAria : navCopy.openNavAria}
             onClick={() => setOpen((o) => !o)}
           >
             {open ? <X className="size-5" aria-hidden="true" /> : <Menu className="size-5" aria-hidden="true" />}
@@ -217,7 +230,8 @@ export function Nav() {
             exit={{ opacity: 0, y: -8 }}
             className="glass glass-dense mx-auto mt-2 grid max-w-6xl gap-1 rounded-3xl p-2 md:hidden"
           >
-            {LINKS.map(({ id, label, icon: Icon }) => {
+            {LINKS.map(({ id, icon: Icon }) => {
+              const label = stationLabels[id];
               const done = visited.includes(id);
               return (
                 <li key={id}>
@@ -230,14 +244,14 @@ export function Nav() {
                     <span className={`font-pixel text-xs ${done ? "text-claude-light" : "text-stone"}`}>{stationNumber(id)}</span>
                     <Icon className="size-4" aria-hidden="true" />
                     {label}
-                    {done && <Check className="ml-auto size-4 text-claude-light" aria-label="visitada" />}
+                    {done && <Check className="ml-auto size-4 text-claude-light" aria-label={navCopy.visitedAria} />}
                   </a>
                 </li>
               );
             })}
             <li className="mt-1 border-t border-white/8 pt-1">
               <a href={profile.github} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-2xl px-4 py-3 font-medium text-muted hover:bg-white/10 hover:text-fg">
-                <GitHubIcon className="size-4" /> GitHub
+                <GitHubIcon className="size-4" /> {navCopy.githubMobile}
               </a>
             </li>
           </motion.ul>

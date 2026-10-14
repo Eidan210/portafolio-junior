@@ -27,6 +27,7 @@ import { BuddyAvatar } from "@/buddy/BuddyAvatar";
 import type { Direction } from "@/buddy/BuddyAvatar";
 import { BuddyBubble } from "@/buddy/BuddyBubble";
 import { SECTION_IDS, useBuddy } from "@/buddy/BuddyProvider";
+import { buddyUiCopy } from "@/data/ui";
 import { FxLayer } from "@/buddy/fx";
 import { PixelFlag, PixelSpark } from "@/buddy/pixel-props";
 import { anchorYAt, buildRoute, effortAt, lengthAtEffort, lengthAtY, sampleAt } from "@/buddy/route-geometry";
@@ -531,7 +532,7 @@ export function RouteLayer() {
             aria-hidden="true"
           >
             <PixelFlag className="h-14 w-10" waving={finished} />
-            <span className="station-label absolute top-full left-1/2 mt-1 -translate-x-1/2 whitespace-nowrap">Meta</span>
+            <span className="station-label absolute top-full left-1/2 mt-1 -translate-x-1/2 whitespace-nowrap">{buddyUiCopy.finishGoal}</span>
           </div>
         </>
       )}
@@ -549,14 +550,14 @@ export function RouteLayer() {
             type="button"
             onClick={onActorClick}
             aria-expanded={menuOpen}
-            aria-label={menuOpen ? "Cerrar menú de Buddy" : "Abrir menú de Buddy"}
+            aria-label={menuOpen ? buddyUiCopy.closeMenu : buddyUiCopy.openMenu}
             className="pointer-events-auto relative size-full cursor-pointer opacity-0"
           >
             <span className="block size-full transition-transform duration-200 hover:scale-105">
               <BuddyAvatar mood={shownMood} walking={walk} look={look} className="size-full" />
             </span>
             {muted && (
-              <span className="absolute top-2 left-2 grid size-6 place-items-center rounded-full border border-white/15 bg-ink-2 text-subtle" title="Comentarios silenciados">
+              <span className="absolute top-2 left-2 grid size-6 place-items-center rounded-full border border-white/15 bg-ink-2 text-subtle" title={buddyUiCopy.mutedTitle}>
                 <MessageCircleOff className="size-3.5" aria-hidden="true" />
               </span>
             )}

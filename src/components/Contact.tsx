@@ -17,6 +17,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import type { FormEvent, MouseEvent, ReactNode } from "react";
 import { contactBlocked, contactFailed, contactSent, contactThanks, copiedEmail } from "@/data/buddy-script";
 import { autoCopy, channelCopy, sharedCopy } from "@/data/contact-copy";
+import { contactUiCopy } from "@/data/ui";
 import { profile } from "@/data/profile";
 import { copyEmail } from "@/buddy/BuddyPanel";
 import { useBuddyActions } from "@/buddy/BuddyProvider";
@@ -308,8 +309,18 @@ export function Contact() {
 
   return (
     <section id="contacto" aria-labelledby="contact-title" className="shell px-4 py-24 sm:px-6">
-      <SectionHeading id="contact-title" eyebrow="Contacto" title={<>¿Construimos <span className="text-gradient">algo juntos</span>?</>}>
-        {profile.availability}. Escríbeme por el formulario o por el canal que prefieras.
+      <SectionHeading
+        id="contact-title"
+        eyebrow={contactUiCopy.eyebrow}
+        title={
+          <>
+            {contactUiCopy.titleLead}
+            <span className="text-gradient">{contactUiCopy.titleAccent}</span>
+            {contactUiCopy.titleEnd}
+          </>
+        }
+      >
+        {contactUiCopy.description(profile.availability)}
       </SectionHeading>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[0.8fr_1.2fr]">
@@ -323,7 +334,7 @@ export function Contact() {
               </AnimatePresence>
             </span>
             <span className="min-w-0">
-              <span className="block text-xs text-subtle">{copied ? sharedCopy.copied : "Email · clic para copiar"}</span>
+              <span className="block text-xs text-subtle">{copied ? sharedCopy.copied : contactUiCopy.copyEmailHint}</span>
               <span className="block truncate font-semibold">{profile.email}</span>
             </span>
           </button>
@@ -332,7 +343,7 @@ export function Contact() {
               <GitHubIcon className="size-5" />
             </span>
             <span>
-              <span className="block text-xs text-subtle">GitHub</span>
+              <span className="block text-xs text-subtle">{contactUiCopy.githubLabel}</span>
               <span className="block font-semibold">github.com/{profile.githubUser}</span>
             </span>
           </a>
@@ -341,8 +352,8 @@ export function Contact() {
               <Download className="size-5" aria-hidden="true" />
             </span>
             <span>
-              <span className="block text-xs text-subtle">Currículum</span>
-              <span className="block font-semibold">Descargar CV (PDF)</span>
+              <span className="block text-xs text-subtle">{contactUiCopy.cvLabel}</span>
+              <span className="block font-semibold">{contactUiCopy.cvDownload}</span>
             </span>
           </a>
         </Reveal>
@@ -384,17 +395,17 @@ export function Contact() {
                     )}
                   </DonePanel>
                 ) : (
-                  <motion.form key="form" exit={{ opacity: 0 }} noValidate onSubmit={onSubmit} className="relative grid gap-4" aria-label="Formulario de contacto" aria-busy={busy}>
+                  <motion.form key="form" exit={{ opacity: 0 }} noValidate onSubmit={onSubmit} className="relative grid gap-4" aria-label={contactUiCopy.formAria} aria-busy={busy}>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      {field("name", "Nombre", "input", "text", "name")}
-                      {field("email", "Email", "input", "email", "email")}
+                      {field("name", contactUiCopy.nameLabel, "input", "text", "name")}
+                      {field("email", contactUiCopy.emailLabel, "input", "email", "email")}
                     </div>
-                    {field("message", "Mensaje", "textarea")}
+                    {field("message", contactUiCopy.messageLabel, "textarea")}
                     {/* Trampa para bots del envío automático: fuera de pantalla y del orden de tabulación; una persona nunca la rellena. */}
                     {endpoint && (
                       <div aria-hidden="true" className="absolute -left-[9999px] size-px overflow-hidden">
                         <label>
-                          No rellenar
+                          {contactUiCopy.honeypotLabel}
                           <input tabIndex={-1} autoComplete="off" name="hp_confirm" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} />
                         </label>
                       </div>

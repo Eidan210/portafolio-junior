@@ -1,4 +1,5 @@
 import { profile } from "@/data/profile";
+import { footerCopy } from "@/data/ui";
 import { BuddyHUD } from "@/buddy/BuddyHUD";
 import { BuddyProvider } from "@/buddy/BuddyProvider";
 import { RouteBuddy } from "@/buddy/RouteBuddyLazy";
@@ -18,7 +19,7 @@ export function App() {
     // BuddyProvider envuelve la app en MotionConfig con la preferencia de movimiento efectiva.
     <BuddyProvider>
         <a href="#main" className="skip-link btn btn-primary">
-          Saltar al contenido
+          {footerCopy.skipToContent}
         </a>
         <Background />
         <Nav />
@@ -38,9 +39,9 @@ export function App() {
               © {new Date().getFullYear()} {profile.name}
             </p>
             <p>
-              Hecho con React, Tailwind y Motion · Ilustraciones de Clawd:{" "}
+              {footerCopy.builtWith}
               <a href="https://icons8.com" target="_blank" rel="noreferrer" className="text-muted underline underline-offset-2 hover:text-fg">
-                Icons by Icons8
+                {footerCopy.iconsBy}
               </a>
             </p>
           </div>

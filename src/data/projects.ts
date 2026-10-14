@@ -10,9 +10,12 @@
  * El bloque `buddy` es lo que cuenta la mascota en el explicador: reformula
  * problema → arquitectura → aprendizaje sin añadir datos nuevos.
  */
+import { pick } from "@/i18n/lang";
+import { en } from "@/data/en/projects";
 import type { Project } from "@/lib/types";
 
-export const projects: readonly Project[] = [
+const es = {
+  projects: [
   {
     id: "preseleccion",
     title: "Preselección Inteligente de Candidatos",
@@ -200,6 +203,12 @@ export const projects: readonly Project[] = [
       takeaway: "Agregación de datos por periodo y separación estricta de responsabilidades, en un proyecto pequeño y bien cortado.",
     },
   },
-];
+  ] as readonly Project[],
+};
+
+/** Forma común de los proyectos: la versión inglesa debe tener exactamente las mismas claves. */
+export type ProjectsCopy = typeof es;
+
+export const { projects } = pick({ es, en });
 
 export const projectById = (id: string) => projects.find((p) => p.id === id);

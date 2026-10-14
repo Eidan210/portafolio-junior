@@ -15,6 +15,7 @@ import { BuddyAvatar } from "@/buddy/BuddyAvatar";
 import type { Direction } from "@/buddy/BuddyAvatar";
 import { BuddyBubble } from "@/buddy/BuddyBubble";
 import { SECTION_IDS, useBuddy } from "@/buddy/BuddyProvider";
+import { buddyUiCopy } from "@/data/ui";
 import { FxLayer } from "@/buddy/fx";
 import { PixelSpark } from "@/buddy/pixel-props";
 import { STATION_LABELS, stationNumber } from "@/buddy/stations";
@@ -221,7 +222,7 @@ function TrackLayer() {
     <div data-route-track className={`pointer-events-none fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 transition-transform duration-300 ${typing ? "translate-y-[150%]" : ""}`}>
       <BuddyBubble origin="bottom center" className="absolute right-0 bottom-[calc(100%+0.75rem)] left-0 mx-auto max-h-[min(72dvh,34rem)] max-w-md rounded-b-md" />
 
-      <nav aria-label="Ruta de Buddy" className="glass glass-dense pointer-events-auto relative mx-auto h-[4.75rem] max-w-md rounded-2xl px-8">
+      <nav aria-label={buddyUiCopy.routeAria} className="glass glass-dense pointer-events-auto relative mx-auto h-[4.75rem] max-w-md rounded-2xl px-8">
         <div ref={lineRef} className="absolute inset-x-8 bottom-4">
           <span className="absolute inset-x-0 -top-px border-t-2 border-dashed border-white/20" aria-hidden="true" />
           <div ref={fillRef} className="absolute inset-x-0 -top-px h-0.5 origin-left bg-claude" style={{ transform: "scaleX(0)" }} aria-hidden="true" />
@@ -249,7 +250,7 @@ function TrackLayer() {
                 <button
                   type="button"
                   onClick={() => scrollTo(id)}
-                  aria-label={`Ir a ${STATION_LABELS[id]} (parada ${i + 1} de ${SECTION_IDS.length}${done ? ", visitada" : ""})`}
+                  aria-label={buddyUiCopy.stopAria(STATION_LABELS[id], i + 1, SECTION_IDS.length, done)}
                   className="absolute top-0 grid size-11 -translate-x-1/2 -translate-y-1/2 place-items-center"
                 >
                   <span className={`track-stop grid size-7 place-items-center font-pixel text-[0.75rem] leading-none ${done ? "is-done" : ""}`}>
@@ -266,12 +267,12 @@ function TrackLayer() {
               type="button"
               onClick={toggleMenu}
               aria-expanded={menuOpen}
-              aria-label={menuOpen ? "Cerrar menú de Buddy" : "Abrir menú de Buddy"}
+              aria-label={menuOpen ? buddyUiCopy.closeMenu : buddyUiCopy.openMenu}
               className="pointer-events-auto relative size-full opacity-0"
             >
               <BuddyAvatar mood={override ?? mood} walking={walk} className="size-full" bare />
               {muted && (
-                <span className="absolute -top-1 -left-1 grid size-4 place-items-center rounded-full border border-white/15 bg-ink-2 text-subtle" title="Comentarios silenciados">
+                <span className="absolute -top-1 -left-1 grid size-4 place-items-center rounded-full border border-white/15 bg-ink-2 text-subtle" title={buddyUiCopy.mutedTitle}>
                   <MessageCircleOff className="size-2.5" aria-hidden="true" />
                 </span>
               )}

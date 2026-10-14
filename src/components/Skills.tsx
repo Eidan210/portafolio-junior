@@ -9,6 +9,7 @@ import { FileCheckCorner, Sparkles } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { categories, capacities, learning, projectsFor, techs } from "@/data/skills";
+import { skillsCopy } from "@/data/ui";
 import { useBuddyActions } from "@/buddy/BuddyProvider";
 import { Reveal, trackGlow } from "@/components/interactive";
 import { SectionHeading } from "@/components/SectionHeading";
@@ -41,7 +42,7 @@ const EvidenceMeter = memo(function EvidenceMeter({ count }: { count: number }) 
 const TechSlot = memo(function TechSlot({ tech, onSelect }: { tech: Tech; onSelect: (t: Tech) => void }) {
   const used = projectsFor(tech);
   const n = used.length;
-  const evidence = n > 0 ? `${n} ${n === 1 ? "proyecto" : "proyectos"}${tech.note ? ` · ${tech.note}` : ""}` : (tech.note ?? "");
+  const evidence = n > 0 ? `${n} ${skillsCopy.evidenceProjects(n)}${tech.note ? ` · ${tech.note}` : ""}` : (tech.note ?? "");
 
   return (
     <button
@@ -50,7 +51,7 @@ const TechSlot = memo(function TechSlot({ tech, onSelect }: { tech: Tech; onSele
       onPointerMove={(e) => trackGlow(e.currentTarget, e)}
       onPointerLeave={(e) => e.currentTarget.style.setProperty("--glow", "0")}
       style={{ "--brand": tech.brand } as CSSProperties}
-      aria-label={`${tech.name}: ${tech.role}. ${evidence}. Pregúntale a Buddy.`}
+      aria-label={`${tech.name}: ${tech.role}. ${evidence}. ${skillsCopy.askBuddy}`}
       className="tech-slot glass glow-border group flex h-full w-full items-start gap-4 rounded-2xl p-4 text-left transition-transform duration-300 hover:-translate-y-1"
     >
       <span className="tech-logo pixel-corners grid size-12 shrink-0 place-items-center bg-ink-3">
@@ -82,7 +83,7 @@ export function Skills() {
 
   const shown = useMemo(() => (filter === "todo" ? techs : techs.filter((t) => t.category === filter)), [filter]);
   const tabs: { id: Filter; label: string; count: number }[] = [
-    { id: "todo", label: "Todo", count: techs.length },
+    { id: "todo", label: skillsCopy.allFilter, count: techs.length },
     ...categories.map((c) => ({ id: c.id, label: c.label, count: techs.filter((t) => t.category === c.id).length })),
   ];
 
@@ -92,7 +93,7 @@ export function Skills() {
       const used = projectsFor(tech);
       const parts = [`${tech.role}.`];
       if (tech.capacities?.length) parts.push(`${tech.capacities.join(" · ")}.`);
-      if (used.length) parts.push(`La usa en: ${used.map((p) => p.title).join(", ")}.`);
+      if (used.length) parts.push(`${skillsCopy.usedIn}${used.map((p) => p.title).join(", ")}.`);
       else if (tech.note) parts.push(`${tech.note}.`);
       say({
         type: "text",
@@ -100,7 +101,7 @@ export function Skills() {
         text: parts.join(" "),
         mood: tech.category === "automatizacion" ? "happy" : "coding",
         actions: used.slice(0, 2).map((p) => ({
-          label: `Ver ${p.title.split(" ").slice(0, 2).join(" ")}`,
+          label: skillsCopy.viewProject(p.title.split(" ").slice(0, 2).join(" ")),
           run: () => {
             scrollTo(`proyecto-${p.id}`);
             say({ type: "project", projectId: p.id });
@@ -113,13 +114,23 @@ export function Skills() {
 
   return (
     <section id="stack" aria-labelledby="stack-title" className="shell px-4 py-24 sm:px-6">
-      <SectionHeading id="stack-title" eyebrow="Stack técnico" title={<>Herramientas con <span className="text-gradient">evidencia</span>.</>}>
-        {techs.length} tecnologías agrupadas por función. Cada una dice para qué la uso y dónde se ve; pulsa cualquiera y Buddy te lo cuenta.
+      <SectionHeading
+        id="stack-title"
+        eyebrow={skillsCopy.eyebrow}
+        title={
+          <>
+            {skillsCopy.titleLead}
+            <span className="text-gradient">{skillsCopy.titleAccent}</span>
+            {skillsCopy.titleEnd}
+          </>
+        }
+      >
+        {skillsCopy.description(techs.length)}
       </SectionHeading>
 
       <Reveal>
         <LayoutGroup id="stack-filter">
-          <div role="group" aria-label="Filtrar el stack por categoría" className="glass mb-6 inline-flex max-w-full flex-wrap gap-1 rounded-2xl p-1.5">
+          <div role="group" aria-label={skillsCopy.filterAria} className="glass mb-6 inline-flex max-w-full flex-wrap gap-1 rounded-2xl p-1.5">
             {tabs.map((tab) => {
               const active = filter === tab.id;
               return (
@@ -165,13 +176,13 @@ export function Skills() {
         </motion.ul>
       </div>
       <p className="sr-only" role="status">
-        {shown.length} tecnologías en {tabs.find((t) => t.id === filter)?.label}.
+        {skillsCopy.statusText(shown.length, tabs.find((t) => t.id === filter)?.label ?? "")}
       </p>
 
       <Reveal className="mt-8 grid gap-3">
         <p className="flex flex-wrap items-center gap-2 text-sm">
           <span className="flex items-center gap-1.5 font-semibold text-muted">
-            <Sparkles className="size-4 text-claude-light" aria-hidden="true" /> Capacidades:
+            <Sparkles className="size-4 text-claude-light" aria-hidden="true" /> {skillsCopy.capacitiesLabel}
           </span>
           {capacities.map((c) => (
             <span key={c} className="chip !text-xs">
@@ -180,7 +191,7 @@ export function Skills() {
           ))}
         </p>
         <p className="flex flex-wrap items-center gap-2 text-sm text-subtle">
-          <span className="font-semibold text-muted">En consolidación:</span>
+          <span className="font-semibold text-muted">{skillsCopy.learningLabel}</span>
           {learning.map((l) => (
             <span key={l} className="chip border-dashed !text-xs">
               {l}

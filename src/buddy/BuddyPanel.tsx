@@ -21,6 +21,7 @@ import type { ReactNode } from "react";
 import { copiedEmail, faq, skillsSummary, surprises, tour } from "@/data/buddy-script";
 import { profile } from "@/data/profile";
 import { projectById, projects } from "@/data/projects";
+import { buddyUiCopy } from "@/data/ui";
 import { GitHubIcon } from "@/components/icons";
 import { BuddyAvatar } from "@/buddy/BuddyAvatar";
 import { Typewriter } from "@/buddy/Typewriter";
@@ -68,8 +69,8 @@ export function MotionToggle({ className = "" }: { className?: string }) {
     <div className={className}>
       <Switch
         on={!reducedMotion}
-        label="Animaciones completas"
-        hint="Tu sistema pide movimiento reducido."
+        label={buddyUiCopy.motionLabel}
+        hint={buddyUiCopy.motionHint}
         onToggle={() => setFullMotion(reducedMotion)}
       />
     </div>
@@ -119,23 +120,23 @@ function MenuView() {
       }
     }
     const fact = surprises[Math.floor(Math.random() * surprises.length)] ?? surprises[0] ?? "";
-    say({ type: "text", title: "¿Sabías que…?", text: fact, mood: "happy", actions: [{ label: "Otra", run: surprise }] });
+    say({ type: "text", title: buddyUiCopy.surpriseTitle, text: fact, mood: "happy", actions: [{ label: buddyUiCopy.surpriseAnother, run: surprise }] });
   };
 
   const tiles: { icon: typeof Route; label: string; hint: string; tone: Tone; run: () => void }[] = [
-    { icon: Route, label: "Tour guiado", hint: "1 min · 5 paradas", tone: "claude", run: startTour },
-    { icon: CircleQuestionMark, label: "Preguntas", hint: "Disponibilidad, fuerte…", tone: "sky", run: () => say({ type: "faq" }) },
+    { icon: Route, label: buddyUiCopy.tourTileLabel, hint: buddyUiCopy.tourTileHint, tone: "claude", run: startTour },
+    { icon: CircleQuestionMark, label: buddyUiCopy.faqTileLabel, hint: buddyUiCopy.faqTileHint, tone: "sky", run: () => say({ type: "faq" }) },
     {
       icon: Sparkles,
-      label: "Skills",
-      hint: "El stack en una frase",
+      label: buddyUiCopy.skillsTileLabel,
+      hint: buddyUiCopy.skillsTileHint,
       tone: "olive",
       run: () =>
-        say({ type: "text", title: "Resumen de skills", text: skillsSummary, mood: "coding", actions: [{ label: "Ver stack", run: () => scrollTo("stack") }] }),
+        say({ type: "text", title: buddyUiCopy.skillsSummaryTitle, text: skillsSummary, mood: "coding", actions: [{ label: buddyUiCopy.viewStackAction, run: () => scrollTo("stack") }] }),
     },
-    { icon: FolderGit2, label: "Proyectos", hint: "Te explico uno", tone: "claude", run: () => say({ type: "projects" }) },
-    { icon: Mail, label: "Contacto", hint: "Email, GitHub, CV", tone: "sky", run: () => say({ type: "contact" }) },
-    { icon: Dices, label: "Sorpréndeme", hint: "Un dato al azar", tone: "olive", run: surprise },
+    { icon: FolderGit2, label: buddyUiCopy.projectsTileLabel, hint: buddyUiCopy.projectsTileHint, tone: "claude", run: () => say({ type: "projects" }) },
+    { icon: Mail, label: buddyUiCopy.contactTileLabel, hint: buddyUiCopy.contactTileHint, tone: "sky", run: () => say({ type: "contact" }) },
+    { icon: Dices, label: buddyUiCopy.surpriseTileLabel, hint: buddyUiCopy.surpriseTileHint, tone: "olive", run: surprise },
   ];
 
   return (
@@ -143,9 +144,9 @@ function MenuView() {
       <div className="flex items-center gap-3">
         <BuddyAvatar mood={mood} bare className="size-10 shrink-0" />
         <div className="min-w-0">
-          <p className="font-display text-base font-bold text-fg">¿En qué te ayudo?</p>
+          <p className="font-display text-base font-bold text-fg">{buddyUiCopy.helpTitle}</p>
           <p className="text-xs text-subtle">
-            Guía de Eidan · ruta {visited.length}/{SECTION_IDS.length}
+            {buddyUiCopy.guideSubtitle(visited.length, SECTION_IDS.length)}
           </p>
         </div>
       </div>
@@ -153,12 +154,12 @@ function MenuView() {
       {/* Progreso: una casilla por parada; pulsarla lleva a la sección y Clawd camina hasta allí. */}
       <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-2">
         <div className="mb-2 flex items-center justify-between font-pixel text-xs tracking-wider text-stone uppercase">
-          <span>Ruta de Buddy</span>
+          <span>{buddyUiCopy.routeProgressTitle}</span>
           <span className="text-claude-light">
             {visited.length}/{SECTION_IDS.length}
           </span>
         </div>
-        <ol className="grid grid-cols-5 gap-1.5" aria-label="Paradas de la ruta">
+        <ol className="grid grid-cols-5 gap-1.5" aria-label={buddyUiCopy.stopsAria}>
           {SECTION_IDS.map((id) => {
             const done = visited.includes(id);
             return (
@@ -169,7 +170,7 @@ function MenuView() {
                     scrollTo(id);
                     close();
                   }}
-                  aria-label={`Ir a ${STATION_LABELS[id]}${done ? " (visitada)" : ""}`}
+                  aria-label={buddyUiCopy.goToStationAria(STATION_LABELS[id], done)}
                   title={STATION_LABELS[id]}
                   className={`pixel-corners grid h-8 w-full place-items-center font-pixel text-xs transition-colors ${
                     done ? "bg-claude text-ink" : "bg-ink-3 text-sand hover:bg-white/10"
@@ -209,9 +210,9 @@ function MenuView() {
       </ul>
 
       <div className="grid gap-0.5 border-t border-white/8 pt-1.5">
-        <Switch on={!muted} label="Comentarios automáticos" onToggle={() => setMuted(!muted)} />
+        <Switch on={!muted} label={buddyUiCopy.autoCommentsLabel} onToggle={() => setMuted(!muted)} />
         <MotionToggle />
-        <p className="px-3 pt-1 text-[0.7rem] text-stone">Esc cierra · clic en Clawd abre este menú</p>
+        <p className="px-3 pt-1 text-[0.7rem] text-stone">{buddyUiCopy.menuShortcutHint}</p>
       </div>
     </div>
   );
@@ -222,7 +223,7 @@ function FaqView() {
   const back: BuddyView = { type: "faq" };
   return (
     <div>
-      <Heading>Preguntas frecuentes</Heading>
+      <Heading>{buddyUiCopy.faqHeading}</Heading>
       <ul className="grid gap-1.5">
         {faq.map((entry) => (
           <li key={entry.q}>
@@ -235,7 +236,7 @@ function FaqView() {
                   title: entry.q,
                   text: entry.a,
                   mood: "talk",
-                  actions: [{ label: "Otra pregunta", run: () => say(back) }],
+                  actions: [{ label: buddyUiCopy.anotherQuestionAction, run: () => say(back) }],
                 })
               }
             >
@@ -253,7 +254,7 @@ function ProjectsView() {
   const { say, scrollTo } = useBuddyActions();
   return (
     <div>
-      <Heading>¿Cuál te explico?</Heading>
+      <Heading>{buddyUiCopy.whichProjectHeading}</Heading>
       <ul className="grid gap-1.5">
         {projects.map((p) => (
           <li key={p.id}>
@@ -283,13 +284,13 @@ function ProjectView({ projectId }: { projectId: string }) {
   const project = projectById(projectId);
   if (!project) return null;
   const blocks = [
-    { label: "El reto", text: project.buddy.challenge, color: "text-claude-light" },
-    { label: "La arquitectura", text: project.buddy.architecture, color: "text-sky-light" },
-    { label: "Mi opinión", text: project.buddy.takeaway, color: "text-olive-light" },
+    { label: buddyUiCopy.challengeLabel, text: project.buddy.challenge, color: "text-claude-light" },
+    { label: buddyUiCopy.architectureLabel, text: project.buddy.architecture, color: "text-sky-light" },
+    { label: buddyUiCopy.opinionLabel, text: project.buddy.takeaway, color: "text-olive-light" },
   ];
   return (
     <div>
-      <p className="eyebrow mb-1 !text-[0.65rem]">Buddy explica</p>
+      <p className="eyebrow mb-1 !text-[0.65rem]">{buddyUiCopy.buddyExplainsEyebrow}</p>
       <Heading>{project.title}</Heading>
       <div className="grid gap-3 text-sm leading-relaxed text-muted">
         {blocks.map((b, i) => (
@@ -299,7 +300,7 @@ function ProjectView({ projectId }: { projectId: string }) {
           </Stagger>
         ))}
         <Stagger i={3}>
-          <ul className="flex flex-wrap gap-1.5" aria-label="Tecnologías">
+          <ul className="flex flex-wrap gap-1.5" aria-label={buddyUiCopy.techsAria}>
             {project.stack.map((t) => (
               <li key={t} className="chip !px-2 !py-0.5 !text-[0.7rem]">
                 {t}
@@ -308,15 +309,15 @@ function ProjectView({ projectId }: { projectId: string }) {
           </ul>
           <div className="mt-3 flex flex-wrap gap-2">
             <a className={smallBtn} href={project.repoUrl} target="_blank" rel="noreferrer">
-              <GitHubIcon className="size-3.5" /> Repositorio
+              <GitHubIcon className="size-3.5" /> {buddyUiCopy.repoBtn}
             </a>
             {project.demoUrl && (
               <a className={smallBtn} href={project.demoUrl} target="_blank" rel="noreferrer">
-                <ArrowUpRight className="size-3.5" aria-hidden="true" /> Demo
+                <ArrowUpRight className="size-3.5" aria-hidden="true" /> {buddyUiCopy.demoBtn}
               </a>
             )}
             <button type="button" className={smallBtn} onClick={() => say({ type: "projects" })}>
-              Otro proyecto
+              {buddyUiCopy.anotherProjectBtn}
             </button>
           </div>
         </Stagger>
@@ -330,7 +331,7 @@ function ContactView() {
   const [copied, setCopied] = useState(false);
   return (
     <div>
-      <Heading>Habla con Eidan</Heading>
+      <Heading>{buddyUiCopy.talkWithEidanHeading}</Heading>
       <p className="mb-3 text-sm text-muted">{profile.availability}.</p>
       <div className="grid gap-1.5">
         <button
@@ -357,7 +358,7 @@ function ContactView() {
             close();
           }}
         >
-          <Mail className="size-4 text-sky-light" aria-hidden="true" /> Ir al formulario
+          <Mail className="size-4 text-sky-light" aria-hidden="true" /> {buddyUiCopy.goToFormBtn}
         </button>
       </div>
     </div>
@@ -373,7 +374,7 @@ function TourView({ index }: { index: number }) {
     <div>
       <div className="mb-2 flex items-center justify-between">
         <p className="eyebrow !text-[0.65rem]">
-          Tour · {index + 1}/{tour.length}
+          {buddyUiCopy.tourStepEyebrow(index + 1, tour.length)}
         </p>
         <ol className="flex gap-1" aria-hidden="true">
           {tour.map((s, i) => (
@@ -386,7 +387,7 @@ function TourView({ index }: { index: number }) {
       </p>
       <div className="mt-3 flex items-center gap-2">
         {index > 0 && (
-          <button type="button" className={smallBtn} onClick={() => goTour(index - 1)} aria-label="Paso anterior">
+          <button type="button" className={smallBtn} onClick={() => goTour(index - 1)} aria-label={buddyUiCopy.prevStepAria}>
             <ChevronLeft className="size-3.5" aria-hidden="true" />
           </button>
         )}
@@ -395,12 +396,12 @@ function TourView({ index }: { index: number }) {
           className={`${smallBtn} !border-claude/50 !bg-claude/20`}
           onClick={() => (last ? endTour() : goTour(index + 1))}
         >
-          {last ? "Terminar" : "Siguiente"}
+          {last ? buddyUiCopy.finishTourBtn : buddyUiCopy.nextStepBtn}
           {!last && <ChevronRight className="size-3.5" aria-hidden="true" />}
         </button>
         {!last && (
           <button type="button" className="ml-auto text-xs text-subtle underline-offset-2 hover:text-fg hover:underline" onClick={endTour}>
-            Salir del tour
+            {buddyUiCopy.exitTourBtn}
           </button>
         )}
       </div>
@@ -425,7 +426,7 @@ function TextView({ view }: { view: Extract<BuddyView, { type: "text" }> }) {
           ))}
           {!view.auto && (
             <button type="button" className={smallBtn} onClick={() => say({ type: "menu" })}>
-              Menú
+              {buddyUiCopy.menuBtn}
             </button>
           )}
         </div>
@@ -461,19 +462,19 @@ export function viewToSpeech(view: BuddyView | null): string {
       return [view.title, view.text].filter(Boolean).join(". ");
     case "tour": {
       const step = tour[view.index];
-      return step ? `Paso ${view.index + 1} de ${tour.length}. ${step.text}` : "";
+      return step ? buddyUiCopy.speechTourStep(view.index + 1, tour.length, step.text) : "";
     }
     case "project": {
       const p = projectById(view.projectId);
-      return p ? `${p.title}. El reto: ${p.buddy.challenge} La arquitectura: ${p.buddy.architecture} ${p.buddy.takeaway}` : "";
+      return p ? buddyUiCopy.speechProject(p.title, p.buddy.challenge, p.buddy.architecture, p.buddy.takeaway) : "";
     }
     case "menu":
-      return "Menú de Buddy abierto.";
+      return buddyUiCopy.speechMenu;
     case "faq":
-      return "Preguntas frecuentes.";
+      return buddyUiCopy.speechFaq;
     case "projects":
-      return "Selector de proyectos.";
+      return buddyUiCopy.speechProjects;
     case "contact":
-      return "Opciones de contacto.";
+      return buddyUiCopy.speechContact;
   }
 }

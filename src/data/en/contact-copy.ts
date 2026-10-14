@@ -1,0 +1,67 @@
+/** Textos del formulario de contacto en inglés: mismas claves que `../contact-copy.ts`. */
+import type { ContactCopy } from "../contact-copy.ts";
+
+export const en: ContactCopy = {
+  validationCopy: {
+    name: "Please enter your name.",
+    nameLong: (max) => `Please use a shorter version (up to ${max} characters).`,
+    email: "Please check the email format.",
+    emailLong: (max) => `That email is too long (up to ${max} characters).`,
+    messageShort: "Tell me a little more (at least 10 characters).",
+    messageLong: (max) => `Please shorten it a bit (up to ${max} characters).`,
+  },
+  autoCopy: {
+    submit: "Send message",
+    sending: "Sending…",
+    sendingLive: "Sending your message…",
+    note: "It goes straight to my inbox. This site doesn't store your data.",
+    sentTitle: "Message sent!",
+    sentBody: "It's already in my inbox. I'll reply to",
+    sentBodyEnd: "as soon as I can.",
+    failedTitle: "It couldn't be sent automatically.",
+    failedBody: "Your text is still here: send it from your email (it's already written) or copy my address.",
+    failure: {
+      offline: "It looks like you're offline.",
+      timeout: "The server took too long to respond.",
+      network: "I couldn't reach the mail server.",
+      rejected: "The mail server didn't accept the message.",
+    },
+  },
+  channelCopy: {
+    web: {
+      submit: "Send with Gmail",
+      note: "Gmail will open with your message ready to send. This site doesn't send or store your data.",
+      openedTitle: "Your message is ready in Gmail!",
+      openedBody: "I opened it in a new tab, already addressed to me.",
+      reopen: "Open Gmail again",
+      blockedTitle: "Your browser blocked the Gmail tab.",
+      blockedBody: "Open it with this button (your message is already written) or copy my email.",
+      retry: "Open Gmail",
+    },
+    app: {
+      submit: "Send from your email",
+      note: "Your email app (Gmail on Android) will open with your message ready. This site doesn't send or store your data.",
+      openedTitle: "Your message is ready in your email!",
+      openedBody: "Your email app opened with the message already addressed to me.",
+      reopen: "Open my email again",
+      blockedTitle: "Your email app didn't open.",
+      blockedBody: "Try this button, or copy my email and write to me from wherever you like.",
+      retry: "Open my email",
+    },
+  },
+  sharedCopy: {
+    launching: "Opening your email…",
+    launchingLive: "Opening your email app…",
+    sendHint: "Review it and press",
+    sendHintAction: "Send",
+    sendHintEnd: "so it reaches me.",
+    another: "Write another",
+    copyEmail: "Copy email",
+    copied: "Copied!",
+    noGmail: "Don't use Gmail?",
+    noGmailCopy: "Copy my email",
+    noGmailCopied: "Email copied!",
+    noGmailEnd: "and write to me from your own email.",
+    validationNudge: "Almost there. Check the highlighted fields and let's try again.",
+  },
+};

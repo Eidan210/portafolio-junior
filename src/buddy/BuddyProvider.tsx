@@ -24,6 +24,8 @@ import { animateScroll, jumpTo, scrollTopFor } from "@/lib/scroll";
 import { readPref, writePref } from "@/lib/storage";
 import type { BuddyMood, SectionId } from "@/lib/types";
 import { completion, idleQuips, sectionLines, tour } from "@/data/buddy-script";
+import { buddyUiCopy } from "@/data/ui";
+import { skipIntro } from "@/i18n/lang";
 
 export const SECTION_IDS: readonly SectionId[] = ["inicio", "sobre-mi", "stack", "proyectos", "contacto"];
 
@@ -181,7 +183,8 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
   const reducedMotion = systemReduced && !fullMotion;
   // Se decide una vez al cargar. Con #seccion en la URL el navegador salta allí y el hero ni se ve.
   const [intro, setIntro] = useState<IntroPhase>(() =>
-    !reducedMotion && window.matchMedia(DESKTOP_INTRO).matches && (!location.hash || location.hash === "#inicio") ? "play" : "done",
+    // Tras cambiar de idioma la página se recarga: la intro ya se vio en esta sesión.
+    !reducedMotion && !skipIntro && window.matchMedia(DESKTOP_INTRO).matches && (!location.hash || location.hash === "#inicio") ? "play" : "done",
   );
   const wide = useMediaQuery("(min-width: 1280px)");
   const routeMode: RouteMode = wide && !reducedMotion ? "lanes" : "track";
@@ -346,7 +349,7 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
     const t = window.setTimeout(() => {
       const current = viewRef.current;
       if (current && !(current.type === "text" && current.auto)) return;
-      say({ ...completion, type: "text", auto: true, actions: [{ label: "Escribirle", run: () => scrollTo("contacto") }] });
+      say({ ...completion, type: "text", auto: true, actions: [{ label: buddyUiCopy.writeToHim, run: () => scrollTo("contacto") }] });
     }, 900);
     return () => window.clearTimeout(t);
     // Solo al completar: cambios posteriores de muted/minimized no deben repetir el mensaje.

@@ -2,6 +2,7 @@ import { memo } from "react";
 import { motion, useReducedMotionConfig } from "motion/react";
 import { ArrowUpRight } from "lucide-react";
 import { projects } from "@/data/projects";
+import { projectsCopy } from "@/data/ui";
 import { BuddyAvatar } from "@/buddy/BuddyAvatar";
 import { useBuddyActions } from "@/buddy/BuddyProvider";
 import { GitHubIcon } from "@/components/icons";
@@ -75,7 +76,7 @@ const ProjectCard = memo(function ProjectCard({ project, index }: { project: Pro
         {project.image ? (
           <img
             src={project.image}
-            alt={`Captura de ${project.title}`}
+            alt={projectsCopy.screenshotAlt(project.title)}
             loading="lazy"
             decoding="async"
             className="size-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.04]"
@@ -92,7 +93,7 @@ const ProjectCard = memo(function ProjectCard({ project, index }: { project: Pro
       </div>
 
       <div className={`flex flex-1 flex-col p-5 sm:p-6 ${featured ? "lg:justify-center lg:p-8" : ""}`}>
-        {featured && <p className="pixel-tag mb-3 self-start" style={FEATURED_TAG}>★ Destacado</p>}
+        {featured && <p className="pixel-tag mb-3 self-start" style={FEATURED_TAG}>{projectsCopy.featuredTag}</p>}
         <h3 className={`font-display font-bold ${featured ? "text-2xl" : "text-xl"}`}>{project.title}</h3>
         <p className="mt-2 text-sm leading-relaxed text-muted">{project.summary}</p>
 
@@ -110,7 +111,7 @@ const ProjectCard = memo(function ProjectCard({ project, index }: { project: Pro
           ))}
         </dl>
 
-        <ul className="mt-4 flex flex-wrap gap-1.5" aria-label="Tecnologías">
+        <ul className="mt-4 flex flex-wrap gap-1.5" aria-label={projectsCopy.techListAria}>
           {project.stack.map((t) => (
             <li key={t} className="chip !px-2.5 !py-0.5 !text-xs">
               {t}
@@ -127,14 +128,14 @@ const ProjectCard = memo(function ProjectCard({ project, index }: { project: Pro
             className="btn btn-ghost !min-h-10 !border-claude/40 !bg-claude/10 !py-1.5 !pr-4 !pl-1.5 !text-sm hover:!bg-claude/20"
           >
             <BuddyAvatar mood="happy" bare className="size-8" />
-            ¿Qué dice Buddy?
+            {projectsCopy.whatBuddySays}
           </motion.button>
-          <a href={project.repoUrl} target="_blank" rel="noreferrer" className="btn btn-ghost !min-h-10 !px-3.5 !text-sm" aria-label={`Repositorio de ${project.title}`}>
-            <GitHubIcon className="size-4" /> Repo
+          <a href={project.repoUrl} target="_blank" rel="noreferrer" className="btn btn-ghost !min-h-10 !px-3.5 !text-sm" aria-label={projectsCopy.repoAria(project.title)}>
+            <GitHubIcon className="size-4" /> {projectsCopy.repoLabel}
           </a>
           {project.demoUrl && (
-            <a href={project.demoUrl} target="_blank" rel="noreferrer" className="btn btn-ghost !min-h-10 !px-3.5 !text-sm" aria-label={`Demo en vivo de ${project.title}`}>
-              <ArrowUpRight className="size-4" aria-hidden="true" /> Demo
+            <a href={project.demoUrl} target="_blank" rel="noreferrer" className="btn btn-ghost !min-h-10 !px-3.5 !text-sm" aria-label={projectsCopy.demoAria(project.title)}>
+              <ArrowUpRight className="size-4" aria-hidden="true" /> {projectsCopy.demoLabel}
             </a>
           )}
         </div>
@@ -146,8 +147,18 @@ const ProjectCard = memo(function ProjectCard({ project, index }: { project: Pro
 export function Projects() {
   return (
     <section id="proyectos" aria-labelledby="projects-title" className="shell px-4 py-24 sm:px-6">
-      <SectionHeading id="projects-title" eyebrow="Proyectos destacados" title={<>Software que <span className="text-gradient">resuelve algo</span>.</>}>
-        {projects.length} repositorios reales, de la automatización con IA a la programación orientada a objetos en Java. Cada cifra sale del propio repo.
+      <SectionHeading
+        id="projects-title"
+        eyebrow={projectsCopy.eyebrow}
+        title={
+          <>
+            {projectsCopy.titleLead}
+            <span className="text-gradient">{projectsCopy.titleAccent}</span>
+            {projectsCopy.titleEnd}
+          </>
+        }
+      >
+        {projectsCopy.description(projects.length)}
       </SectionHeading>
 
       <ul className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">

@@ -13,6 +13,7 @@ import { AnimatePresence, motion, useAnimate, useReducedMotionConfig } from "mot
 import { Compass, Route } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { welcome } from "@/data/buddy-script";
+import { heroCopy } from "@/data/ui";
 import type { BuddyMood } from "@/lib/types";
 import { BuddyAvatar } from "@/buddy/BuddyAvatar";
 import { MotionToggle } from "@/buddy/BuddyPanel";
@@ -81,8 +82,8 @@ export function HeroBuddy() {
             type: "text",
             text:
               routeMode === "lanes"
-                ? "¡Perfecto! Haz scroll y te acompaño por la ruta: recoge las 5 chispas. Haz clic en mí cuando quieras."
-                : "¡Perfecto! Te sigo por la barra de abajo: cada parada es una sección. Tócame cuando quieras.",
+                ? heroCopy.lanesPrompt
+                : heroCopy.trackPrompt,
             mood: "happy",
             auto: true,
           });
@@ -114,7 +115,7 @@ export function HeroBuddy() {
             transition={{ delay: reduce ? 0 : 0.25, type: "spring", stiffness: 260, damping: 24 }}
             className="glass buddy-bubble relative w-full max-w-sm rounded-3xl p-5 text-left"
             role="region"
-            aria-label="Bienvenida de Buddy"
+            aria-label={heroCopy.welcomeAria}
           >
             {/* Pico de la burbuja apuntando a Buddy. */}
             <span className="absolute -top-2 left-1/2 size-4 -translate-x-1/2 rotate-45 border-t border-l border-white/10 bg-[rgb(42_40_37)]" aria-hidden="true" />
@@ -125,10 +126,10 @@ export function HeroBuddy() {
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <button type="button" className="btn btn-primary !min-h-10 !px-4 !text-sm" onClick={() => choose(true)}>
-                <Route className="size-4" aria-hidden="true" /> Tour guiado
+                <Route className="size-4" aria-hidden="true" /> {heroCopy.guidedTour}
               </button>
               <button type="button" className="btn btn-ghost !min-h-10 !px-4 !text-sm" onClick={() => choose(false)}>
-                <Compass className="size-4" aria-hidden="true" /> Explorar libremente
+                <Compass className="size-4" aria-hidden="true" /> {heroCopy.exploreFreely}
               </button>
             </div>
             <MotionToggle className="-mx-3 mt-3 !px-3" />
