@@ -113,7 +113,7 @@ src/
     buddy-script.ts       Todo lo que dice Buddy: bienvenida, saludos de la intro, tour, FAQ, secciones, "Sorpréndeme", meta
     contact-copy.ts       Textos del formulario de contacto (validación, envío automático, plan B)
   buddy/
-    BuddyProvider.tsx     Estado: hero→ruta, vista, mood, tour, narración, paradas visitadas, movimiento
+    BuddyProvider.tsx     Estado: hero→ruta, vista, mood, tour, narración, paradas visitadas, movimiento; contextos separados para que cada componente escuche solo lo que usa
     BuddyAvatar.tsx       Clawd: secuencias de fotogramas PNG por ánimo + fotograma por dirección
     HeroBuddy.tsx         Bienvenida: burbuja, tour/explorar y salto a la ruta
     ClawdEntrance.tsx     Entradas: ensamblado, caída, teletransporte, lluvia, paracaídas, hiperespacio, meteorito y ovni (a pantalla o en el hueco)
@@ -165,6 +165,7 @@ public/
 | Rotación por visita con memoria por carga (`lib/rotation.ts`) | En desarrollo, StrictMode invoca dos veces los inicializadores de estado: sin la memoria, la rotación saltaba de dos en dos y en escritorio solo se veían 3 de las 6 entradas. |
 | Ruta de escritorio en un chunk aparte (`React.lazy`) | Medido con el mapa de fuentes: el 80 % del JS es react-dom + motion. El móvil ya no descarga la ruta (13,5 kB) y, si el chunk falla, un ErrorBoundary deja la página en pie. La intro (4,2 kB) se queda en el bundle: cargarla aparte dejaba un instante sin telón. Bajar del aviso de 500 kB exigiría migrar a `LazyMotion`. |
 | Métricas: valor final hasta armarse | Bajan a 0 justo antes de entrar en pantalla y cuentan al aparecer. Si el observador nunca se dispara (pestaña en segundo plano, robots), se ve el valor real y nunca un 0. |
+| Contexto de Buddy dividido y contadores fuera de React | Medido con trazas de Chrome: durante el scroll, React re-renderizaba unas 20 veces por segundo secciones estáticas porque todo escuchaba el contexto completo de Buddy, que cambia con su ánimo y sus mensajes. Acciones, navegación, fase y movimiento van en contextos separados, tarjetas e iconos con `memo` y `CountUp` escribe el número en el DOM. En producción el scroll pasó de 10 a 23 fps en escritorio y de 13 a 30 en móvil con CPU 4× (Chrome headless). |
 | `-webkit-backdrop-filter` siempre **antes** de `backdrop-filter` | Lightning CSS (minificador del build) trata ambos como la misma propiedad y conserva solo el último. En el orden inverso, producción perdía el estándar y Chrome/Edge pintaban el vidrio sin blur. |
 | Scroll de Buddy propio (`lib/scroll.ts`), no `scrollIntoView` smooth | El smooth nativo es rápido y no se puede sincronizar con Clawd; el propio tiene duración y easing controlados y se cancela si el visitante toma el control. |
 

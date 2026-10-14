@@ -6,7 +6,7 @@
  * La opacidad del orbe naranja (0.28) es el techo medido para el contraste de
  * texto en globals.css: no la subas sin volver a medir.
  */
-import { useBuddy } from "@/buddy/BuddyProvider";
+import { useBuddyMotion } from "@/buddy/BuddyProvider";
 import { PixelField } from "@/components/PixelField";
 
 const ORBS = [
@@ -17,7 +17,7 @@ const ORBS = [
 ];
 
 export function Background() {
-  const { reducedMotion } = useBuddy();
+  const { reducedMotion } = useBuddyMotion();
   return (
     <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
       {ORBS.map((orb) => (

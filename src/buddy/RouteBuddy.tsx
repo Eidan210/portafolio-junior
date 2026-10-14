@@ -229,6 +229,7 @@ export function RouteLayer() {
     };
 
     const tick = (now: number) => {
+      if (!guiding) target = targetLen();
       const dt = last ? Math.min(0.1, (now - last) / 1000) : 1 / 60;
       last = now;
       const diff = target - cur;
@@ -350,11 +351,11 @@ export function RouteLayer() {
     let settle = 0;
     const onScroll = () => {
       if (guiding) return; // el scroll lo está moviendo el propio guiado
-      target = targetLen();
       kick();
       // Al soltar el scroll, nunca quedarse en mitad de un cruce: al extremo más cercano.
       window.clearTimeout(settle);
       settle = window.setTimeout(() => {
+        target = targetLen();
         for (const [a, b] of route.crossings) {
           if (target > a + 2 && target < b - 2) {
             target = target - a < b - target ? a : b;

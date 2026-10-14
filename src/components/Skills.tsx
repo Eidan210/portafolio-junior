@@ -6,10 +6,10 @@
  */
 import { AnimatePresence, LayoutGroup, motion, useReducedMotionConfig } from "motion/react";
 import { FileCheckCorner, Sparkles } from "lucide-react";
-import { useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { categories, capacities, learning, projectsFor, techs } from "@/data/skills";
-import { useBuddy } from "@/buddy/BuddyProvider";
+import { useBuddyActions } from "@/buddy/BuddyProvider";
 import { Reveal, trackGlow } from "@/components/interactive";
 import { SectionHeading } from "@/components/SectionHeading";
 import { TechIcon } from "@/components/TechIcon";
@@ -28,7 +28,7 @@ const TAG: Record<TechCategory, CSSProperties> = {
 const tagLabel = (c: TechCategory) => categories.find((x) => x.id === c)?.tag ?? c;
 
 /** Medidor pixel de evidencia: un bloque por proyecto destacado (máx. 4). */
-function EvidenceMeter({ count }: { count: number }) {
+const EvidenceMeter = memo(function EvidenceMeter({ count }: { count: number }) {
   return (
     <span className="flex gap-0.5" aria-hidden="true">
       {Array.from({ length: 4 }, (_, i) => (
@@ -36,9 +36,9 @@ function EvidenceMeter({ count }: { count: number }) {
       ))}
     </span>
   );
-}
+});
 
-function TechSlot({ tech, onSelect }: { tech: Tech; onSelect: (t: Tech) => void }) {
+const TechSlot = memo(function TechSlot({ tech, onSelect }: { tech: Tech; onSelect: (t: Tech) => void }) {
   const used = projectsFor(tech);
   const n = used.length;
   const evidence = n > 0 ? `${n} ${n === 1 ? "proyecto" : "proyectos"}${tech.note ? ` · ${tech.note}` : ""}` : (tech.note ?? "");
@@ -73,10 +73,10 @@ function TechSlot({ tech, onSelect }: { tech: Tech; onSelect: (t: Tech) => void 
       </span>
     </button>
   );
-}
+});
 
 export function Skills() {
-  const { say, scrollTo } = useBuddy();
+  const { say, scrollTo } = useBuddyActions();
   const reduce = useReducedMotionConfig();
   const [filter, setFilter] = useState<Filter>("todo");
 
@@ -87,26 +87,29 @@ export function Skills() {
   ];
 
   // Buddy explica la tecnología con su evidencia y ofrece saltar a los proyectos donde se usó.
-  const explain = (tech: Tech) => {
-    const used = projectsFor(tech);
-    const parts = [`${tech.role}.`];
-    if (tech.capacities?.length) parts.push(`${tech.capacities.join(" · ")}.`);
-    if (used.length) parts.push(`La usa en: ${used.map((p) => p.title).join(", ")}.`);
-    else if (tech.note) parts.push(`${tech.note}.`);
-    say({
-      type: "text",
-      title: tech.name,
-      text: parts.join(" "),
-      mood: tech.category === "automatizacion" ? "happy" : "coding",
-      actions: used.slice(0, 2).map((p) => ({
-        label: `Ver ${p.title.split(" ").slice(0, 2).join(" ")}`,
-        run: () => {
-          scrollTo(`proyecto-${p.id}`);
-          say({ type: "project", projectId: p.id });
-        },
-      })),
-    });
-  };
+  const explain = useCallback(
+    (tech: Tech) => {
+      const used = projectsFor(tech);
+      const parts = [`${tech.role}.`];
+      if (tech.capacities?.length) parts.push(`${tech.capacities.join(" · ")}.`);
+      if (used.length) parts.push(`La usa en: ${used.map((p) => p.title).join(", ")}.`);
+      else if (tech.note) parts.push(`${tech.note}.`);
+      say({
+        type: "text",
+        title: tech.name,
+        text: parts.join(" "),
+        mood: tech.category === "automatizacion" ? "happy" : "coding",
+        actions: used.slice(0, 2).map((p) => ({
+          label: `Ver ${p.title.split(" ").slice(0, 2).join(" ")}`,
+          run: () => {
+            scrollTo(`proyecto-${p.id}`);
+            say({ type: "project", projectId: p.id });
+          },
+        })),
+      });
+    },
+    [say, scrollTo],
+  );
 
   return (
     <section id="stack" aria-labelledby="stack-title" className="shell px-4 py-24 sm:px-6">

@@ -8,7 +8,7 @@
  * Los acentos del set (puntos, "zz", "?") son negros sobre transparente: el
  * contorno claro de `.clawd-img` los hace legibles sobre el fondo oscuro.
  */
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { useReducedMotionConfig } from "motion/react";
 import type { BuddyMood } from "@/lib/types";
@@ -106,7 +106,7 @@ type Props = {
   bare?: boolean;
 };
 
-export function BuddyAvatar({ mood, className = "", walking = null, look = null, bare = false }: Props) {
+export const BuddyAvatar = memo(function BuddyAvatar({ mood, className = "", walking = null, look = null, bare = false }: Props) {
   const reduce = useReducedMotionConfig();
   const [tick, setTick] = useState(0);
   const seq = SEQUENCES[mood];
@@ -136,4 +136,4 @@ export function BuddyAvatar({ mood, className = "", walking = null, look = null,
       </span>
     </span>
   );
-}
+});

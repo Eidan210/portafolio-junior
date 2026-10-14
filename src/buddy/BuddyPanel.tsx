@@ -24,7 +24,7 @@ import { projectById, projects } from "@/data/projects";
 import { GitHubIcon } from "@/components/icons";
 import { BuddyAvatar } from "@/buddy/BuddyAvatar";
 import { Typewriter } from "@/buddy/Typewriter";
-import { SECTION_IDS, useBuddy } from "@/buddy/BuddyProvider";
+import { SECTION_IDS, useBuddy, useBuddyActions, useBuddyMotion } from "@/buddy/BuddyProvider";
 import { STATION_LABELS, stationNumber } from "@/buddy/stations";
 import type { BuddyView } from "@/buddy/BuddyProvider";
 
@@ -62,7 +62,7 @@ export async function copyEmail(): Promise<boolean> {
 
 /** Interruptor de movimiento completo: solo tiene sentido si el sistema pide movimiento reducido. */
 export function MotionToggle({ className = "" }: { className?: string }) {
-  const { systemReduced, reducedMotion, setFullMotion } = useBuddy();
+  const { systemReduced, reducedMotion, setFullMotion } = useBuddyMotion();
   if (!systemReduced) return null;
   return (
     <div className={className}>
@@ -250,7 +250,7 @@ function FaqView() {
 }
 
 function ProjectsView() {
-  const { say, scrollTo } = useBuddy();
+  const { say, scrollTo } = useBuddyActions();
   return (
     <div>
       <Heading>¿Cuál te explico?</Heading>
@@ -279,7 +279,7 @@ function ProjectsView() {
 }
 
 function ProjectView({ projectId }: { projectId: string }) {
-  const { say } = useBuddy();
+  const { say } = useBuddyActions();
   const project = projectById(projectId);
   if (!project) return null;
   const blocks = [
@@ -409,7 +409,7 @@ function TourView({ index }: { index: number }) {
 }
 
 function TextView({ view }: { view: Extract<BuddyView, { type: "text" }> }) {
-  const { say } = useBuddy();
+  const { say } = useBuddyActions();
   return (
     <div>
       {view.title && <Heading>{view.title}</Heading>}

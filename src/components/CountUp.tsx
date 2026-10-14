@@ -6,9 +6,13 @@
  * queda el valor real y nunca un 0. Lo que no es un número limpio se muestra
  * tal cual, igual que con movimiento reducido; el lector de pantalla oye
  * siempre el valor final.
+ *
+ * El texto visible lo escribe este componente en el DOM, no React: contar no
+ * provoca un render por frame (con varias métricas a la vez eran decenas de
+ * commits por segundo mientras se hacía scroll).
  */
 import { animate, useInView, useReducedMotionConfig } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { formatMetric, parseMetric } from "@/lib/count";
 
 export function CountUp({ value }: { value: string }) {
@@ -18,28 +22,36 @@ export function CountUp({ value }: { value: string }) {
   const armed = useInView(ref, { once: true, margin: "0px 0px 25% 0px" });
   const visible = useInView(ref, { once: true, margin: "-10% 0px" });
   const [metric] = useState(() => parseMetric(value));
-  const [shown, setShown] = useState(value);
   const counted = useRef(false);
 
-  useEffect(() => {
-    if (!metric || reduce || counted.current) return;
+  // Layout effect: el texto queda escrito antes de pintar, sin parpadeo de un span vacío.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const show = (text: string) => {
+      el.textContent = text;
+    };
+    if (!metric || reduce || counted.current) return show(value);
     if (visible) {
       counted.current = true;
       const controls = animate(0, metric.value, {
         duration: 1.2,
         ease: [0.16, 1, 0.3, 1],
-        onUpdate: (v) => setShown(formatMetric(v, metric)),
+        onUpdate: (v) => show(formatMetric(v, metric)),
+        onComplete: () => show(value),
       });
-      return () => controls.stop();
+      // Cortada a medias (cambio de preferencia de movimiento, desmontaje): queda el valor real, nunca uno intermedio.
+      return () => {
+        controls.stop();
+        show(value);
+      };
     }
-    if (armed) setShown(formatMetric(0, metric));
-  }, [metric, reduce, armed, visible]);
+    show(armed ? formatMetric(0, metric) : value);
+  }, [metric, reduce, armed, visible, value]);
 
   return (
     <>
-      <span ref={ref} aria-hidden="true">
-        {reduce || !metric ? value : shown}
-      </span>
+      <span ref={ref} aria-hidden="true" />
       <span className="sr-only">{value}</span>
     </>
   );

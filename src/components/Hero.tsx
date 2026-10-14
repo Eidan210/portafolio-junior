@@ -2,7 +2,7 @@ import { motion, useReducedMotionConfig } from "motion/react";
 import { ArrowUpRight, Download, Mail } from "lucide-react";
 import { profile } from "@/data/profile";
 import { HeroBuddy } from "@/buddy/HeroBuddy";
-import { useBuddy } from "@/buddy/BuddyProvider";
+import { useBuddyStage } from "@/buddy/BuddyProvider";
 import { GitHubIcon } from "@/components/icons";
 import { Magnetic } from "@/components/interactive";
 import { ProfileCode } from "@/components/ProfileCode";
@@ -10,7 +10,7 @@ import { ProfileCode } from "@/components/ProfileCode";
 const ease = [0.16, 1, 0.3, 1] as const;
 
 export function Hero() {
-  const { stage, intro } = useBuddy();
+  const { stage, intro } = useBuddyStage();
   const reduce = useReducedMotionConfig();
   const hidden = { opacity: 0, y: reduce ? 0 : 24 };
   // Con la intro de escritorio en pantalla el texto espera: aparece mientras Clawd vuela hacia aquí.

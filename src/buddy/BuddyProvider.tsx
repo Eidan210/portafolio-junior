@@ -49,23 +49,7 @@ export type Guide = (top: number) => void;
 /** Intro a pantalla completa: escritorio con ratón (el hero va a dos columnas desde lg). */
 const DESKTOP_INTRO = "(min-width: 1024px) and (pointer: fine)";
 
-type BuddyContextValue = {
-  stage: Stage;
-  mood: BuddyMood;
-  view: BuddyView | null;
-  muted: boolean;
-  minimized: boolean;
-  routeMode: RouteMode;
-  /** El sistema pide movimiento reducido (con independencia de lo que eligió el visitante). */
-  systemReduced: boolean;
-  /** Movimiento reducido efectivo: el del sistema, salvo que el visitante active el completo. */
-  reducedMotion: boolean;
-  setFullMotion: (v: boolean) => void;
-  activeSection: SectionId | null;
-  visited: readonly SectionId[];
-  completed: boolean;
-  /** Marca una parada como alcanzada. Devuelve `true` si es la primera vez. */
-  visit: (id: SectionId) => boolean;
+export type BuddyActions = {
   say: (view: BuddyView) => void;
   close: () => void;
   toggleMenu: () => void;
@@ -78,17 +62,77 @@ type BuddyContextValue = {
   setMuted: (v: boolean) => void;
   setMinimized: (v: boolean) => void;
   scrollTo: (id: string) => void;
-  intro: IntroPhase;
   setIntro: (phase: IntroPhase) => void;
   /** La ruta de carriles registra aquí su guiado; sin él, `scrollTo` usa un scroll con easing. */
   registerGuide: (guide: Guide | null) => void;
+  setFullMotion: (v: boolean) => void;
+  /** Marca una parada como alcanzada. Devuelve `true` si es la primera vez. */
+  visit: (id: SectionId) => boolean;
 };
 
+export type BuddyNav = {
+  activeSection: SectionId | null;
+  visited: readonly SectionId[];
+  completed: boolean;
+};
+
+export type BuddyStage = {
+  stage: Stage;
+  intro: IntroPhase;
+  routeMode: RouteMode;
+};
+
+export type BuddyMotion = {
+  systemReduced: boolean;
+  reducedMotion: boolean;
+  setFullMotion: (v: boolean) => void;
+};
+
+type BuddyContextValue = BuddyActions &
+  BuddyNav &
+  BuddyStage & {
+    mood: BuddyMood;
+    view: BuddyView | null;
+    muted: boolean;
+    minimized: boolean;
+    systemReduced: boolean;
+    reducedMotion: boolean;
+    toggleMenu: () => void;
+  };
+
 const BuddyContext = createContext<BuddyContextValue | null>(null);
+const BuddyActionsContext = createContext<BuddyActions | null>(null);
+const BuddyNavContext = createContext<BuddyNav | null>(null);
+const BuddyStageContext = createContext<BuddyStage | null>(null);
+const BuddyMotionContext = createContext<BuddyMotion | null>(null);
 
 export function useBuddy(): BuddyContextValue {
   const ctx = useContext(BuddyContext);
   if (!ctx) throw new Error("useBuddy debe usarse dentro de <BuddyProvider>");
+  return ctx;
+}
+
+export function useBuddyActions(): BuddyActions {
+  const ctx = useContext(BuddyActionsContext);
+  if (!ctx) throw new Error("useBuddyActions debe usarse dentro de <BuddyProvider>");
+  return ctx;
+}
+
+export function useBuddyNav(): BuddyNav {
+  const ctx = useContext(BuddyNavContext);
+  if (!ctx) throw new Error("useBuddyNav debe usarse dentro de <BuddyProvider>");
+  return ctx;
+}
+
+export function useBuddyStage(): BuddyStage {
+  const ctx = useContext(BuddyStageContext);
+  if (!ctx) throw new Error("useBuddyStage debe usarse dentro de <BuddyProvider>");
+  return ctx;
+}
+
+export function useBuddyMotion(): BuddyMotion {
+  const ctx = useContext(BuddyMotionContext);
+  if (!ctx) throw new Error("useBuddyMotion debe usarse dentro de <BuddyProvider>");
   return ctx;
 }
 
@@ -350,21 +394,8 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
 
   const mood: BuddyMood = minimized ? "sleep" : talking ? "talk" : view ? viewMood(view) : (ambient ?? "idle");
 
-  const value = useMemo<BuddyContextValue>(
+  const actionsValue = useMemo<BuddyActions>(
     () => ({
-      stage,
-      mood,
-      view,
-      muted,
-      minimized,
-      routeMode,
-      systemReduced,
-      reducedMotion,
-      setFullMotion,
-      activeSection,
-      visited,
-      completed,
-      visit,
       say,
       close,
       toggleMenu,
@@ -376,24 +407,12 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
       setMuted,
       setMinimized,
       scrollTo,
-      intro,
       setIntro,
       registerGuide,
+      setFullMotion,
+      visit,
     }),
     [
-      stage,
-      mood,
-      view,
-      muted,
-      minimized,
-      routeMode,
-      systemReduced,
-      reducedMotion,
-      setFullMotion,
-      activeSection,
-      visited,
-      completed,
-      visit,
       say,
       close,
       toggleMenu,
@@ -405,15 +424,75 @@ export function BuddyProvider({ children }: { children: ReactNode }) {
       setMuted,
       setMinimized,
       scrollTo,
-      intro,
+      setIntro,
       registerGuide,
+      setFullMotion,
+      visit,
+    ],
+  );
+
+  const navValue = useMemo<BuddyNav>(
+    () => ({
+      activeSection,
+      visited,
+      completed,
+    }),
+    [activeSection, visited, completed],
+  );
+
+  const stageValue = useMemo<BuddyStage>(
+    () => ({
+      stage,
+      intro,
+      routeMode,
+    }),
+    [stage, intro, routeMode],
+  );
+
+  const motionValue = useMemo<BuddyMotion>(
+    () => ({
+      systemReduced,
+      reducedMotion,
+      setFullMotion,
+    }),
+    [systemReduced, reducedMotion, setFullMotion],
+  );
+
+  const value = useMemo<BuddyContextValue>(
+    () => ({
+      ...actionsValue,
+      ...navValue,
+      ...stageValue,
+      ...motionValue,
+      mood,
+      view,
+      muted,
+      minimized,
+    }),
+    [
+      actionsValue,
+      navValue,
+      stageValue,
+      motionValue,
+      mood,
+      view,
+      muted,
+      minimized,
     ],
   );
 
   return (
-    <BuddyContext.Provider value={value}>
-      {/* Motion sigue la preferencia efectiva, no solo la del sistema. */}
-      <MotionConfig reducedMotion={reducedMotion ? "always" : "never"}>{children}</MotionConfig>
-    </BuddyContext.Provider>
+    <BuddyActionsContext.Provider value={actionsValue}>
+      <BuddyMotionContext.Provider value={motionValue}>
+        <BuddyStageContext.Provider value={stageValue}>
+          <BuddyNavContext.Provider value={navValue}>
+            <BuddyContext.Provider value={value}>
+              {/* Motion sigue la preferencia efectiva, no solo la del sistema. */}
+              <MotionConfig reducedMotion={reducedMotion ? "always" : "never"}>{children}</MotionConfig>
+            </BuddyContext.Provider>
+          </BuddyNavContext.Provider>
+        </BuddyStageContext.Provider>
+      </BuddyMotionContext.Provider>
+    </BuddyActionsContext.Provider>
   );
 }

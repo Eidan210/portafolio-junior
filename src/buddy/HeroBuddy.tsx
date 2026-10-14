@@ -16,7 +16,7 @@ import { welcome } from "@/data/buddy-script";
 import type { BuddyMood } from "@/lib/types";
 import { BuddyAvatar } from "@/buddy/BuddyAvatar";
 import { MotionToggle } from "@/buddy/BuddyPanel";
-import { useBuddy } from "@/buddy/BuddyProvider";
+import { useBuddyActions, useBuddyStage } from "@/buddy/BuddyProvider";
 import { ClawdEntrance, nextEntrance } from "@/buddy/ClawdEntrance";
 import type { EntranceKind } from "@/buddy/ClawdEntrance";
 import { IntroStage } from "@/buddy/IntroStage";
@@ -24,7 +24,9 @@ import { PixelBurst } from "@/buddy/pixel-props";
 import { Typewriter } from "@/buddy/Typewriter";
 
 export function HeroBuddy() {
-  const { dock, startTour, say, routeMode, intro, setIntro } = useBuddy();
+  // Solo acciones y fase: el mood y la vista cambian a menudo y no afectan al hero.
+  const { dock, startTour, say, setIntro } = useBuddyActions();
+  const { routeMode, intro } = useBuddyStage();
   const reduce = useReducedMotionConfig();
   // Con la intro de escritorio la entrada ocurre allí (y no consume el turno del ciclo de móvil).
   const [withIntro] = useState(() => intro === "play");

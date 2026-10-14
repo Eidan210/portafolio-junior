@@ -6,7 +6,7 @@
 import { motion, useReducedMotionConfig } from "motion/react";
 import { useState } from "react";
 import { konamiLine } from "@/data/buddy-script";
-import { useBuddy } from "@/buddy/BuddyProvider";
+import { useBuddyActions } from "@/buddy/BuddyProvider";
 import { useKonami } from "@/lib/konami";
 
 const COLORS = ["#d97757", "#eba487", "#e8e6dc", "#6a9bcc", "#788c5d", "#faf9f5"] as const;
@@ -28,7 +28,7 @@ function makePieces(): Piece[] {
 }
 
 export function KonamiEgg() {
-  const { say } = useBuddy();
+  const { say } = useBuddyActions();
   const reduce = useReducedMotionConfig();
   // Cada activación es una tanda nueva (key distinta) que se retira sola.
   const [burst, setBurst] = useState<{ id: number; pieces: Piece[] } | null>(null);

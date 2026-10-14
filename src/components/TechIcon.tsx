@@ -4,6 +4,7 @@
  * cursor el color de marca (ver `.tech-slot`). SQL y APIs REST no tienen logo
  * de marca y usan un glifo de trazo con el mismo peso visual.
  */
+import { memo } from "react";
 import type { ReactNode } from "react";
 import type { TechIconId } from "@/lib/types";
 
@@ -68,7 +69,7 @@ const ICONS: Record<TechIconId, IconDef> = {
   ),
 };
 
-export function TechIcon({ id, className = "size-6" }: { id: TechIconId; className?: string }) {
+export const TechIcon = memo(function TechIcon({ id, className = "size-6" }: { id: TechIconId; className?: string }) {
   const icon: IconDef = ICONS[id];
   return (
     <svg
@@ -85,4 +86,4 @@ export function TechIcon({ id, className = "size-6" }: { id: TechIconId; classNa
       {icon.body}
     </svg>
   );
-}
+});

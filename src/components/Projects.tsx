@@ -1,8 +1,9 @@
+import { memo } from "react";
 import { motion, useReducedMotionConfig } from "motion/react";
 import { ArrowUpRight } from "lucide-react";
 import { projects } from "@/data/projects";
 import { BuddyAvatar } from "@/buddy/BuddyAvatar";
-import { useBuddy } from "@/buddy/BuddyProvider";
+import { useBuddyActions } from "@/buddy/BuddyProvider";
 import { GitHubIcon } from "@/components/icons";
 import { CountUp } from "@/components/CountUp";
 import { Reveal, TiltCard } from "@/components/interactive";
@@ -57,14 +58,14 @@ function GenerativePreview({ project, index }: { project: Project; index: number
   );
 }
 
-function ProjectCard({ project, index }: { project: Project; index: number }) {
-  const { say, minimized, setMinimized } = useBuddy();
+const ProjectCard = memo(function ProjectCard({ project, index }: { project: Project; index: number }) {
+  const { say, setMinimized } = useBuddyActions();
   const reduce = useReducedMotionConfig();
   // El destacado es horizontal en escritorio: captura a la izquierda, contenido a la derecha.
   const featured = index === 0;
 
   const askBuddy = () => {
-    if (minimized) setMinimized(false);
+    setMinimized(false);
     say({ type: "project", projectId: project.id });
   };
 
@@ -140,7 +141,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       </div>
     </TiltCard>
   );
-}
+});
 
 export function Projects() {
   return (

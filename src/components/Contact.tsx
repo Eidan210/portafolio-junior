@@ -19,7 +19,7 @@ import { contactBlocked, contactFailed, contactSent, contactThanks, copiedEmail 
 import { autoCopy, channelCopy, sharedCopy } from "@/data/contact-copy";
 import { profile } from "@/data/profile";
 import { copyEmail } from "@/buddy/BuddyPanel";
-import { useBuddy } from "@/buddy/BuddyProvider";
+import { useBuddyActions } from "@/buddy/BuddyProvider";
 import { PixelBurst } from "@/buddy/pixel-props";
 import { GitHubIcon } from "@/components/icons";
 import { GlowPanel, Magnetic, Reveal } from "@/components/interactive";
@@ -121,7 +121,7 @@ function DonePanel({ mark, title, children }: { mark: ReactNode; title: string; 
 }
 
 export function Contact() {
-  const { say } = useBuddy();
+  const { say } = useBuddyActions();
   const reduce = useReducedMotionConfig();
   const uid = useId();
   const [scope, animate] = useAnimate<HTMLDivElement>();

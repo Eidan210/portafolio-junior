@@ -9,6 +9,7 @@
  * claves sky-light, cadenas olive-light, números amber, puntuación stone.
  */
 import { motion, useReducedMotionConfig } from "motion/react";
+import { memo } from "react";
 import { Check, GitBranch } from "lucide-react";
 import type { ReactNode } from "react";
 import { profileCode } from "@/data/profile";
@@ -48,7 +49,7 @@ const LINES: readonly ReactNode[] = [
   </>,
 ];
 
-export function ProfileCode() {
+export const ProfileCode = memo(function ProfileCode() {
   const reduce = useReducedMotionConfig();
   return (
     <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.35, duration: 0.5, ease }} className="w-full max-w-sm">
@@ -108,4 +109,4 @@ export function ProfileCode() {
       </TiltCard>
     </motion.div>
   );
-}
+});

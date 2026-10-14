@@ -22,7 +22,7 @@ import { Check, Download, FolderGit2, Layers, Mail, Menu, UserRound, X } from "l
 import type { LucideIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { profile } from "@/data/profile";
-import { useBuddy } from "@/buddy/BuddyProvider";
+import { useBuddyNav } from "@/buddy/BuddyProvider";
 import { stationNumber } from "@/buddy/stations";
 import { GitHubIcon } from "@/components/icons";
 import { NavParachute } from "@/components/NavParachute";
@@ -40,7 +40,7 @@ const SPRING = { type: "spring", stiffness: 420, damping: 34 } as const;
 const RIDER_SRC = `${import.meta.env.BASE_URL}clawd/clawd-hands-up.png`;
 
 export function Nav() {
-  const { activeSection, visited } = useBuddy();
+  const { activeSection, visited } = useBuddyNav();
   const reduce = useReducedMotionConfig();
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState<SectionId | null>(null);

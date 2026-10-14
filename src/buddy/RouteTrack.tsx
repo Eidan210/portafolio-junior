@@ -70,11 +70,13 @@ function TrackLayer() {
     const fx = new FxLayer(fxRoot, { dots: 48, ghosts: 0, reduced: reducedMotion });
     fxRef.current = fx;
 
-    let tops: number[] = [];
+    let starts: number[] = [];
     let docHeight = 0;
     let width = 0;
     const measure = () => {
-      tops = SECTION_IDS.map((id) => {
+      const vhAnchor = window.innerHeight * ANCHOR;
+      starts = SECTION_IDS.map((id, i) => {
+        if (i === 0) return vhAnchor;
         const s = document.getElementById(id);
         return s ? s.getBoundingClientRect().top + window.scrollY : 0;
       });
@@ -85,12 +87,12 @@ function TrackLayer() {
     // Progreso 0..1: sección actual + fracción recorrida de ella. Cada parada está en i / LAST.
     const progress = () => {
       const anchor = window.scrollY + window.innerHeight * ANCHOR;
-      const starts = tops.map((t, i) => (i === 0 ? window.innerHeight * ANCHOR : t));
       let i = 0;
       while (i < LAST && anchor >= starts[i + 1]!) i++;
       if (i === LAST) return 1;
       const end = starts[i + 1] ?? docHeight;
-      return clamp01((i + clamp01((anchor - starts[i]!) / Math.max(1, end - starts[i]!))) / LAST);
+      const start = starts[i]!;
+      return clamp01((i + clamp01((anchor - start) / Math.max(1, end - start))) / LAST);
     };
 
     let cur = 0;
@@ -124,6 +126,7 @@ function TrackLayer() {
     };
 
     const tick = (now: number) => {
+      target = progress();
       const dt = last ? Math.min(0.1, (now - last) / 1000) : 1 / 60;
       last = now;
       const diffPx = (target - cur) * width;
@@ -152,7 +155,6 @@ function TrackLayer() {
     };
 
     const kick = () => {
-      target = progress();
       if (running) return;
       running = true;
       raf = requestAnimationFrame(tick);
