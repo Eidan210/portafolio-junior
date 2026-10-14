@@ -1,18 +1,21 @@
 import { motion, useReducedMotionConfig } from "motion/react";
-import { ArrowUpRight, Download, Mail } from "lucide-react";
+import { ArrowUpRight, Download, Mail, Timer } from "lucide-react";
+import { useState } from "react";
 import { profile } from "@/data/profile";
-import { heroCopy } from "@/data/ui";
+import { heroCopy, quickViewCopy } from "@/data/ui";
 import { HeroBuddy } from "@/buddy/HeroBuddy";
 import { useBuddyStage } from "@/buddy/BuddyProvider";
 import { GitHubIcon } from "@/components/icons";
 import { Magnetic } from "@/components/interactive";
 import { ProfileCode } from "@/components/ProfileCode";
+import { QuickView } from "@/components/QuickView";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
 export function Hero() {
   const { stage, intro } = useBuddyStage();
   const reduce = useReducedMotionConfig();
+  const [quick, setQuick] = useState(false);
   const hidden = { opacity: 0, y: reduce ? 0 : 24 };
   // Con la intro de escritorio en pantalla el texto espera: aparece mientras Clawd vuela hacia aquí.
   const rise = (delay: number) => ({
@@ -55,6 +58,11 @@ export function Hero() {
             </a>
           </Magnetic>
           <Magnetic>
+            <button type="button" onClick={() => setQuick(true)} aria-haspopup="dialog" className="btn btn-ghost">
+              <Timer className="size-4" aria-hidden="true" /> {quickViewCopy.open}
+            </button>
+          </Magnetic>
+          <Magnetic>
             <a href="#contacto" className="btn btn-ghost">
               <Mail className="size-4" aria-hidden="true" /> {heroCopy.contact}
             </a>
@@ -66,6 +74,7 @@ export function Hero() {
             </a>
           </Magnetic>
         </motion.div>
+        <QuickView open={quick} onClose={() => setQuick(false)} />
       </div>
 
       <div className="order-1 flex justify-center lg:order-2">{stage === "hero" ? <HeroBuddy /> : <ProfileCode />}</div>

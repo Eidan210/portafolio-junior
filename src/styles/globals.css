@@ -356,3 +356,21 @@
     --glass-bg-strong: rgb(38 37 34 / 0.96);
   }
 }
+
+/* Diálogos (vista rápida, casos de estudio): entrada breve, sin ella con movimiento reducido. */
+.app-dialog[open] {
+  animation: dialog-in 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-dialog[open] {
+    animation: none;
+  }
+}
