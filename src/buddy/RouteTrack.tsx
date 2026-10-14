@@ -216,7 +216,7 @@ function TrackLayer() {
   const menuOpen = view?.type === "menu";
 
   return (
-    <div className={`pointer-events-none fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 transition-transform duration-300 ${typing ? "translate-y-[150%]" : ""}`}>
+    <div data-route-track className={`pointer-events-none fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 transition-transform duration-300 ${typing ? "translate-y-[150%]" : ""}`}>
       <BuddyBubble origin="bottom center" className="absolute right-0 bottom-[calc(100%+0.75rem)] left-0 mx-auto max-h-[min(72dvh,34rem)] max-w-md rounded-b-md" />
 
       <nav aria-label="Ruta de Buddy" className="glass glass-dense pointer-events-auto relative mx-auto h-[4.75rem] max-w-md rounded-2xl px-8">

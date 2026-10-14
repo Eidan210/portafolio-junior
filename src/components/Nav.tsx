@@ -4,7 +4,9 @@
  * de hover que sigue al cursor, pill de sección activa y modo compacto al hacer
  * scroll. El progreso de lectura es el borde inferior del pill, que se llena;
  * un mini Clawd viaja colgado de él, como en una tirolesa, y se balancea con la
- * velocidad del scroll.
+ * velocidad del scroll. Al llegar al final de la página, Clawd se suelta de la
+ * vía, desciende en paracaídas hasta posarse sobre el footer (o sobre la barra
+ * o la burbuja de Buddy en móvil), saluda y se va caminando (`NavParachute`).
  */
 import {
   AnimatePresence,
@@ -18,11 +20,12 @@ import {
 } from "motion/react";
 import { Check, Download, FolderGit2, Layers, Mail, Menu, UserRound, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { profile } from "@/data/profile";
 import { useBuddy } from "@/buddy/BuddyProvider";
 import { stationNumber } from "@/buddy/stations";
 import { GitHubIcon } from "@/components/icons";
+import { NavParachute } from "@/components/NavParachute";
 import type { SectionId } from "@/lib/types";
 
 const LINKS: readonly { id: SectionId; label: string; icon: LucideIcon }[] = [
@@ -42,18 +45,70 @@ export function Nav() {
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState<SectionId | null>(null);
   const [compact, setCompact] = useState(false);
+  // Paracaídas: `bailed` = se soltó de la vía (histéresis 0.985 / 0.9); `falling` = hay una caída en pantalla.
+  const [bailed, setBailed] = useState(false);
+  const [falling, setFalling] = useState(false);
+  // Punto del viewport donde colgaba al soltarse: la caída se pinta en su propia capa (portal) y arranca justo ahí.
+  const [fallFrom, setFallFrom] = useState({ x: 0, y: 0 });
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [fallKey, setFallKey] = useState(0);
+  // Copias síncronas para el handler de scroll, que dispara varias veces antes del siguiente render.
+  const fallingRef = useRef(false);
+  const bailedRef = useRef(false);
 
   const { scrollY, scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 220, damping: 32, restDelta: 0.001 });
   // El envoltorio mide lo mismo que la vía: trasladarlo un % de su propio ancho lo lleva a ese % de la vía.
   const riderX = useTransform(progress, (v) => `${v * 100}%`);
   // En los extremos el mini Clawd taparía el logo o el botón de CV: aparece solo mientras avanza.
-  const riderOpacity = useTransform(progress, [0, 0.03, 0.97, 1], [0, 1, 1, 0]);
+  // Con reduced motion conserva el fundido al final; con paracaídas solo funde en la entrada.
+  const riderOpacityStandard = useTransform(progress, [0, 0.03], [0, 1]);
+  const riderOpacityReduced = useTransform(progress, [0, 0.03, 0.97, 1], [0, 1, 1, 0]);
+  const riderOpacity = reduce ? riderOpacityReduced : riderOpacityStandard;
   // Péndulo: al avanzar, el cuerpo se queda atrás; al frenar oscila hasta parar (resorte poco amortiguado).
   const velocity = useVelocity(scrollY);
   const swing = useSpring(useTransform(velocity, [-2400, 0, 2400], [-16, 0, 16]), { stiffness: 140, damping: 7 });
 
   useMotionValueEvent(scrollY, "change", (v) => setCompact(v > 24));
+
+  useMotionValueEvent(progress, "change", (v) => {
+    if (reduce) return;
+    if (v >= 0.985) {
+      if (!bailedRef.current) {
+        bailedRef.current = true;
+        setBailed(true);
+        if (!fallingRef.current) {
+          fallingRef.current = true;
+          setFalling(true);
+          const r = trackRef.current?.getBoundingClientRect();
+          setFallFrom(r ? { x: r.left + v * r.width, y: r.top } : { x: window.innerWidth - 40, y: 64 });
+          setFallKey((k) => k + 1);
+        }
+      }
+    } else if (v < 0.9) {
+      if (bailedRef.current) {
+        bailedRef.current = false;
+        setBailed(false);
+      }
+    }
+  });
+
+  const handleParachuteDone = useCallback(() => {
+    fallingRef.current = false;
+    setFalling(false);
+  }, []);
+
+  // Si el visitante pide movimiento reducido a mitad de una caída, NavParachute se desmonta sin
+  // llamar a onDone: se cierra aquí para que no reaparezca al reactivar las animaciones.
+  useEffect(() => {
+    if (!reduce) return;
+    fallingRef.current = false;
+    bailedRef.current = false;
+    setFalling(false);
+    setBailed(false);
+  }, [reduce]);
+
+  const isRiderHidden = !reduce && (bailed || falling);
 
   return (
     <header className="fixed inset-x-0 top-0 z-40 overflow-x-clip px-3 pt-3 sm:px-6 sm:pt-4">
@@ -125,18 +180,31 @@ export function Nav() {
         </div>
 
         {/* Progreso de lectura: la vía es el tramo recto del borde inferior del pill (el radio mide la mitad del alto). */}
-        <div className="pointer-events-none absolute inset-x-7 -bottom-px h-0.5" aria-hidden="true">
+        <div ref={trackRef} className="pointer-events-none absolute inset-x-7 -bottom-px h-0.5" aria-hidden="true">
           <span className="absolute inset-0 rounded-full bg-white/10" />
           <motion.span className="absolute inset-0 origin-left rounded-full bg-gradient-to-r from-claude-light via-claude to-sky" style={{ scaleX: progress }} />
           <motion.div className="absolute top-0 left-0 w-full" style={{ x: riderX, opacity: riderOpacity }}>
-            <motion.img
-              src={RIDER_SRC}
-              alt=""
-              draggable={false}
-              className="nav-rider absolute -top-[3px] left-0 block size-6 max-w-none -translate-x-1/2 select-none"
-              style={{ rotate: reduce ? 0 : swing, transformOrigin: "50% 12%" }}
-            />
+            <motion.div
+              animate={isRiderHidden ? { opacity: 0, scale: 0.4 } : { opacity: 1, scale: 1 }}
+              transition={
+                isRiderHidden
+                  ? { duration: 0 }
+                  : { type: "spring", stiffness: 420, damping: 26 }
+              }
+              className="absolute -top-[3px] left-0 size-6 -translate-x-1/2"
+            >
+              <motion.img
+                src={RIDER_SRC}
+                alt=""
+                draggable={false}
+                className="nav-rider block size-full max-w-none select-none"
+                style={{ rotate: reduce ? 0 : swing, transformOrigin: "50% 12%" }}
+              />
+            </motion.div>
           </motion.div>
+          {!reduce && falling && (
+            <NavParachute key={fallKey} from={fallFrom} onDone={handleParachuteDone} />
+          )}
         </div>
       </nav>
 

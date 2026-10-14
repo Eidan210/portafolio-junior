@@ -29,7 +29,8 @@ export function App() {
           <RouteBuddy />
         </main>
         <footer className="shell px-4 pt-8 pb-32 text-sm text-subtle sm:px-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-8">
+          {/* `data-landing`: el borde superior visible es el suelo donde aterriza el paracaídas del nav. */}
+          <div data-landing className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-8">
             <p>
               © {new Date().getFullYear()} {profile.name}
             </p>
