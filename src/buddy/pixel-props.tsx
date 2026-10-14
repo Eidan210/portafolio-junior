@@ -1,7 +1,8 @@
 /**
  * Props en pixel art: la chispa coleccionable de cada parada, la bandera de
- * meta y el paracaídas de la entrada (SVG con `crispEdges`, nítidos a cualquier
- * tamaño), y la ráfaga con la que Clawd aparece en el hero y en la intro.
+ * meta, el paracaídas, el platillo volante y la estela de meteorito de la
+ * entrada (SVG con `crispEdges`, nítidos a cualquier tamaño), y la ráfaga con la
+ * que Clawd aparece en el hero y en la intro.
  */
 import { motion } from "motion/react";
 
@@ -87,6 +88,108 @@ export function PixelParachute({ className = "" }: { className?: string }) {
         <line x1="24.5" y1="7.5" x2="23" y2="15" />
       </g>
       {cells}
+    </svg>
+  );
+}
+
+/**
+ * Platillo volante en pixel art (entrada "ufo"). ViewBox 30×12.
+ * Cúpula de cristal arriba en azul claro con brillo crema, disco ancho de
+ * piedra/arena con borde más oscuro, fila de 5 luces parpadeantes que alternan
+ * naranja y crema, y emisor inferior pequeño en naranja.
+ */
+export function PixelUfo({ className = "" }: { className?: string }) {
+  const lights = [
+    { x: 3, fill: "#d97757" },
+    { x: 9, fill: "#faf9f5" },
+    { x: 14, fill: "#d97757" },
+    { x: 19, fill: "#faf9f5" },
+    { x: 25, fill: "#d97757" },
+  ];
+
+  return (
+    <svg viewBox="0 0 30 12" className={className} shapeRendering="crispEdges" aria-hidden="true">
+      {/* Cúpula de cristal centrada con brillo crema */}
+      <rect x="12" y="1" width="6" height="1" fill="#9cc0e4" />
+      <rect x="13" y="1" width="2" height="1" fill="#faf9f5" />
+      <rect x="10" y="2" width="10" height="1" fill="#9cc0e4" />
+      <rect x="11" y="2" width="2" height="1" fill="#faf9f5" />
+      <rect x="9" y="3" width="12" height="1" fill="#6a9bcc" />
+      <rect x="10" y="3" width="1" height="1" fill="#faf9f5" />
+      <rect x="8" y="4" width="14" height="1" fill="#6a9bcc" />
+
+      {/* Disco ancho: piedra/arena con borde más oscuro */}
+      <rect x="5" y="5" width="20" height="1" fill="#b0aea5" />
+      <rect x="6" y="5" width="18" height="1" fill="#e8e6dc" />
+
+      <rect x="2" y="6" width="26" height="1" fill="#b0aea5" />
+      <rect x="3" y="6" width="24" height="1" fill="#e8e6dc" />
+
+      {/* Fila central con las 5 luces alternadas y desfasadas */}
+      <rect x="0" y="7" width="30" height="1" fill="#b0aea5" />
+      <rect x="1" y="7" width="28" height="1" fill="#e8e6dc" />
+      {lights.map((l, i) => (
+        <motion.rect
+          key={i}
+          x={l.x}
+          y={7}
+          width={2}
+          height={1}
+          fill={l.fill}
+          animate={{ opacity: [0.2, 1, 0.2] }}
+          transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.12, ease: "easeInOut" }}
+        />
+      ))}
+
+      {/* Base inferior del disco */}
+      <rect x="2" y="8" width="26" height="1" fill="#b0aea5" />
+      <rect x="6" y="9" width="18" height="1" fill="#b0aea5" />
+
+      {/* Emisor inferior pequeño en naranja */}
+      <rect x="11" y="10" width="8" height="1" fill="#c15f3c" />
+      <rect x="13" y="11" width="4" height="1" fill="#d97757" />
+    </svg>
+  );
+}
+
+/**
+ * Estela de fuego del meteorito (entrada "meteor"). Tira horizontal de 10 bloques
+ * cuadrados que decrecen en tamaño y opacidad: crema → naranja claro → naranja → naranja oscuro,
+ * con parpadeo suave en bucle. Pensada para rotarse con CSS hacia el punto de origen.
+ */
+export function PixelMeteorTrail({ className = "" }: { className?: string }) {
+  const blocks = [
+    { x: 0, s: 14, color: "#faf9f5", op: 1 },
+    { x: 9, s: 12, color: "#faf9f5", op: 0.92 },
+    { x: 19, s: 11, color: "#eba487", op: 0.85 },
+    { x: 29, s: 9, color: "#eba487", op: 0.75 },
+    { x: 38, s: 8, color: "#d97757", op: 0.65 },
+    { x: 47, s: 7, color: "#d97757", op: 0.55 },
+    { x: 56, s: 6, color: "#d97757", op: 0.45 },
+    { x: 65, s: 5, color: "#c15f3c", op: 0.35 },
+    { x: 73, s: 4, color: "#c15f3c", op: 0.25 },
+    { x: 80, s: 3, color: "#c15f3c", op: 0.16 },
+  ] as const;
+
+  return (
+    <svg viewBox="0 0 88 16" className={className} shapeRendering="crispEdges" aria-hidden="true">
+      {blocks.map((b, i) => (
+        <motion.rect
+          key={i}
+          x={b.x}
+          y={8 - b.s / 2}
+          width={b.s}
+          height={b.s}
+          fill={b.color}
+          animate={{ opacity: [b.op * 0.7, b.op, b.op * 0.7] }}
+          transition={{
+            duration: 0.35 + (i % 3) * 0.08,
+            repeat: Infinity,
+            delay: (i * 0.05) % 0.25,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
     </svg>
   );
 }

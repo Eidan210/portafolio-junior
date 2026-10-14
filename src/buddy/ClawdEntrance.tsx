@@ -1,5 +1,5 @@
 /**
- * Entradas de Clawd. Cinco coreografías sirven a dos escalas y una sexta solo
+ * Entradas de Clawd. Siete coreografías sirven a dos escalas y una octava solo
  * existe a pantalla completa:
  *
  *  - "assemble":  se arma con sus propios pixeles desde posiciones dispersas.
@@ -9,6 +9,8 @@
  *  - "parachute": baja en paracaídas balanceándose y lo suelta al aterrizar.
  *  - "warp":      salto al hiperespacio: estrellas que salen disparadas del
  *                 centro y Clawd llegando en espiral desde el fondo (solo intro).
+ *  - "meteor":    cruza el cielo envuelto en fuego y choca levantando polvo.
+ *  - "ufo":       un platillo volante desciende, emite un haz tractor y lo deja caer.
  *
  * Con `screen` es la intro de escritorio (Clawd gigante, la coreografía usa
  * toda la pantalla); sin él ocurre en el hueco del hero. Ocupa el tamaño de su
@@ -22,12 +24,12 @@ import { rotate } from "@/lib/storage";
 import type { BuddyMood } from "@/lib/types";
 import { BuddyAvatar } from "@/buddy/BuddyAvatar";
 import { PixelAssemble } from "@/buddy/PixelAssemble";
-import { PixelParachute } from "@/buddy/pixel-props";
+import { PixelMeteorTrail, PixelParachute, PixelUfo } from "@/buddy/pixel-props";
 
-export type EntranceKind = "assemble" | "drop" | "beam" | "rain" | "parachute" | "warp";
+export type EntranceKind = "assemble" | "drop" | "beam" | "rain" | "parachute" | "warp" | "meteor" | "ufo";
 /** Intro de escritorio (pantalla completa) y hueco del hero (móvil y tablet). */
-const SCREEN_KINDS: readonly EntranceKind[] = ["assemble", "drop", "beam", "rain", "parachute", "warp"];
-const SLOT_KINDS: readonly EntranceKind[] = ["assemble", "drop", "beam", "rain", "parachute"];
+const SCREEN_KINDS: readonly EntranceKind[] = ["assemble", "drop", "beam", "rain", "parachute", "warp", "meteor", "ufo"];
+const SLOT_KINDS: readonly EntranceKind[] = ["assemble", "drop", "beam", "rain", "parachute", "meteor", "ufo"];
 
 /** `?entrada=…` fuerza una concreta (sin avanzar la rotación): para verlas una a una. */
 const BY_SLUG: Readonly<Record<string, EntranceKind>> = {
@@ -37,6 +39,8 @@ const BY_SLUG: Readonly<Record<string, EntranceKind>> = {
   lluvia: "rain",
   paracaidas: "parachute",
   hiperespacio: "warp",
+  meteorito: "meteor",
+  ovni: "ufo",
 };
 
 /**
@@ -52,6 +56,8 @@ export function nextEntrance(key: "buddy.intro" | "buddy.entrance"): EntranceKin
 const FRAME = `${import.meta.env.BASE_URL}clawd/clawd-hands-up.png`;
 const BEAM_BG =
   "repeating-linear-gradient(0deg, rgb(250 249 245 / 0.14) 0 2px, transparent 2px 6px), linear-gradient(180deg, transparent, rgb(235 164 135 / 0.55) 70%, rgb(217 119 87 / 0.7))";
+const UFO_RAY_BG =
+  "repeating-linear-gradient(0deg, rgb(250 249 245 / 0.15) 0 2px, transparent 2px 6px), linear-gradient(180deg, rgb(156 192 228 / 0.55), rgb(156 192 228 / 0.12))";
 /** Pose mientras dura la coreografía; al aterrizar manda el ánimo del padre. */
 const ENTRANCE_MOOD: Record<EntranceKind, BuddyMood> = {
   assemble: "idle",
@@ -60,6 +66,8 @@ const ENTRANCE_MOOD: Record<EntranceKind, BuddyMood> = {
   rain: "idle",
   parachute: "hang",
   warp: "cool",
+  meteor: "dizzy",
+  ufo: "hang",
 };
 /** Primer paint, antes de que arranque la secuencia: Clawd todavía fuera de escena. */
 const PRE: Partial<Record<EntranceKind, CSSProperties>> = {
@@ -67,8 +75,21 @@ const PRE: Partial<Record<EntranceKind, CSSProperties>> = {
   beam: { clipPath: "inset(0% 0% 100% 0%)" },
   parachute: { transform: "translateY(-120vh)" },
   warp: { transform: "scale(0.03)", opacity: 0 },
+  meteor: { transform: "translate(75vw, -110vh)" },
+  ufo: { opacity: 0 },
 };
 const WARP_MS = 1150;
+/**
+ * Geometría del ovni en lados de Clawd. `lift`: altura de la base del ovni
+ * sobre los pies de Clawd (y largo del rayo); `start`: desde dónde baja Clawd.
+ * En la intro sobra pantalla; en el hueco del hero, el menú fijo queda a ~40 px
+ * del borde superior de Clawd, así que el ovni es más pequeño y planea justo
+ * encima de su cabeza.
+ */
+const UFO_FIT = {
+  screen: { width: 1.2, lift: 1.35, ray: 1.1, start: -0.45 },
+  slot: { width: 0.85, lift: 0.9, ray: 0.9, start: -0.27 },
+} as const;
 const STAR_COLORS = ["#faf9f5", "#e8e6dc", "#e8e6dc", "#eba487", "#d97757", "#9cc0e4"] as const;
 
 /**
@@ -138,11 +159,11 @@ type Props = {
   /** Aterrizar ya, sin terminar la coreografía (la intro se saltó). */
   finish?: boolean;
   onLanded: () => void;
-  /** Golpe al aterrizar de la caída: el padre decide qué tiembla. */
+  /** Golpe al aterrizar de la caída o el meteorito: el padre decide qué tiembla. */
   onImpact?: () => void;
 };
 
-/** Polvo pixel que levanta al aterrizar (caída). Diseñado para un Clawd de ~240 px. */
+/** Polvo pixel que levanta al aterrizar (caída y meteorito). Diseñado para un Clawd de ~240 px. */
 function Dust({ scale }: { scale: number }) {
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-[6%] flex justify-center" style={{ transform: `scale(${scale})`, transformOrigin: "50% 100%" }}>
@@ -170,6 +191,11 @@ export function ClawdEntrance({ kind, screen = false, mood, finish = false, onLa
   const squashRef = useRef<HTMLDivElement>(null); // estira y aplasta desde los pies
   const beamRef = useRef<HTMLSpanElement>(null);
   const chuteRef = useRef<HTMLDivElement>(null);
+  const meteorAuraRef = useRef<HTMLSpanElement>(null);
+  const meteorTrailRef = useRef<HTMLDivElement>(null);
+  const meteorFlashRef = useRef<HTMLSpanElement>(null);
+  const ufoRef = useRef<HTMLDivElement>(null);
+  const rayRef = useRef<HTMLSpanElement>(null);
   const running = useRef<Controls[]>([]);
   const landedRef = useRef(false);
   const [landed, setLanded] = useState(false);
@@ -177,10 +203,13 @@ export function ClawdEntrance({ kind, screen = false, mood, finish = false, onLa
   const [origin, setOrigin] = useState<{ x: number; y: number } | undefined>(undefined);
   const [warpAt, setWarpAt] = useState<{ x: number; y: number } | null>(null);
   const [dust, setDust] = useState(false);
+  // Los props con parpadeo en bucle (luces del ovni, estela) se desmontan al acabar: el hero sigue montado toda la visita.
+  const [fxDone, setFxDone] = useState(false);
   // Espejo de los callbacks: la coreografía no debe reiniciarse si el padre los recrea.
   const handlers = useRef({ onLanded, onImpact });
   handlers.current = { onLanded, onImpact };
   const pixels = kind === "assemble" || kind === "rain";
+  const ufoFit = screen ? UFO_FIT.screen : UFO_FIT.slot;
 
   const land = useCallback(() => {
     if (landedRef.current) return;
@@ -197,6 +226,8 @@ export function ClawdEntrance({ kind, screen = false, mood, finish = false, onLa
     // Ya aterrizó: activar "Animaciones completas" después no debe repetir la entrada.
     if (!root || !group || !squash || landedRef.current) return;
     if (reduce) {
+      // Sin coreografía no hay efectos que mostrar: si luego se activa el movimiento, no deben aparecer sueltos.
+      setFxDone(true);
       land();
       return;
     }
@@ -252,6 +283,75 @@ export function ClawdEntrance({ kind, screen = false, mood, finish = false, onLa
             { duration: WARP_MS / 1000, times: [0, 0.84, 1], ease: ["easeIn", "easeOut"] },
           ),
         );
+      } else if (kind === "meteor") {
+        const W = window.innerWidth;
+        await Promise.all([
+          track(animate(group, { x: [0.75 * W, 0], y: [-1.1 * h, 0] }, { duration: 0.75, ease: "easeIn", delay: 0.1 })),
+          track(animate(squash, { rotate: [-540, -20, 0] }, { duration: 0.75, times: [0, 0.9, 1], ease: "easeIn", delay: 0.1 })),
+        ]);
+        if (cancelled) return;
+        setDust(true);
+        handlers.current.onImpact?.();
+        const flash = meteorFlashRef.current;
+        const aura = meteorAuraRef.current;
+        const trail = meteorTrailRef.current;
+        if (flash) track(animate(flash, { scale: [0.2, 2.4], opacity: [0.9, 0] }, { duration: 0.45, ease: "easeOut" }));
+        if (aura) track(animate(aura, { opacity: 0 }, { duration: 0.2 }));
+        if (trail) track(animate(trail, { opacity: 0 }, { duration: 0.2 }));
+        await track(
+          animate(
+            squash,
+            { scaleY: [0.62, 1.12, 1], scaleX: [1.3, 0.94, 1] },
+            { duration: 0.5, ease: "easeOut" },
+          ),
+        );
+      } else if (kind === "ufo") {
+        const ufo = ufoRef.current;
+        const ray = rayRef.current;
+        const W = window.innerWidth;
+        if (ufo) {
+          await track(
+            animate(
+              ufo,
+              { x: [-0.6 * W, 0], y: [-0.5 * h, 0], rotate: [-14, 6, -3, 0], opacity: [1, 1] },
+              { duration: 0.9, ease: [0.16, 1, 0.3, 1] },
+            ),
+          );
+        }
+        if (cancelled) return;
+        if (ray) {
+          await track(animate(ray, { scaleY: [0, 1], opacity: [0, 1] }, { duration: 0.3, ease: "easeOut" }));
+        }
+        if (cancelled) return;
+        await track(
+          animate(
+            group,
+            { y: [ufoFit.start * s, 0], scale: [0.3, 1], opacity: [0, 1], rotate: [-6, 4, 0] },
+            { duration: 1.0, ease: "easeOut" },
+          ),
+        );
+        if (cancelled) return;
+        await track(
+          animate(
+            squash,
+            { scaleY: [1, 0.88, 1.05, 1], scaleX: [1, 1.08, 0.96, 1] },
+            { duration: 0.35, ease: "easeOut" },
+          ),
+        );
+        if (cancelled) return;
+        // Clawd ya está en el suelo: saluda mientras el ovni se marcha.
+        land();
+        await Promise.all([
+          ray && track(animate(ray, { scaleY: [1, 0], opacity: [1, 0] }, { duration: 0.3, ease: "easeIn" })),
+          ufo &&
+            track(
+              animate(
+                ufo,
+                { x: [0, 0.7 * W], y: [0, -0.6 * h], rotate: [0, 18], scale: [1, 0.7], opacity: [1, 0] },
+                { duration: 0.6, ease: "easeIn" },
+              ),
+            ),
+        ]);
       } else {
         // Paracaídas: desciende frenando, con vaivén de péndulo colgado de la cúpula.
         await Promise.all([
@@ -264,7 +364,11 @@ export function ClawdEntrance({ kind, screen = false, mood, finish = false, onLa
         await track(animate(squash, { scaleY: [1, 0.84, 1.06, 1], scaleX: [1, 1.12, 0.96, 1] }, { duration: 0.45 }));
       }
     };
-    void run().then(() => !cancelled && land());
+    void run().then(() => {
+      if (cancelled) return;
+      land();
+      setFxDone(true);
+    });
     return () => {
       cancelled = true;
       running.current.forEach((c) => c.stop());
@@ -278,10 +382,23 @@ export function ClawdEntrance({ kind, screen = false, mood, finish = false, onLa
     running.current.forEach((c) => c.stop());
     running.current = [];
     if (groupRef.current) animate(groupRef.current, { x: 0, y: 0, rotate: 0, scale: 1, opacity: 1, clipPath: "inset(0% 0% 0% 0%)" }, { duration: 0 });
-    if (squashRef.current) animate(squashRef.current, { scaleX: 1, scaleY: 1 }, { duration: 0 });
-    for (const prop of [beamRef.current, chuteRef.current]) if (prop) animate(prop, { opacity: 0 }, { duration: 0 });
+    if (squashRef.current) animate(squashRef.current, { scaleX: 1, scaleY: 1, rotate: 0 }, { duration: 0 });
+    for (const prop of [
+      beamRef.current,
+      chuteRef.current,
+      meteorAuraRef.current,
+      meteorTrailRef.current,
+      meteorFlashRef.current,
+      ufoRef.current,
+      rayRef.current,
+    ]) {
+      if (prop) animate(prop, { opacity: 0 }, { duration: 0 });
+    }
+    setFxDone(true);
     land();
   }, [finish, land]);
+
+  const trailAngle = typeof window !== "undefined" ? (Math.atan2(-1.1 * window.innerHeight, 0.75 * window.innerWidth) * 180) / Math.PI : -55;
 
   return (
     <div ref={rootRef} className="relative size-full" aria-hidden="true">
@@ -291,6 +408,33 @@ export function ClawdEntrance({ kind, screen = false, mood, finish = false, onLa
           className="pointer-events-none absolute bottom-[4%] left-1/2 w-[70%] origin-top -translate-x-1/2 opacity-0"
           style={{ height: screen ? "100vh" : "220%", background: BEAM_BG, clipPath: "polygon(30% 0, 70% 0, 100% 100%, 0 100%)" }}
         />
+      )}
+      {kind === "ufo" && !reduce && !fxDone && (
+        <>
+          <div
+            ref={ufoRef}
+            className="pointer-events-none absolute left-1/2 aspect-[30/12] -translate-x-1/2"
+            // Invisible hasta que el primer keyframe lo lleva fuera de escena: sin destello en su sitio final.
+            style={{
+              opacity: 0,
+              bottom: `${ufoFit.lift * 100}%`,
+              width: `${ufoFit.width * 100}%`,
+            }}
+          >
+            <PixelUfo className="size-full" />
+          </div>
+          <span
+            ref={rayRef}
+            className="pointer-events-none absolute left-1/2 origin-top -translate-x-1/2 opacity-0"
+            style={{
+              top: `${(1 - ufoFit.lift) * 100}%`,
+              height: `${ufoFit.lift * 100}%`,
+              width: `${ufoFit.ray * 100}%`,
+              background: UFO_RAY_BG,
+              clipPath: "polygon(30% 0, 70% 0, 100% 100%, 0 100%)",
+            }}
+          />
+        </>
       )}
       {pixels && !landed && size > 0 && (!screen || origin) && (
         <PixelAssemble src={FRAME} size={size} mode={kind === "rain" ? "rain" : "scatter"} fullscreen={origin} onDone={land} />
@@ -308,6 +452,35 @@ export function ClawdEntrance({ kind, screen = false, mood, finish = false, onLa
           <div ref={chuteRef} className="pointer-events-none absolute bottom-[88%] -left-[15%] aspect-[26/15] w-[130%]">
             <PixelParachute className="size-full" />
           </div>
+        )}
+        {kind === "meteor" && !reduce && !fxDone && (
+          <>
+            <span
+              ref={meteorAuraRef}
+              className="pointer-events-none absolute inset-[-25%] rounded-full"
+              // Resplandor, no bola: translúcido y apagándose antes del borde.
+              style={{
+                background:
+                  "radial-gradient(circle, rgb(250 249 245 / 0.7) 0%, rgb(235 164 135 / 0.5) 26%, rgb(217 119 87 / 0.28) 46%, transparent 66%)",
+              }}
+            />
+            <div
+              ref={meteorTrailRef}
+              className="pointer-events-none absolute left-1/2 top-1/2"
+              style={{
+                width: size ? `${2.2 * size}px` : "220%",
+                height: size ? `${0.35 * size}px` : "35%",
+                transformOrigin: "0 0",
+                transform: `rotate(${trailAngle}deg) translateY(-50%)`,
+              }}
+            >
+              <PixelMeteorTrail className="size-full" />
+            </div>
+            <span
+              ref={meteorFlashRef}
+              className="pointer-events-none absolute bottom-0 left-1/2 size-full -translate-x-1/2 translate-y-1/2 rounded-full bg-[#faf9f5] opacity-0"
+            />
+          </>
         )}
         <div ref={squashRef} className="size-full origin-bottom">
           <motion.div

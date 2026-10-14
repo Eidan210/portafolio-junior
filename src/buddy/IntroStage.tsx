@@ -1,6 +1,6 @@
 /**
  * Intro de escritorio a pantalla completa. Telón de tinta → Clawd gigante entra
- * con una de las cinco coreografías de `ClawdEntrance` (rotan por visita) →
+ * con una de las ocho coreografías de `ClawdEntrance` (rotan por visita) →
  * saluda con un globo "¡HOLA!" → el telón cae y Clawd se encoge y vuela en
  * arco, con voltereta, hasta su hueco del hero (`target`), donde el Clawd real
  * toma el relevo.
@@ -44,8 +44,9 @@ export function IntroStage({ target, onReveal, onDone }: Props) {
   const [kind] = useState(() => nextEntrance("buddy.intro"));
   const [size] = useState(stageSize);
   const [at] = useState(() => {
-    // Con paracaídas Clawd aterriza algo más abajo: la cúpula (0.63× su alto) tiene que caber encima.
-    const y = Math.max(window.innerHeight * 0.44 - size / 2, kind === "parachute" ? size * 0.63 + 24 : 0);
+    // Con paracaídas o con ovni Clawd aterriza más abajo para que quepan encima.
+    const topMargin = kind === "parachute" ? size * 0.63 + 24 : kind === "ufo" ? size * 0.85 + 24 : 0;
+    const y = Math.max(window.innerHeight * 0.44 - size / 2, topMargin);
     return { x: Math.round((window.innerWidth - size) / 2), y: Math.round(y) };
   });
   const [phase, setPhase] = useState<Phase>("enter");
@@ -62,7 +63,7 @@ export function IntroStage({ target, onReveal, onDone }: Props) {
     fast.current = true;
     setPhase("fly");
   }, []);
-  // Aterrizaje de la caída: tiembla la pantalla entera.
+  // Aterrizaje de la caída o el meteorito: tiembla la pantalla entera.
   const shake = useCallback(() => {
     if (stageRef.current) void animate(stageRef.current, { x: [0, -16, 14, -9, 5, 0], y: [0, 7, -5, 3, 0] }, { duration: 0.45 });
   }, []);
