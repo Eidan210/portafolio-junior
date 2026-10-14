@@ -3,5 +3,7 @@ dist
 *.tsbuildinfo
 .lighthouseci
 lhci
+test-results
+playwright-report
 .env
 .env.*
