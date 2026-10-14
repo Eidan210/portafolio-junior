@@ -25,6 +25,17 @@ export type Project = {
   category: string;
   /** Lo que Buddy cuenta al pulsar "¿Qué dice Buddy?". */
   buddy: ProjectBreakdown;
+  /** Caso de estudio verificable contra el README del repo; sin él, la tarjeta no ofrece ese botón. */
+  caseStudy?: CaseStudy;
+};
+
+/** Problema → solución → decisiones → resultados → aprendizajes, en primera persona y sin cifras inventadas. */
+export type CaseStudy = {
+  problem: string;
+  solution: string;
+  decisions: readonly string[];
+  results: readonly string[];
+  learnings: readonly string[];
 };
 
 /** Una línea de consola: la salida del programa y, si la hay, lo que teclea el usuario tras ella. */

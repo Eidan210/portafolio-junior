@@ -26,6 +26,18 @@ export const en: UiCopy = {
     write: "Contact me",
     github: "GitHub",
   },
+  caseStudyCopy: {
+    open: "Case study",
+    close: "Close the case study",
+    eyebrow: "Case study",
+    problem: "The problem",
+    solution: "The solution",
+    decisions: "Technical decisions",
+    results: "Results",
+    learnings: "Lessons learned",
+    repo: "View the code",
+    demo: "View the demo",
+  },
   stationLabels: {
     inicio: "Home",
     "sobre-mi": "About",

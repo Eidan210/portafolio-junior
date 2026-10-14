@@ -9,6 +9,9 @@
  *
  * El bloque `buddy` es lo que cuenta la mascota en el explicador: reformula
  * problema → arquitectura → aprendizaje sin añadir datos nuevos.
+ *
+ * El bloque `caseStudy` sale del README de cada repo: cada afirmación se
+ * contrastó con una cita literal del README o de sus metadatos (2026-10-14).
  */
 import { pick } from "@/i18n/lang";
 import { en } from "@/data/en/projects";
@@ -39,6 +42,23 @@ const es = {
       takeaway:
         "Lo que más me gusta: la IA propone, pero el humano decide. Es human-in-the-loop por diseño, no por accidente.",
     },
+    caseStudy: {
+      problem: "Identifiqué que Recursos Humanos tardaba días revisando cientos de hojas de vida en PDF de forma manual.",
+      solution: "Construí un flujo en n8n que evalúa el PDF con Google Gemini, registra el resultado en Google Sheets y notifica a RR. HH.",
+      decisions: [
+        "Configuré un nodo de código para limpiar y validar el JSON devuelto por Gemini, porque no se debe confiar a ciegas en las salidas estructuradas del LLM.",
+        "Implementé el bot de Telegram con herramientas de solo lectura y acoté el prompt a modificar únicamente la columna Revision_RRHH, para mantener la decisión final en manos humanas.",
+        "Diseñé webhooks con respuesta inmediata 200 y procesamiento posterior, para evitar demoras en la respuesta al portal de postulación.",
+      ],
+      results: [
+        "Implementé el flujo completo en n8n mediante 39 nodos orquestados y persistencia en Google Sheets con 13 columnas.",
+        "Establecí tres niveles de compatibilidad: revisión prioritaria con 80 % o más, manual entre 60 y 79 %, y secundaria con menos de 60 %.",
+      ],
+      learnings: [
+        "Aprendí a estructurar prompts para exigir JSON estricto a un LLM y a limpiar el markdown antes de procesarlo.",
+        "Reforcé la integración de frontends con automatizaciones mediante webhooks, gestión de CORS y estados de carga.",
+      ],
+    },
   },
   {
     id: "mym",
@@ -61,6 +81,23 @@ const es = {
       architecture:
         "SPA sin frameworks en 8 módulos de responsabilidad única: catálogo, personalizador, carrito con IVA, auth y panel admin. n8n hace de backend: persiste usuarios en PostgreSQL, envía el recibo por Gmail y registra pedidos en Sheets.",
       takeaway: "Un frontend grande en JavaScript vanilla que habla con servicios reales. Y está desplegado: puedes probarlo.",
+    },
+    caseStudy: {
+      problem: "Identifiqué la necesidad de vender prendas personalizadas sin asumir comisiones de plataformas de terceros ni catálogos cerrados.",
+      solution: "Construí una SPA en JavaScript puro sin frameworks, respaldada por flujos en n8n para usuarios, recibos y pedidos.",
+      decisions: [
+        "Estructuré la navegación mediante un router propio que muestra u oculta secciones dentro de una sola página sin recargar.",
+        "Utilicé n8n como backend mediante tres webhooks especializados, para evitar el desarrollo y mantenimiento de un servidor dedicado.",
+        "Almacené carrito, favoritos, pedidos y sesión en localStorage y sessionStorage, para conservar el estado en el cliente sin base de datos en frontend.",
+      ],
+      results: [
+        "Integré un personalizador con texto de hasta 50 caracteres, selección de 6 tipografías y vista previa interactiva.",
+        "Añadí cálculo automático del IVA del 19 % en el carrito y completé el flujo con confirmación por correo.",
+      ],
+      learnings: [
+        "Aprendí a coordinar una arquitectura frontend sin dependencias externas dividida en ocho módulos con responsabilidad única.",
+        "Identifiqué que codificar credenciales en Base64 no equivale a cifrado y requiere algoritmos de hash como bcrypt en producción.",
+      ],
     },
   },
   {
@@ -123,6 +160,23 @@ const es = {
       takeaway:
         "Es su primer repositorio en Java y ya usa POO de verdad: clases abstractas, herencia, colecciones con ArrayList y validación de cada entrada.",
     },
+    caseStudy: {
+      problem: "Me propuse consolidar 25 ejercicios prácticos de programación orientada a objetos en un único programa ejecutable.",
+      solution: "Construí un menú interactivo por consola que agrupa los ejercicios en paquetes temáticos independientes.",
+      decisions: [
+        "Diseñé una jerarquía con la clase abstracta Cuenta para reutilizar lógica común entre cuentas corrientes y de ahorro.",
+        "Implementé persistencia en archivos planos para guardar y recuperar la agenda de contactos al iniciar o cerrar la aplicación.",
+        "Apliqué control de excepciones con try-catch para capturar InputMismatchException cuando el usuario introduce caracteres no numéricos.",
+      ],
+      results: [
+        "Resolví los 25 ejercicios de expansión distribuidos en 19 clases y 6 paquetes organizados.",
+        "Configuré la lectura de números con coma decimal conforme al estándar regional colombiano con reintento automático.",
+      ],
+      learnings: [
+        "Practiqué la aplicación de abstracción y polimorfismo para modelar comportamientos bancarios diferenciados.",
+        "Reforcé la gestión dinámica de colecciones en memoria empleando ArrayList para registros y contactos sin límite prefijado.",
+      ],
+    },
   },
   {
     id: "examenes",
@@ -142,6 +196,23 @@ const es = {
       architecture:
         "Tres módulos independientes —login, portal de creación y resolución con cuenta atrás— que comparten estado por almacenamiento local.",
       takeaway: "Estado, temporizadores y render dinámico, todo sin librerías. Aquí se aprende cómo funciona lo que los frameworks esconden.",
+    },
+    caseStudy: {
+      problem: "Detecté que evaluar con formularios sin control impedía limitar el tiempo, restringir accesos o calificar objetivamente.",
+      solution: "Desarrollé una plataforma web en JavaScript puro para administrar exámenes y resolverlos bajo cuenta regresiva.",
+      decisions: [
+        "Encapsulé el login y la resolución en Web Components con Shadow DOM para aislar lógica y estructura visual.",
+        "Calculé el tiempo restante a partir de la marca temporal inicial para impedir que una recarga reinicie la cuenta atrás.",
+        "Centralicé la persistencia en localStorage para almacenar usuarios, catálogo de exámenes y resultados sin dependencias de backend.",
+      ],
+      results: [
+        "Configuré la entrega obligatoria del examen al llegar a cero el cronómetro y el cálculo inmediato de la nota.",
+        "Estructuré la solución en módulos que separan login, portal docente y entorno de presentación de pruebas.",
+      ],
+      learnings: [
+        "Comprobé la viabilidad de gestionar estados complejos, render dinámico y vistas sin recurrir a frameworks.",
+        "Reconocí el riesgo de almacenar contraseñas en texto plano dentro de localStorage como limitación para entornos productivos.",
+      ],
     },
   },
   {
@@ -163,6 +234,23 @@ const es = {
         "Valida la API key y el identificador, verifica el estado HTTP, procesa el JSON y muestra un mensaje distinto para cada tipo de fallo.",
       takeaway: "El detalle clave: controla errores en la respuesta, no solo en la petición. Un fetch que no lanza no es un fetch que funcionó.",
     },
+    caseStudy: {
+      problem: "Necesitaba consumir una API pública de videojuegos asegurando renderizado dinámico y tolerancia a errores de red o parámetros.",
+      solution: "Construí un buscador web en JavaScript que consulta la API REST de RAWG con peticiones asíncronas sin recargar la página.",
+      decisions: [
+        "Validé respuesta.ok y el contenido devuelto además del bloque try-catch, para detectar fallos HTTP que no disparan errores en fetch.",
+        "Configuré el parámetro metacritic enviando el mismo valor como mínimo y máximo, para filtrar puntajes exactos según la documentación.",
+        "Asigné textos sustitutos mediante el operador lógico or en las plantillas, para prevenir valores indefinidos ante campos ausentes.",
+      ],
+      results: [
+        "Implementé tres modalidades de búsqueda: identificador único, rango de fechas de lanzamiento y calificación de Metacritic.",
+        "Añadí validación de presencia de la API key y avisos visuales en rojo ante búsquedas sin coincidencias o entradas inválidas.",
+      ],
+      learnings: [
+        "Adopté la sintaxis async y await para estructurar llamadas asíncronas más limpias frente a promesas encadenadas con then.",
+        "Reforcé la práctica de leer a fondo la documentación de APIs para aprovechar filtros específicos como rangos coincidentes.",
+      ],
+    },
   },
   {
     id: "campustech",
@@ -183,6 +271,23 @@ const es = {
         "Cinco módulos de responsabilidad única —registro, visualización, reportes, datos y menú— con validación de entrada y confirmación explícita antes de guardar.",
       takeaway: "Nació de reescribir una v1 monolítica. La refactorización ES el proyecto: Eidan revisa lo que ya funciona.",
     },
+    caseStudy: {
+      problem: "El registro manual generaba inconsistencias y la versión original del inventario era un script monolítico difícil de mantener.",
+      solution: "Reescribí el sistema en Python distribuyendo las funciones en cinco módulos independientes con persistencia en JSON.",
+      decisions: [
+        "Centralicé la gestión de datos y almacenamiento en Productos.py para que modificaciones en la persistencia no alteren los demás módulos.",
+        "Implementé manualmente el ordenamiento por burbuja en lugar de delegar en funciones nativas para ejercitar la algoritmia interna.",
+        "Incorporé un mecanismo de recuperación ante archivos JSON dañados para arrancar con lista vacía en lugar de detener la ejecución.",
+      ],
+      results: [
+        "Estructuré el sistema en cinco módulos dedicados a menú, altas, visualización ordenada, categorías únicas y almacenamiento.",
+        "Formateé los listados y reportes en terminal mediante tablas fancy_grid generadas con la biblioteca tabulate.",
+      ],
+      learnings: [
+        "Refactoricé código preexistente para transicionar de una estructura monolítica a un esquema desacoplado y mantenible.",
+        "Practiqué la validación de datos en la frontera del sistema controlando tipos numéricos, rangos positivos y excepciones ValueError.",
+      ],
+    },
   },
   {
     id: "gastos",
@@ -201,6 +306,23 @@ const es = {
       challenge: "Los apuntes sueltos de gastos no se pueden sumar por periodo, filtrar ni convertir en reporte.",
       architecture: "Seis módulos dedicados —registro, listado, cálculo, reporte, datos y menú— con salida en tablas en la terminal.",
       takeaway: "Agregación de datos por periodo y separación estricta de responsabilidades, en un proyecto pequeño y bien cortado.",
+    },
+    caseStudy: {
+      problem: "Registrar gastos sin estructura impedía totalizar por fechas, filtrar categorías o conciliar movimientos en distintas monedas.",
+      solution: "Desarrollé una CLI en Python distribuida en seis módulos que convierte divisas a COP y totaliza por día, semana y mes.",
+      decisions: [
+        "Aislé la carga y guardado en gastos_data.py para que todos los submódulos operen sobre una única fuente de verdad.",
+        "Estandaricé la conversión con tasas de cambio fijas a COP para posibilitar comparaciones sin perder el valor ni la divisa original.",
+        "Empleé fechas con formato ISO YYYY-MM-DD para calcular filtros y rangos temporales mediante comparaciones directas de cadenas.",
+      ],
+      results: [
+        "Construí seis módulos de funcionalidad específica protegidos con el bloque condicional if __name__ == '__main__':.",
+        "Generé reportes diarios, semanales y mensuales presentados en tablas con formato fancy_grid o exportados a ficheros JSON.",
+      ],
+      learnings: [
+        "Practiqué la separación de responsabilidades distribuyendo menús, operaciones matemáticas y persistencia en módulos independientes.",
+        "Reforcé la lógica de agregación temporal mediante filtrado de fechas exactas e intervalos para cálculos periódicos.",
+      ],
     },
   },
   ] as readonly Project[],

@@ -1,11 +1,12 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { motion, useReducedMotionConfig } from "motion/react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, BookOpen } from "lucide-react";
 import { projects } from "@/data/projects";
-import { projectsCopy } from "@/data/ui";
+import { caseStudyCopy, projectsCopy } from "@/data/ui";
 import { BuddyAvatar } from "@/buddy/BuddyAvatar";
 import { useBuddyActions } from "@/buddy/BuddyProvider";
 import { GitHubIcon } from "@/components/icons";
+import { CaseStudyDialog } from "@/components/CaseStudyDialog";
 import { CountUp } from "@/components/CountUp";
 import { Reveal, TiltCard } from "@/components/interactive";
 import { TerminalPreview } from "@/components/TerminalPreview";
@@ -65,82 +66,93 @@ const ProjectCard = memo(function ProjectCard({ project, index }: { project: Pro
   // El destacado es horizontal en escritorio: captura a la izquierda, contenido a la derecha.
   const featured = index === 0;
 
+  const [studyOpen, setStudyOpen] = useState(false);
+
   const askBuddy = () => {
     setMinimized(false);
     say({ type: "project", projectId: project.id });
   };
 
+  // El diálogo va fuera de la TiltCard: dentro, el puntero sobre el diálogo seguiría inclinando la tarjeta.
   return (
-    <TiltCard max={featured ? 2 : 5} className={`group flex h-full flex-col overflow-hidden rounded-3xl ${featured ? "lg:flex-row" : ""}`}>
-      <div className={`relative overflow-hidden border-b border-white/10 ${LAYOUT[index]?.media ?? "aspect-[16/9]"}`}>
-        {project.image ? (
-          <img
-            src={project.image}
-            alt={projectsCopy.screenshotAlt(project.title)}
-            loading="lazy"
-            decoding="async"
-            className="size-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-          />
-        ) : project.terminal ? (
-          <TerminalPreview session={project.terminal} />
-        ) : (
-          <GenerativePreview project={project} index={index} />
-        )}
-        {/* Fondo casi opaco: sobre capturas claras el vidrio al 5 % no da contraste AA. */}
-        <span className="absolute top-3 left-3 rounded-full border border-white/15 bg-ink/80 px-3 py-1 text-xs font-semibold text-fg backdrop-blur-md">
-          {project.category}
-        </span>
-      </div>
-
-      <div className={`flex flex-1 flex-col p-5 sm:p-6 ${featured ? "lg:justify-center lg:p-8" : ""}`}>
-        {featured && <p className="pixel-tag mb-3 self-start" style={FEATURED_TAG}>{projectsCopy.featuredTag}</p>}
-        <h3 className={`font-display font-bold ${featured ? "text-2xl" : "text-xl"}`}>{project.title}</h3>
-        <p className="mt-2 text-sm leading-relaxed text-muted">{project.summary}</p>
-
-        <dl className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
-          {project.metrics.map((m) => (
-            <div key={m.label} className="flex items-baseline gap-1.5">
-              <dt className="sr-only">{m.label}</dt>
-              <dd className="font-display text-lg font-extrabold text-claude-light tabular-nums">
-                <CountUp value={m.value} />
-              </dd>
-              <span className="text-xs text-subtle" aria-hidden="true">
-                {m.label}
-              </span>
-            </div>
-          ))}
-        </dl>
-
-        <ul className="mt-4 flex flex-wrap gap-1.5" aria-label={projectsCopy.techListAria}>
-          {project.stack.map((t) => (
-            <li key={t} className="chip !px-2.5 !py-0.5 !text-xs">
-              {t}
-            </li>
-          ))}
-        </ul>
-
-        <div className={`flex flex-wrap items-center gap-2 pt-6 ${featured ? "lg:mt-2" : "mt-auto"}`}>
-          <motion.button
-            type="button"
-            onClick={askBuddy}
-            whileHover={reduce ? undefined : { scale: 1.03 }}
-            whileTap={reduce ? undefined : { scale: 0.97 }}
-            className="btn btn-ghost !min-h-10 !border-claude/40 !bg-claude/10 !py-1.5 !pr-4 !pl-1.5 !text-sm hover:!bg-claude/20"
-          >
-            <BuddyAvatar mood="happy" bare className="size-8" />
-            {projectsCopy.whatBuddySays}
-          </motion.button>
-          <a href={project.repoUrl} target="_blank" rel="noreferrer" className="btn btn-ghost !min-h-10 !px-3.5 !text-sm" aria-label={projectsCopy.repoAria(project.title)}>
-            <GitHubIcon className="size-4" /> {projectsCopy.repoLabel}
-          </a>
-          {project.demoUrl && (
-            <a href={project.demoUrl} target="_blank" rel="noreferrer" className="btn btn-ghost !min-h-10 !px-3.5 !text-sm" aria-label={projectsCopy.demoAria(project.title)}>
-              <ArrowUpRight className="size-4" aria-hidden="true" /> {projectsCopy.demoLabel}
-            </a>
+    <>
+      <TiltCard max={featured ? 2 : 5} className={`group flex h-full flex-col overflow-hidden rounded-3xl ${featured ? "lg:flex-row" : ""}`}>
+        <div className={`relative overflow-hidden border-b border-white/10 ${LAYOUT[index]?.media ?? "aspect-[16/9]"}`}>
+          {project.image ? (
+            <img
+              src={project.image}
+              alt={projectsCopy.screenshotAlt(project.title)}
+              loading="lazy"
+              decoding="async"
+              className="size-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+            />
+          ) : project.terminal ? (
+            <TerminalPreview session={project.terminal} />
+          ) : (
+            <GenerativePreview project={project} index={index} />
           )}
+          {/* Fondo casi opaco: sobre capturas claras el vidrio al 5 % no da contraste AA. */}
+          <span className="absolute top-3 left-3 rounded-full border border-white/15 bg-ink/80 px-3 py-1 text-xs font-semibold text-fg backdrop-blur-md">
+            {project.category}
+          </span>
         </div>
-      </div>
-    </TiltCard>
+
+        <div className={`flex flex-1 flex-col p-5 sm:p-6 ${featured ? "lg:justify-center lg:p-8" : ""}`}>
+          {featured && <p className="pixel-tag mb-3 self-start" style={FEATURED_TAG}>{projectsCopy.featuredTag}</p>}
+          <h3 className={`font-display font-bold ${featured ? "text-2xl" : "text-xl"}`}>{project.title}</h3>
+          <p className="mt-2 text-sm leading-relaxed text-muted">{project.summary}</p>
+
+          <dl className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
+            {project.metrics.map((m) => (
+              <div key={m.label} className="flex items-baseline gap-1.5">
+                <dt className="sr-only">{m.label}</dt>
+                <dd className="font-display text-lg font-extrabold text-claude-light tabular-nums">
+                  <CountUp value={m.value} />
+                </dd>
+                <span className="text-xs text-subtle" aria-hidden="true">
+                  {m.label}
+                </span>
+              </div>
+            ))}
+          </dl>
+
+          <ul className="mt-4 flex flex-wrap gap-1.5" aria-label={projectsCopy.techListAria}>
+            {project.stack.map((t) => (
+              <li key={t} className="chip !px-2.5 !py-0.5 !text-xs">
+                {t}
+              </li>
+            ))}
+          </ul>
+
+          <div className={`flex flex-wrap items-center gap-2 pt-6 ${featured ? "lg:mt-2" : "mt-auto"}`}>
+            <motion.button
+              type="button"
+              onClick={askBuddy}
+              whileHover={reduce ? undefined : { scale: 1.03 }}
+              whileTap={reduce ? undefined : { scale: 0.97 }}
+              className="btn btn-ghost !min-h-10 !border-claude/40 !bg-claude/10 !py-1.5 !pr-4 !pl-1.5 !text-sm hover:!bg-claude/20"
+            >
+              <BuddyAvatar mood="happy" bare className="size-8" />
+              {projectsCopy.whatBuddySays}
+            </motion.button>
+            {project.caseStudy && (
+              <button type="button" onClick={() => setStudyOpen(true)} aria-haspopup="dialog" className="btn btn-ghost !min-h-10 !px-3.5 !text-sm">
+                <BookOpen className="size-4" aria-hidden="true" /> {caseStudyCopy.open}
+              </button>
+            )}
+            <a href={project.repoUrl} target="_blank" rel="noreferrer" className="btn btn-ghost !min-h-10 !px-3.5 !text-sm" aria-label={projectsCopy.repoAria(project.title)}>
+              <GitHubIcon className="size-4" /> {projectsCopy.repoLabel}
+            </a>
+            {project.demoUrl && (
+              <a href={project.demoUrl} target="_blank" rel="noreferrer" className="btn btn-ghost !min-h-10 !px-3.5 !text-sm" aria-label={projectsCopy.demoAria(project.title)}>
+                <ArrowUpRight className="size-4" aria-hidden="true" /> {projectsCopy.demoLabel}
+              </a>
+            )}
+          </div>
+        </div>
+      </TiltCard>
+      <CaseStudyDialog project={project} open={studyOpen} onClose={() => setStudyOpen(false)} />
+    </>
   );
 });
 
