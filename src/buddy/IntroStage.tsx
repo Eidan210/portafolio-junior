@@ -13,9 +13,10 @@ import { AnimatePresence, animate, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { createPortal } from "react-dom";
-import { intro } from "@/data/buddy-script";
+import { intro, introGreetings } from "@/data/buddy-script";
 import { ClawdEntrance, nextEntrance } from "@/buddy/ClawdEntrance";
 import { PixelBurst } from "@/buddy/pixel-props";
+import { rotate } from "@/lib/storage";
 
 type Phase = "enter" | "greet" | "fly";
 
@@ -42,6 +43,8 @@ type Props = {
 
 export function IntroStage({ target, onReveal, onDone }: Props) {
   const [kind] = useState(() => nextEntrance("buddy.intro"));
+  // Pose, globo y frase del saludo: rotan por visita, como las entradas.
+  const [greeting] = useState(() => introGreetings[rotate("buddy.greet", introGreetings.length)] ?? introGreetings[0]!);
   const [size] = useState(stageSize);
   const [at] = useState(() => {
     // Con paracaídas o con ovni Clawd aterriza más abajo para que quepan encima.
@@ -132,7 +135,7 @@ export function IntroStage({ target, onReveal, onDone }: Props) {
       <div ref={backdropRef} className="intro-backdrop absolute inset-0" aria-hidden="true" />
 
       <div ref={clawdRef} className="absolute" style={{ left: at.x, top: at.y, width: size, height: size }} aria-hidden="true">
-        <ClawdEntrance kind={kind} screen mood="wave" finish={phase === "fly"} onLanded={toGreet} onImpact={shake} />
+        <ClawdEntrance kind={kind} screen mood={greeting.mood} finish={phase === "fly"} onLanded={toGreet} onImpact={shake} />
         {phase === "greet" && (
           <div className="absolute inset-0" style={{ transform: `scale(${size / 240})` }}>
             <PixelBurst />
@@ -154,7 +157,7 @@ export function IntroStage({ target, onReveal, onDone }: Props) {
             aria-hidden="true"
           >
             <p className="pixel-corners bg-sand px-6 pt-4 pb-3 font-pixel text-5xl leading-none whitespace-nowrap text-ink xl:text-6xl">
-              {[...intro.hello].map((ch, i) => (
+              {[...greeting.hello].map((ch, i) => (
                 <motion.span key={i} className="inline-block" initial={{ y: 14 }} animate={{ y: [14, -10, 0] }} transition={{ delay: 0.1 + i * 0.07, duration: 0.42 }}>
                   {ch}
                 </motion.span>
@@ -176,7 +179,7 @@ export function IntroStage({ target, onReveal, onDone }: Props) {
             transition={{ delay: 0.35, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             aria-hidden="true"
           >
-            {intro.line}
+            {greeting.line}
           </motion.p>
         )}
       </AnimatePresence>

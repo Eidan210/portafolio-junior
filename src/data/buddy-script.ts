@@ -9,10 +9,24 @@ import type { BuddyMood, FaqEntry, SectionId } from "@/lib/types";
 
 /** Intro de escritorio a pantalla completa, antes de que Clawd vuele a su sitio del hero. */
 export const intro = {
-  hello: "¡HOLA!",
-  line: "Soy Buddy, el guía del portafolio de Eidan",
   skip: "Saltar intro",
 } as const;
+
+export type IntroGreeting = { mood: BuddyMood; hello: string; line: string };
+
+/**
+ * Saludo de Clawd al aterrizar en la intro: pose, globo y frase rotan por
+ * visita. El globo usa la fuente pixel a 48–60 px: máximo 7 caracteres para
+ * que quepa junto a Clawd en una pantalla de 1024 px.
+ */
+export const introGreetings: readonly IntroGreeting[] = [
+  { mood: "wave", hello: "¡HOLA!", line: "Soy Buddy, el guía del portafolio de Eidan" },
+  { mood: "cool", hello: "¡EPA!", line: "Buddy al mando: te enseño lo que construye Eidan" },
+  { mood: "love", hello: "¡HOLI!", line: "Qué bueno verte por aquí. Soy Buddy, tu guía" },
+  { mood: "happy", hello: "¡HEY!", line: "Soy Buddy, y hoy el recorrido corre por mi cuenta" },
+  { mood: "coding", hello: "<HOLA/>", line: "Hello, world: soy Buddy, el guía de Eidan" },
+  { mood: "surprised", hello: "¡OH!", line: "¡Una visita! Soy Buddy, déjame enseñarte todo" },
+];
 
 export const welcome = {
   title: "¡Hola! Soy Buddy 👋",
