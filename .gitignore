@@ -1,5 +1,7 @@
 node_modules
 dist
 *.tsbuildinfo
+.lighthouseci
+lhci
 .env
 .env.*
