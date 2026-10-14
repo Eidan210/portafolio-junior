@@ -9,7 +9,7 @@
  * se mide su rectángulo y se pasa a `dock`: la ruta lo hace saltar en arco
  * desde aquí. Si el visitante hace scroll sin elegir, se acopla sin salto.
  */
-import { AnimatePresence, motion, useAnimate, useReducedMotionConfig } from "motion/react";
+import { motion, useAnimate, useReducedMotionConfig } from "motion/react";
 import { Compass, Route } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { welcome } from "@/data/buddy-script";
@@ -107,35 +107,36 @@ export function HeroBuddy() {
         {landed && !reduce && <PixelBurst />}
       </div>
 
-      <AnimatePresence>
-        {landed && (
-          <motion.div
-            initial={{ opacity: 0, y: reduce ? 0 : 16, scale: reduce ? 1 : 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ delay: reduce ? 0 : 0.25, type: "spring", stiffness: 260, damping: 24 }}
-            className="glass buddy-bubble relative w-full max-w-sm rounded-3xl p-5 text-left"
-            role="region"
-            aria-label={heroCopy.welcomeAria}
-          >
-            {/* Pico de la burbuja apuntando a Buddy. */}
-            <span className="absolute -top-2 left-1/2 size-4 -translate-x-1/2 rotate-45 border-t border-l border-white/10 bg-[rgb(42_40_37)]" aria-hidden="true" />
-            <p className="mb-1.5 font-display text-lg font-bold">{welcome.title}</p>
-            <p className="sr-only">{welcome.body}</p>
-            <p className="text-sm leading-relaxed text-muted">
-              <Typewriter text={welcome.body} speed={20} />
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button type="button" className="btn btn-primary !min-h-10 !px-4 !text-sm" onClick={() => choose(true)}>
-                <Route className="size-4" aria-hidden="true" /> {heroCopy.guidedTour}
-              </button>
-              <button type="button" className="btn btn-ghost !min-h-10 !px-4 !text-sm" onClick={() => choose(false)}>
-                <Compass className="size-4" aria-hidden="true" /> {heroCopy.exploreFreely}
-              </button>
-            </div>
-            <MotionToggle className="-mx-3 mt-3 !px-3" />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* La burbuja ocupa su sitio desde el primer render, invisible e inerte hasta que Clawd aterriza:
+          montarla al aterrizar empujaba el texto del hero en móvil (unos 245 px; CLS 0,17 en Lighthouse). */}
+      <motion.div
+        initial={false}
+        animate={landed ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: reduce ? 0 : 16, scale: reduce ? 1 : 0.95 }}
+        transition={landed ? { delay: reduce ? 0 : 0.25, type: "spring", stiffness: 260, damping: 24 } : { duration: 0 }}
+        className="glass buddy-bubble relative w-full max-w-sm rounded-3xl p-5 text-left"
+        role="region"
+        aria-label={heroCopy.welcomeAria}
+        aria-hidden={landed ? undefined : true}
+        inert={!landed}
+      >
+        {/* Pico de la burbuja apuntando a Buddy. */}
+        <span className="absolute -top-2 left-1/2 size-4 -translate-x-1/2 rotate-45 border-t border-l border-white/10 bg-[rgb(42_40_37)]" aria-hidden="true" />
+        <p className="mb-1.5 font-display text-lg font-bold">{welcome.title}</p>
+        <p className="sr-only">{welcome.body}</p>
+        <p className="text-sm leading-relaxed text-muted">
+          {/* Hasta aterrizar, el texto invisible reserva la altura exacta; el tecleo empieza al verse. */}
+          {landed ? <Typewriter text={welcome.body} speed={20} /> : <span className="invisible">{welcome.body}</span>}
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button type="button" className="btn btn-primary !min-h-10 !px-4 !text-sm" onClick={() => choose(true)}>
+            <Route className="size-4" aria-hidden="true" /> {heroCopy.guidedTour}
+          </button>
+          <button type="button" className="btn btn-ghost !min-h-10 !px-4 !text-sm" onClick={() => choose(false)}>
+            <Compass className="size-4" aria-hidden="true" /> {heroCopy.exploreFreely}
+          </button>
+        </div>
+        <MotionToggle className="-mx-3 mt-3 !px-3" />
+      </motion.div>
     </div>
   );
 }
