@@ -51,7 +51,8 @@ const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
 type Geo = { route: Route; width: number; height: number; size: number; mainTop: number; maxScroll: number };
 
-function RouteLayer() {
+/** Capa de la ruta de escritorio. Se carga aparte (`RouteBuddyLazy`): en móvil y tablet nunca se descarga. */
+export function RouteLayer() {
   const { mood, view, muted, toggleMenu, visit, visited, consumeLaunch, registerGuide } = useBuddy();
   const layerRef = useRef<HTMLDivElement>(null);
   const walkerRef = useRef<HTMLDivElement>(null);
@@ -563,10 +564,4 @@ function RouteLayer() {
       </div>
     </div>
   );
-}
-
-export function RouteBuddy() {
-  const { routeMode, stage, minimized } = useBuddy();
-  if (routeMode !== "lanes" || stage !== "hud" || minimized) return null;
-  return <RouteLayer />;
 }

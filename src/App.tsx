@@ -1,7 +1,7 @@
 import { profile } from "@/data/profile";
 import { BuddyHUD } from "@/buddy/BuddyHUD";
 import { BuddyProvider } from "@/buddy/BuddyProvider";
-import { RouteBuddy } from "@/buddy/RouteBuddy";
+import { RouteBuddy } from "@/buddy/RouteBuddyLazy";
 import { About } from "@/components/About";
 import { Background } from "@/components/Background";
 import { Contact } from "@/components/Contact";
