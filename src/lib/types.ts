@@ -17,13 +17,21 @@ export type Project = {
   repoUrl: string;
   /** Demo desplegada; si falta, la tarjeta no muestra ese CTA. */
   demoUrl?: string;
-  /** Captura en /public/proyectos. Sin imagen se dibuja una vista previa generativa. */
+  /** Captura en /public/proyectos (sale de los `docs/` del propio repo). */
   image?: string;
+  /** Sesión real de consola para proyectos sin captura; sin ninguna de las dos, vista previa generativa. */
+  terminal?: TerminalSession;
   /** Etiqueta corta del badge. */
   category: string;
   /** Lo que Buddy cuenta al pulsar "¿Qué dice Buddy?". */
   buddy: ProjectBreakdown;
 };
+
+/** Una línea de consola: la salida del programa y, si la hay, lo que teclea el usuario tras ella. */
+export type TerminalLine = { out: string; input?: string };
+
+/** Sesión grabada ejecutando el programa real, línea a línea. */
+export type TerminalSession = { title: string; lines: readonly TerminalLine[] };
 
 export type ProjectBreakdown = {
   challenge: string;

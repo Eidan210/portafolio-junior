@@ -1,7 +1,11 @@
 /**
- * Proyectos destacados. Fuente: README de cada repositorio y
- * `Portafolio v3/data/projects.ts` (verificado 2026-09-08). Las métricas son
- * cifras del propio repo o del flujo, nunca estimaciones.
+ * Proyectos destacados. Las capturas salen de la carpeta `docs/` de cada repo
+ * y la sesión de consola del taller de Java, de ejecutar el programa real.
+ * Fuente de los textos: README de cada repositorio y
+ * `Portafolio v3/data/projects.ts` (verificado 2026-09-08). El taller de Java
+ * (`Cajero`) se contrastó con su código el 2026-10-13: 19 clases en 6
+ * paquetes. Las métricas son cifras del propio repo o del flujo, nunca
+ * estimaciones.
  *
  * El bloque `buddy` es lo que cuenta la mascota en el explicador: reformula
  * problema → arquitectura → aprendizaje sin añadir datos nuevos.
@@ -70,6 +74,44 @@ export const projects: readonly Project[] = [
     ],
     repoUrl: "https://github.com/Eidan210/Cajero",
     category: "Java · POO",
+    // Sesión real: compilado con javac y ejecutado con la cuenta de prueba del README (2026-10-13).
+    terminal: {
+      title: "Cajero — java",
+      lines: [
+        { out: "$ ", input: "java -cp target/classes com.mycompany.cajero.Cajero" },
+        { out: "----------- MENU OPCIONES -----------" },
+        { out: "1. Cajero Automatico" },
+        { out: "2. Registro Academico" },
+        { out: "3. Simulación de Tienda Online" },
+        { out: "4. Agenda de Contactos" },
+        { out: "5. Sistema de Notas con Curva" },
+        { out: "6. Salir" },
+        { out: "======================================" },
+        { out: "Elija una opcion: ", input: "1" },
+        { out: "" },
+        { out: "        Cajero Electronico" },
+        { out: "Ingrese el titular: ", input: "Ana" },
+        { out: "Ingrese su pin: ", input: "1234" },
+        { out: "Acceso Permitido. Bienvenido Ana (Cuenta de Ahorro)" },
+        { out: "" },
+        { out: " ----- MENU CAJERO -----" },
+        { out: "1. Consultar Saldo" },
+        { out: "2. Depositar" },
+        { out: "3. Retirar" },
+        { out: "4. Transferir" },
+        { out: "5. Estadisticas" },
+        { out: "6. Consultar Movimientos" },
+        { out: "7. Salir" },
+        { out: "================================" },
+        { out: "", input: "2" },
+        { out: "================================" },
+        { out: "Ingrese el monto a depositar: ", input: "50000" },
+        { out: "Deposito Realizado Correctamente" },
+        { out: "Interes ganado: +$500,00" },
+        { out: "Nuevo saldo: 550500.0" },
+        { out: "================================" },
+      ],
+    },
     buddy: {
       challenge:
         "Una guía de práctica con 25 ejercicios repartidos en 5 casos distintos. Resueltos por separado serían 25 programas sueltos, difíciles de ejecutar y de revisar.",
@@ -90,6 +132,7 @@ export const projects: readonly Project[] = [
       { value: "111 KB", label: "de JavaScript" },
     ],
     repoUrl: "https://github.com/Eidan210/examen",
+    image: "./proyectos/examenes.webp",
     category: "Frontend",
     buddy: {
       challenge: "Evaluar con formularios sueltos no permite controlar el tiempo de respuesta ni quién accede.",
@@ -109,6 +152,7 @@ export const projects: readonly Project[] = [
       { value: "9,7 KB", label: "peso total" },
     ],
     repoUrl: "https://github.com/Eidan210/Control-De-Apis-JS",
+    image: "./proyectos/videojuegos.webp",
     category: "API REST",
     buddy: {
       challenge: "Mostrar datos de un servicio externo sin recargar la página ni romperse cuando la API falla.",
@@ -128,6 +172,7 @@ export const projects: readonly Project[] = [
       { value: "v2.0", label: "reescritura" },
     ],
     repoUrl: "https://github.com/Eidan210/CampusTech-V2.0-Eidan",
+    image: "./proyectos/campustech.webp",
     category: "Backend · Python",
     buddy: {
       challenge: "Un inventario llevado a mano genera datos inconsistentes, sin trazabilidad ni agrupación por categoría.",
@@ -147,6 +192,7 @@ export const projects: readonly Project[] = [
       { value: "3", label: "periodos" },
     ],
     repoUrl: "https://github.com/Eidan210/Moneda",
+    image: "./proyectos/gastos.webp",
     category: "CLI · Python",
     buddy: {
       challenge: "Los apuntes sueltos de gastos no se pueden sumar por periodo, filtrar ni convertir en reporte.",

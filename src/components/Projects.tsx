@@ -4,7 +4,9 @@ import { projects } from "@/data/projects";
 import { BuddyAvatar } from "@/buddy/BuddyAvatar";
 import { useBuddy } from "@/buddy/BuddyProvider";
 import { GitHubIcon } from "@/components/icons";
+import { CountUp } from "@/components/CountUp";
 import { Reveal, TiltCard } from "@/components/interactive";
+import { TerminalPreview } from "@/components/TerminalPreview";
 import { SectionHeading } from "@/components/SectionHeading";
 import type { CSSProperties } from "react";
 import type { Project } from "@/lib/types";
@@ -77,6 +79,8 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             decoding="async"
             className="size-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.04]"
           />
+        ) : project.terminal ? (
+          <TerminalPreview session={project.terminal} />
         ) : (
           <GenerativePreview project={project} index={index} />
         )}
@@ -95,7 +99,9 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           {project.metrics.map((m) => (
             <div key={m.label} className="flex items-baseline gap-1.5">
               <dt className="sr-only">{m.label}</dt>
-              <dd className="font-display text-lg font-extrabold text-claude-light">{m.value}</dd>
+              <dd className="font-display text-lg font-extrabold text-claude-light tabular-nums">
+                <CountUp value={m.value} />
+              </dd>
               <span className="text-xs text-subtle" aria-hidden="true">
                 {m.label}
               </span>
