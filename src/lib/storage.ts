@@ -3,6 +3,8 @@
  * bloqueadas o en iframes sandbox el accesor puede lanzar. Las preferencias
  * son una comodidad, nunca un requisito para renderizar.
  */
+import { createRotation } from "@/lib/rotation";
+
 export function readPref<T>(key: string, fallback: T): T {
   try {
     const raw = window.localStorage.getItem(key);
@@ -19,3 +21,6 @@ export function writePref<T>(key: string, value: T): void {
     /* sin persistencia: la preferencia vive solo en esta visita */
   }
 }
+
+/** Rotación por visita de la app (entradas de Clawd, saludos de la intro), guardada con las preferencias. */
+export const rotate = createRotation({ read: (key) => readPref<unknown>(key, null), write: writePref });

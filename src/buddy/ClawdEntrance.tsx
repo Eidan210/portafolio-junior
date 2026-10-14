@@ -18,7 +18,7 @@
 import { animate, motion, useReducedMotionConfig } from "motion/react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
-import { readPref, writePref } from "@/lib/storage";
+import { rotate } from "@/lib/storage";
 import type { BuddyMood } from "@/lib/types";
 import { BuddyAvatar } from "@/buddy/BuddyAvatar";
 import { PixelAssemble } from "@/buddy/PixelAssemble";
@@ -39,14 +39,14 @@ const BY_SLUG: Readonly<Record<string, EntranceKind>> = {
   hiperespacio: "warp",
 };
 
-/** Siguiente entrada del ciclo de esta plataforma: un visitante que vuelve ve otra distinta. */
+/**
+ * Siguiente entrada del ciclo de esta plataforma: un visitante que vuelve ve
+ * otra distinta. Una sola elección por carga de página (`@/lib/rotation`).
+ */
 export function nextEntrance(key: "buddy.intro" | "buddy.entrance"): EntranceKind {
   const kinds = key === "buddy.intro" ? SCREEN_KINDS : SLOT_KINDS;
   const forced = BY_SLUG[new URLSearchParams(window.location.search).get("entrada") ?? ""];
-  if (forced && kinds.includes(forced)) return forced;
-  const n = (readPref(key, -1) + 1) % kinds.length;
-  writePref(key, n);
-  return kinds[n] ?? "assemble";
+  return kinds[rotate(key, kinds.length, forced ? kinds.indexOf(forced) : null)] ?? "assemble";
 }
 
 const FRAME = `${import.meta.env.BASE_URL}clawd/clawd-hands-up.png`;
