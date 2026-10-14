@@ -56,7 +56,7 @@ export async function copyEmail(): Promise<boolean> {
     await navigator.clipboard.writeText(profile.email);
     return true;
   } catch {
-    return false; // contexto inseguro o permiso denegado: el mailto sigue disponible
+    return false; // contexto inseguro o permiso denegado: el email sigue visible para copiarlo a mano
   }
 }
 

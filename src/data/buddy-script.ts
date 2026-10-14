@@ -133,5 +133,8 @@ export const surprises: readonly string[] = [
   "Aprobó 4 de 4 módulos de Campuslands al 100 %, cada uno con su repo y su historial de commits.",
 ];
 
-export const contactThanks = "¡Listo! Se abrió tu cliente de correo con el mensaje preparado: solo falta pulsar enviar.";
+export const contactThanks = "¡Listo! Tu mensaje ya está escrito para Eidan: solo falta que pulses «Enviar» en tu correo.";
+export const contactBlocked = "No se abrió tu correo. Usa el botón del aviso o copia el email de Eidan: tu mensaje sigue aquí.";
+export const contactSent = "¡Enviado! Tu mensaje ya está en la bandeja de Eidan y te responderá a tu email.";
+export const contactFailed = "El envío automático falló, pero tu mensaje sigue aquí: ábrelo en tu correo con el botón del aviso.";
 export const copiedEmail = "Email copiado al portapapeles. 📋";

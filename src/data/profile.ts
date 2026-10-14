@@ -21,6 +21,11 @@ export const profile = {
   // Misma ruta que el sitio anterior: los enlaces ya compartidos al CV siguen funcionando.
   cv: "./cv/CV-Eidan-Carreno.pdf",
   availability: "Disponible para roles Junior · Pasantías · Proyectos",
+  /**
+   * URL /exec del Apps Script de contacto (`apps-script/README.md`). Vacía: el
+   * formulario abre Gmail con el mensaje escrito en lugar de enviarlo solo.
+   */
+  contactEndpoint: "",
   valueProp:
     "Construyo automatizaciones con IA sobre n8n, aplicaciones modulares en Python y aplicaciones web que consumen APIs REST. Prefiero lo nativo antes que una dependencia, y el porqué antes que el cómo.",
   bio: [
