@@ -27,6 +27,13 @@ export function BuddyBubble({ className = "", origin }: Props) {
     return () => window.clearTimeout(t);
   }, [view, holding, close]);
 
+  // Cerrarla con el puntero o el foco dentro la desmonta sin que lleguen pointerleave ni blur: la pausa
+  // quedaba activa y los siguientes comentarios automáticos (p. ej. "Ruta completada", que en móvil
+  // flota sobre el formulario de contacto) ya no se retiraban solos.
+  useEffect(() => {
+    if (!view || minimized) setHolding(false);
+  }, [view, minimized]);
+
   // Clawd cruzó de carril y la burbuja cambia de lado: reaparece con un fundido en vez de teletransportarse.
   const lastOrigin = useRef(origin);
   useEffect(() => {
