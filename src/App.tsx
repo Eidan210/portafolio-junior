@@ -6,6 +6,7 @@ import { About } from "@/components/About";
 import { Background } from "@/components/Background";
 import { Contact } from "@/components/Contact";
 import { Hero } from "@/components/Hero";
+import { KonamiEgg } from "@/components/KonamiEgg";
 import { Nav } from "@/components/Nav";
 import { Projects } from "@/components/Projects";
 import { Skills } from "@/components/Skills";
@@ -43,6 +44,7 @@ export function App() {
           </div>
         </footer>
         <BuddyHUD />
+        <KonamiEgg />
     </BuddyProvider>
   );
 }

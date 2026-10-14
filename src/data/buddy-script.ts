@@ -152,3 +152,6 @@ export const contactBlocked = "No se abrió tu correo. Usa el botón del aviso o
 export const contactSent = "¡Enviado! Tu mensaje ya está en la bandeja de Eidan y te responderá a tu email.";
 export const contactFailed = "El envío automático falló, pero tu mensaje sigue aquí: ábrelo en tu correo con el botón del aviso.";
 export const copiedEmail = "Email copiado al portapapeles. 📋";
+
+/** Guiño oculto: código Konami (↑↑↓↓←→←→BA). */
+export const konamiLine = "¡Código Konami! 🕶️ Modo leyenda activado. Eidan también cuida los detalles que nadie ve.";

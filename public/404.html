@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Página no encontrada · Eidan Carreño</title>
+    <link id="favicon" rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        background-color: #141413;
+        color: #faf9f5;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        max-width: 28rem;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .clawd-stage {
+        position: relative;
+        width: 160px;
+        height: 160px;
+        margin-bottom: 2rem;
+      }
+      .question-mark {
+        position: absolute;
+        top: -1.75rem;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 2rem;
+        font-weight: 700;
+        color: #eba487;
+        text-shadow: 0 0 12px rgba(217, 119, 87, 0.5);
+        animation: blink 1.2s ease-in-out infinite;
+        user-select: none;
+      }
+      .clawd-bob {
+        position: relative;
+        width: 160px;
+        height: 160px;
+        animation: sway 1.8s ease-in-out infinite;
+      }
+      .clawd-img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 160px;
+        height: 160px;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        pointer-events: none;
+        user-select: none;
+      }
+      .clawd-left {
+        animation: toggle-left 1.8s steps(1) infinite;
+      }
+      .clawd-right {
+        animation: toggle-right 1.8s steps(1) infinite;
+      }
+      @keyframes toggle-left {
+        0%, 49.9% { opacity: 1; visibility: visible; }
+        50%, 100% { opacity: 0; visibility: hidden; }
+      }
+      @keyframes toggle-right {
+        0%, 49.9% { opacity: 0; visibility: hidden; }
+        50%, 100% { opacity: 1; visibility: visible; }
+      }
+      @keyframes sway {
+        0%, 100% { transform: translateY(0) rotate(-3deg); }
+        25% { transform: translateY(-5px) rotate(-1deg); }
+        50% { transform: translateY(0) rotate(3deg); }
+        75% { transform: translateY(-5px) rotate(1deg); }
+      }
+      @keyframes blink {
+        0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+        50% { opacity: 0.2; transform: translateX(-50%) scale(0.85); }
+      }
+      h1 {
+        margin: 0 0 0.75rem;
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #faf9f5;
+        letter-spacing: -0.02em;
+      }
+      p {
+        margin: 0 0 2rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #b0aea5;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2.75rem;
+        padding: 0.65rem 1.5rem;
+        border-radius: 9999px;
+        background: linear-gradient(135deg, #eba487, #d97757 55%);
+        color: #141413;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: 0 10px 25px -10px rgba(217, 119, 87, 0.65);
+        transition: transform 0.15s ease, box-shadow 0.2s ease;
+      }
+      .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 30px -8px rgba(217, 119, 87, 0.85);
+      }
+      .btn:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px #141413, 0 0 0 4px #d97757;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+        .clawd-left {
+          opacity: 1 !important;
+          visibility: visible !important;
+        }
+        .clawd-right {
+          opacity: 0 !important;
+          visibility: hidden !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="clawd-stage">
+        <span class="question-mark" aria-hidden="true">?</span>
+        <div class="clawd-bob">
+          <img id="clawd-left" class="clawd-img clawd-left" src="" alt="" width="160" height="160" />
+          <img id="clawd-right" class="clawd-img clawd-right" src="" alt="" width="160" height="160" />
+        </div>
+      </div>
+      <h1>404 · Clawd se perdió</h1>
+      <p>Esta página no existe (o se fue en paracaídas).</p>
+      <a id="home-btn" class="btn" href="/">Volver al inicio</a>
+    </main>
+    <script>
+      (function() {
+        var base = "/";
+        if (location.hostname.endsWith("github.io")) {
+          var seg = location.pathname.split("/").filter(Boolean)[0];
+          base = seg ? "/" + seg + "/" : "/";
+        }
+        var favicon = document.getElementById("favicon");
+        if (favicon) favicon.href = base + "favicon.svg";
+
+        var leftImg = document.getElementById("clawd-left");
+        if (leftImg) leftImg.src = base + "clawd/clawd-looking-left.png";
+
+        var rightImg = document.getElementById("clawd-right");
+        if (rightImg) rightImg.src = base + "clawd/clawd-looking-right.png";
+
+        var homeBtn = document.getElementById("home-btn");
+        if (homeBtn) homeBtn.href = base;
+      })();
+    </script>
+  </body>
+</html>
