@@ -4,11 +4,12 @@
  * portafolio: cada tecnología declara para qué se usa y su evidencia se cruza
  * con `projects.ts` (`match`), así no se duplica ni se desincroniza.
  *
- * Las cifras de GitHub se verificaron con su API el 2026-10-13: 25 repos
- * públicos y 314 contribuciones en el último año. Los 8 repos de sitios
+ * Las cifras de GitHub salen de `github-stats.json`, que el CI actualiza con
+ * su API en cada build (repos públicos y contribuciones del último año). Los 8 repos de sitios
  * HTML/CSS salen del snapshot `Portafolio v3/data/github.json` (2026-09-23).
  * Java tiene su evidencia en el taller `Cajero` (`projects.ts`).
  */
+import githubStats from "@/data/github-stats.json" with { type: "json" };
 import { projects } from "@/data/projects";
 import type { Project, Tech, TechCategory } from "@/lib/types";
 
@@ -144,7 +145,7 @@ export const techs: readonly Tech[] = [
     category: "workflow",
     role: "Publicación y revisión",
     brand: "#E4E7EE",
-    note: "25 repos públicos · 314 contribuciones",
+    note: `${githubStats.repos} repos públicos · ${githubStats.contributions} contribuciones`,
   },
   {
     id: "vscode",
