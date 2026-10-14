@@ -8,6 +8,8 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   base: "./",
   plugins: [react(), tailwindcss()],
+  // Mapas de fuentes publicados: el código ya es público en GitHub y así los errores del sitio se leen con su fuente.
+  build: { sourcemap: true },
   resolve: {
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
