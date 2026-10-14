@@ -57,6 +57,29 @@ export const projects: readonly Project[] = [
     },
   },
   {
+    id: "taller-java",
+    title: "Taller de Java",
+    repo: "Cajero",
+    summary:
+      "Consola en Java con 5 casos en un solo menú —cajero automático, registro académico, tienda online, agenda y notas con curva— que resuelve 25 ejercicios de POO.",
+    stack: ["Java", "POO", "Maven"],
+    metrics: [
+      { value: "25", label: "ejercicios" },
+      { value: "5", label: "casos" },
+      { value: "19", label: "clases" },
+    ],
+    repoUrl: "https://github.com/Eidan210/Cajero",
+    category: "Java · POO",
+    buddy: {
+      challenge:
+        "Una guía de práctica con 25 ejercicios repartidos en 5 casos distintos. Resueltos por separado serían 25 programas sueltos, difíciles de ejecutar y de revisar.",
+      architecture:
+        "Un menú de consola y un paquete por caso. El cajero modela la herencia con una Cuenta abstracta de la que salen cuentas de ahorro con interés y corrientes con sobregiro; la agenda se guarda y se carga desde un archivo, el registro académico exporta su reporte a .txt y las entradas numéricas capturan InputMismatchException para volver a pedir el dato.",
+      takeaway:
+        "Es su primer repositorio en Java y ya usa POO de verdad: clases abstractas, herencia, colecciones con ArrayList y validación de cada entrada.",
+    },
+  },
+  {
     id: "examenes",
     title: "Plataforma de Exámenes",
     repo: "examen",

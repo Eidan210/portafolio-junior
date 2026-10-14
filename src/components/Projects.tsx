@@ -22,11 +22,20 @@ const PALETTE = [
 ] as const;
 
 /**
- * Bento sin huecos para 6 proyectos, sin celdas que crezcan en vacío.
- * lg (3 col): destacado horizontal a todo el ancho · Mym (2) + 1 · fila de 3 = 9.
- * md (2 col): destacado · Mym · 2 + 2 = 8.
+ * Bento sin huecos para 7 proyectos, sin celdas que crezcan en vacío.
+ * lg (3 col): destacado horizontal a todo el ancho y después zigzag 2+1 · 1+2 · 2+1 = 12.
+ * md (2 col): destacado · Mym · 2 + 2 · el último a lo ancho = 10.
+ * Una celda ancha lleva una captura más apaisada (16/7) para no estirar la tarjeta.
  */
-const SPANS = ["md:col-span-2 lg:col-span-3", "md:col-span-2", "", "", "", ""];
+const LAYOUT: readonly { span: string; media: string }[] = [
+  { span: "md:col-span-2 lg:col-span-3", media: "aspect-[16/9] lg:aspect-auto lg:w-[54%] lg:shrink-0 lg:border-r lg:border-b-0" },
+  { span: "md:col-span-2", media: "aspect-[16/7]" },
+  { span: "", media: "aspect-[16/9]" },
+  { span: "", media: "aspect-[16/9]" },
+  { span: "lg:col-span-2", media: "aspect-[16/9] lg:aspect-[16/7]" },
+  { span: "lg:col-span-2", media: "aspect-[16/9] lg:aspect-[16/7]" },
+  { span: "md:col-span-2 lg:col-span-1", media: "aspect-[16/9] md:aspect-[16/7] lg:aspect-[16/9]" },
+];
 
 /** Vista previa generativa para repos sin captura: decorativa, no simula una UI que no existe. */
 function GenerativePreview({ project, index }: { project: Project; index: number }) {
@@ -59,11 +68,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
   return (
     <TiltCard max={featured ? 2 : 5} className={`group flex h-full flex-col overflow-hidden rounded-3xl ${featured ? "lg:flex-row" : ""}`}>
-      <div
-        className={`relative overflow-hidden border-b border-white/10 ${
-          featured ? "aspect-[16/9] lg:aspect-auto lg:w-[54%] lg:shrink-0 lg:border-r lg:border-b-0" : index === 1 ? "aspect-[16/7]" : "aspect-[16/9]"
-        }`}
-      >
+      <div className={`relative overflow-hidden border-b border-white/10 ${LAYOUT[index]?.media ?? "aspect-[16/9]"}`}>
         {project.image ? (
           <img
             src={project.image}
@@ -135,12 +140,12 @@ export function Projects() {
   return (
     <section id="proyectos" aria-labelledby="projects-title" className="shell px-4 py-24 sm:px-6">
       <SectionHeading id="projects-title" eyebrow="Proyectos destacados" title={<>Software que <span className="text-gradient">resuelve algo</span>.</>}>
-        Seis repositorios reales, de la automatización con IA a herramientas en Python. Cada cifra sale del propio repo.
+        {projects.length} repositorios reales, de la automatización con IA a la programación orientada a objetos en Java. Cada cifra sale del propio repo.
       </SectionHeading>
 
       <ul className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
         {projects.map((project, i) => (
-          <li key={project.id} id={`proyecto-${project.id}`} className={`scroll-mt-28 ${SPANS[i] ?? ""}`}>
+          <li key={project.id} id={`proyecto-${project.id}`} className={`scroll-mt-28 ${LAYOUT[i]?.span ?? ""}`}>
             <Reveal delay={(i % 3) * 0.08} className="h-full">
               <ProjectCard project={project} index={i} />
             </Reveal>

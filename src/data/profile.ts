@@ -1,6 +1,7 @@
 /**
  * Perfil personal. Fuente: CV `CV-Eidan-Carreno.pdf` y `Portafolio v3/data`
- * (verificado 2026-09-23). Sin LinkedIn: confirmado por Eidan, se omite a
+ * (verificado 2026-09-23); repos y contribuciones, con la API de GitHub
+ * (2026-10-13). Sin LinkedIn: confirmado por Eidan, se omite a
  * propósito — el CTA del hero no lo muestra.
  */
 import type { CodeEntry, Milestone, Principle } from "@/lib/types";
@@ -24,7 +25,7 @@ export const profile = {
     "Construyo automatizaciones con IA sobre n8n, aplicaciones modulares en Python y aplicaciones web que consumen APIs REST. Prefiero lo nativo antes que una dependencia, y el porqué antes que el cómo.",
   bio: [
     "Mi perfil se construyó dentro de Campuslands, un programa intensivo donde cada módulo se aprueba entregando software que funciona, no teoría. Cuatro de cuatro módulos aprobados al 100 %, cada uno con su repositorio y su historial de commits.",
-    "Trabajo con Python, JavaScript, HTML, CSS y SQL, y me muevo con soltura entre bases de datos, APIs y automatización de flujos. Me interesa el detalle: el error que nadie encuentra, el contraste que no pasa AA, la entrega que sí llega a tiempo.",
+    "Trabajo con Python, JavaScript, Java, HTML, CSS y SQL, y me muevo con soltura entre bases de datos, APIs y automatización de flujos. Me interesa el detalle: el error que nadie encuentra, el contraste que no pasa AA, la entrega que sí llega a tiempo.",
   ],
   objective:
     "Seguir creciendo como desarrollador, entrar en proyectos que me obliguen a aprender y aportar mientras consolido bases de datos relacionales, metodologías ágiles y testing automatizado.",
@@ -39,8 +40,8 @@ export const profileCode: readonly CodeEntry[] = [
   { key: "rol", label: "Rol", value: "Dev Junior" },
   { key: "base", label: "Ubicación", value: "Floridablanca, CO" },
   { key: "campuslands", label: "Módulos de Campuslands", value: "4/4 al 100 %" },
-  { key: "repos", label: "Repositorios públicos", value: 24, comment: "públicos" },
-  { key: "contribuciones", label: "Contribuciones en el último año", value: 269, comment: "último año" },
+  { key: "repos", label: "Repositorios públicos", value: 25, comment: "públicos" },
+  { key: "contribuciones", label: "Contribuciones en el último año", value: 314, comment: "último año" },
   { key: "ingles", label: "Inglés", value: "B2 → C1" },
   { key: "disponible", label: "Disponible", value: true, live: true },
 ];

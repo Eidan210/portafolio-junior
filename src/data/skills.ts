@@ -4,9 +4,10 @@
  * portafolio: cada tecnología declara para qué se usa y su evidencia se cruza
  * con `projects.ts` (`match`), así no se duplica ni se desincroniza.
  *
- * Las notas de GitHub salen del snapshot `Portafolio v3/data/github.json`
- * (2026-09-23): 24 repos públicos, 269 contribuciones, 8 repos de sitios
- * HTML/CSS. Java no tiene repositorio público y se dice tal cual.
+ * Las cifras de GitHub se verificaron con su API el 2026-10-13: 25 repos
+ * públicos y 314 contribuciones en el último año. Los 8 repos de sitios
+ * HTML/CSS salen del snapshot `Portafolio v3/data/github.json` (2026-09-23).
+ * Java tiene su evidencia en el taller `Cajero` (`projects.ts`).
  */
 import { projects } from "@/data/projects";
 import type { Project, Tech, TechCategory } from "@/lib/types";
@@ -46,7 +47,8 @@ export const techs: readonly Tech[] = [
     category: "lenguajes",
     role: "Programación orientada a objetos",
     brand: "#E8544A",
-    note: "Sin repositorio público todavía",
+    match: ["Java"],
+    capacities: ["Herencia y clases abstractas", "Excepciones con try-catch y colecciones con ArrayList"],
   },
   {
     id: "html5",
@@ -142,7 +144,7 @@ export const techs: readonly Tech[] = [
     category: "workflow",
     role: "Publicación y revisión",
     brand: "#E4E7EE",
-    note: "24 repos públicos · 269 contribuciones",
+    note: "25 repos públicos · 314 contribuciones",
   },
   {
     id: "vscode",

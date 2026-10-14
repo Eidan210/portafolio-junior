@@ -3,6 +3,7 @@
  * deciden cuándo hablar, nunca qué decir. Las frases se apoyan en datos de
  * `profile.ts`, `projects.ts` y `skills.ts`; no añaden hechos nuevos.
  */
+import { projects } from "@/data/projects";
 import { techs } from "@/data/skills";
 import type { BuddyMood, FaqEntry, SectionId } from "@/lib/types";
 
@@ -76,7 +77,7 @@ export const tour: readonly TourStep[] = [
   {
     section: "proyectos",
     mood: "cool",
-    text: "Seis proyectos reales, cada uno con su repositorio. Pulsa \"¿Qué dice Buddy?\" en cualquiera y te lo desgloso.",
+    text: `${projects.length} proyectos reales, cada uno con su repositorio. Pulsa "¿Qué dice Buddy?" en cualquiera y te lo desgloso.`,
   },
   {
     section: "contacto",
@@ -105,7 +106,7 @@ export const faq: readonly FaqEntry[] = [
 ];
 
 export const skillsSummary =
-  "En corto: JavaScript y Python como lenguajes base, PostgreSQL y SQL para datos, n8n + Gemini para automatizar, y Git con Conventional Commits para que todo quede trazable.";
+  "En corto: JavaScript y Python como lenguajes base, Java para programación orientada a objetos, PostgreSQL y SQL para datos, n8n + Gemini para automatizar, y Git con Conventional Commits para que todo quede trazable.";
 
 /** Frases para cuando el visitante hace clic en Buddy repetidamente o se queda quieto. */
 export const idleQuips: readonly string[] = [
@@ -126,6 +127,7 @@ export const surprises: readonly string[] = [
   "CampusTech v2.0 nació de reescribir su propia v1 monolítica en 5 módulos de responsabilidad única.",
   "La preselección con IA guarda 13 datos por candidato… y la decisión final siempre la toma una persona.",
   "El buscador de videojuegos pesa 9,7 KB en total. Sin librerías.",
+  "Su taller de Java mete 25 ejercicios en un solo menú de consola: de un cajero con PIN a una agenda que se guarda en un archivo.",
   "Mym Designsx tiene demo en vivo: una tienda completa en JavaScript vanilla con n8n de backend.",
   "En el reto \"Si yo fuera el CEO\" coordinó a 5 personas y defendió un pitch de 8 minutos.",
   "Aprobó 4 de 4 módulos de Campuslands al 100 %, cada uno con su repo y su historial de commits.",
