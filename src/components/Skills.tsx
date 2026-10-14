@@ -51,7 +51,6 @@ const TechSlot = memo(function TechSlot({ tech, onSelect }: { tech: Tech; onSele
       onPointerMove={(e) => trackGlow(e.currentTarget, e)}
       onPointerLeave={(e) => e.currentTarget.style.setProperty("--glow", "0")}
       style={{ "--brand": tech.brand } as CSSProperties}
-      aria-label={`${tech.name}: ${tech.role}. ${evidence}. ${skillsCopy.askBuddy}`}
       className="tech-slot glass glow-border group flex h-full w-full items-start gap-4 rounded-2xl p-4 text-left transition-transform duration-300 hover:-translate-y-1"
     >
       <span className="tech-logo pixel-corners grid size-12 shrink-0 place-items-center bg-ink-3">
@@ -72,6 +71,8 @@ const TechSlot = memo(function TechSlot({ tech, onSelect }: { tech: Tech; onSele
           <span>{evidence}</span>
         </span>
       </span>
+      {/* El nombre accesible es el contenido visible más esta pista: contiene siempre lo que se ve. */}
+      <span className="sr-only"> {skillsCopy.askBuddy}</span>
     </button>
   );
 });

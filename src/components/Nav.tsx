@@ -120,13 +120,15 @@ export function Nav() {
           compact ? "bg-ink/50 py-1.5" : "py-2"
         }`}
       >
-        <a href="#inicio" className="flex items-center gap-3 rounded-full pr-2" aria-label={navCopy.goToStartAria}>
+        {/* Sin aria-label: el nombre accesible es el texto visible ("EC", nombre) más la pista; así siempre lo contiene. */}
+        <a href="#inicio" className="flex items-center gap-3 rounded-full pr-2">
           <span className="pixel-corners grid size-10 shrink-0 place-items-center bg-claude font-pixel text-sm font-semibold text-ink">EC</span>
           {/* En md los 4 enlaces ocupan el ancho: solo queda sitio para el badge. */}
           <span className="hidden leading-tight sm:block md:hidden lg:block">
             <span className="block font-display text-base font-extrabold tracking-tight lg:text-[1.0625rem]">{profile.shortName}</span>
             <span className="hidden text-xs text-subtle lg:block">{profile.role}</span>
           </span>
+          <span className="sr-only">{navCopy.goToStartAria}</span>
         </a>
 
         <ul className="mx-auto hidden items-center gap-0.5 md:flex" onMouseLeave={() => setHovered(null)}>
@@ -162,10 +164,10 @@ export function Nav() {
             type="button"
             onClick={() => switchLang(lang === "es" ? "en" : "es", activeSection)}
             className="grid h-10 min-w-10 place-items-center rounded-full px-2 font-pixel text-xs text-muted transition-colors hover:bg-white/10 hover:text-fg"
-            aria-label={langSwitch.aria}
             title={langSwitch.aria}
           >
             <span lang={lang === "es" ? "en" : "es"}>{langSwitch.label}</span>
+            <span className="sr-only"> · {langSwitch.aria}</span>
           </button>
           <a
             href={profile.github}
