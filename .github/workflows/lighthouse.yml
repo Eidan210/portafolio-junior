@@ -1,9 +1,9 @@
 # Mide el build con Lighthouse (perfil móvil, mediana de 3 corridas) en cada
-# push a main y en cada pull request, y falla si los puntajes bajan de los
-# umbrales de .lighthouserc.json. Calibrados el 2026-10-14 sobre el build real:
-# rendimiento 87–90, accesibilidad 100, buenas prácticas 100 y SEO 100; los
-# umbrales (80/95/95/95) dejan margen al ruido entre máquinas sin tapar una
-# regresión. Los informes quedan como artefacto del workflow.
+# push a main y en cada pull request, con los umbrales de .lighthouserc.json.
+# Accesibilidad, buenas prácticas, SEO (95) y CLS (0,1) son deterministas y
+# bloquean. El rendimiento (80, medido 87–90 en local) solo avisa: en los
+# runners compartidos de GitHub varió de 62 a 78 en una misma corrida y como
+# bloqueo daría falsos rojos. Los informes quedan como artefacto del workflow.
 name: Lighthouse CI
 
 on:

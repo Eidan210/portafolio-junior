@@ -184,7 +184,7 @@ public/
 | Salto a `#sección` tras el primer render | El navegador intentaba el salto antes de que React pintara las secciones y los enlaces a una sección se quedaban arriba (también en la versión anterior). Ahora aterrizan, salvo que el visitante ya haya movido la página. |
 | Cifras de GitHub con respaldo | `scripts/github-stats.mjs` consulta la API GraphQL en el CI; sin token o si falla, se conservan las últimas cifras guardadas y el build sigue. |
 | E2E con el Chrome instalado (`channel: "chrome"`) | Ni en local ni en CI hay que descargar navegadores. Los tests leen los textos de `src/data` en vez de copiarlos: un cambio de redacción no los rompe. |
-| Lighthouse CI con umbrales calibrados | Medido sobre el build real (móvil): rendimiento 87–90, accesibilidad 100, buenas prácticas 100 y SEO 100. Los umbrales 80/95/95/95 dejan margen al ruido entre máquinas sin tapar una regresión. |
+| Lighthouse CI con umbrales calibrados | Medido sobre el build real (móvil): rendimiento 87–90, accesibilidad 100, buenas prácticas 100 y SEO 100. Accesibilidad, buenas prácticas, SEO (≥ 95) y CLS (≤ 0,1) bloquean; el rendimiento solo avisa, porque en los runners compartidos de GitHub varió de 62 a 78 en una misma corrida. |
 | Casos de estudio con cita | Cada afirmación lleva una cita literal del README, y un script verificó las 63 citas carácter a carácter. Al contrastarlas aparecieron dos cifras sin respaldo en el repo (5 competencias y umbral del 65 % en Preselección, 111 KB en Exámenes), que se corrigieron. |
 
 ### Diseño
