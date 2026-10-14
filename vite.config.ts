@@ -6,9 +6,9 @@ import tailwindcss from "@tailwindcss/vite";
 
 /**
  * Precarga las fuentes del primer pintado (subconjunto latin, que cubre tildes
- * y eñes). Sin esto se piden al maquetar el texto, el primer render sale con la
- * fuente de respaldo y al llegar la buena el hero se recoloca: en Linux, cuyas
- * fuentes de respaldo son más anchas, Lighthouse medía un CLS de 0,17.
+ * y eñes). Sin esto el navegador no las pide hasta que React pinta el texto,
+ * tras descargar y ejecutar el JS, y el primer render sale con la fuente de
+ * respaldo.
  */
 function preloadFonts(patterns: readonly RegExp[]): Plugin {
   return {
