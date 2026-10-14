@@ -22,8 +22,8 @@ export const projects: readonly Project[] = [
     stack: ["n8n", "Google Gemini", "JavaScript", "Google Sheets", "Gmail", "Telegram"],
     metrics: [
       { value: "13", label: "datos por candidato" },
-      { value: "5", label: "competencias ponderadas" },
-      { value: "65 %", label: "umbral de avance" },
+      { value: "39", label: "nodos en n8n" },
+      { value: "3", label: "niveles de compatibilidad" },
     ],
     repoUrl: "https://github.com/Eidan210/Proyecto_n8n",
     image: "./proyectos/preseleccion-n8n.webp",
@@ -32,7 +32,7 @@ export const projects: readonly Project[] = [
       challenge:
         "RR. HH. recibe decenas o cientos de CV en PDF por vacante. Revisarlos a mano toma días, y lo que el candidato escribe en el formulario no siempre coincide con su hoja de vida.",
       architecture:
-        "Un flujo en n8n donde Gemini puntúa 5 competencias ponderadas y decide contra un umbral del 65 %. Se guardan 13 datos por candidato en Sheets, se notifica por Gmail y Telegram, y un bot deja la decisión final en manos del reclutador.",
+        "Un flujo de 39 nodos en n8n donde Gemini puntúa la compatibilidad del CV con la vacante y la clasifica en tres niveles: revisión prioritaria desde el 80 %, manual entre el 60 y el 79 % y secundaria por debajo. Se guardan 13 datos por candidato en Sheets, se notifica por Gmail y Telegram, y un bot deja la decisión final en manos del reclutador.",
       takeaway:
         "Lo que más me gusta: la IA propone, pero el humano decide. Es human-in-the-loop por diseño, no por accidente.",
     },
@@ -129,7 +129,7 @@ export const projects: readonly Project[] = [
     stack: ["JavaScript ES6+", "HTML5", "CSS3"],
     metrics: [
       { value: "3", label: "módulos" },
-      { value: "111 KB", label: "de JavaScript" },
+      { value: "66 KB", label: "de JavaScript" },
     ],
     repoUrl: "https://github.com/Eidan210/examen",
     image: "./proyectos/examenes.webp",
