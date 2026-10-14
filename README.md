@@ -4,6 +4,7 @@ Mi portafolio personal: una web *one-page* con la paleta de Anthropic, estética
 
 [![Demo en vivo](https://img.shields.io/badge/demo-GitHub_Pages-d97757?style=flat-square&logo=githubpages&logoColor=white)](https://eidan210.github.io/portafolio-junior/)
 [![Despliegue](https://github.com/Eidan210/portafolio-junior/actions/workflows/deploy.yml/badge.svg)](https://github.com/Eidan210/portafolio-junior/actions/workflows/deploy.yml)
+[![Lighthouse CI](https://github.com/Eidan210/portafolio-junior/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/Eidan210/portafolio-junior/actions/workflows/lighthouse.yml)
 ![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white)
@@ -35,11 +36,14 @@ Un portafolio junior suele ser una lista de tarjetas que se recorre en segundos:
 
 ## Funciones clave
 
+- **En español e inglés:** se elige por el idioma del navegador; el botón ES/EN del menú cambia de idioma sin perder la sección y `?lang=en` deja un enlace compartible.
+- **Resumen en 30 segundos:** para quien evalúa con prisa, un botón del inicio abre rol, stack con evidencia, tres proyectos destacados, cifras y contacto, sin animaciones.
 - **Entrada de Buddy rotativa:** ocho coreografías en escritorio (a pantalla completa) y siete en móvil; cada visita estrena una, y en escritorio el saludo final también rota entre seis poses y frases.
 - **Ruta que sigue el scroll:** en escritorio, Clawd camina por carriles entre secciones, recoge chispas y celebra en la meta con confeti; en móvil, una barra de paradas inferior.
 - **Tour guiado:** Clawd camina a su ritmo y la cámara le sigue con un muelle amortiguado.
 - **Menú de Buddy** (clic en Clawd): progreso de la ruta, tour, FAQ, skills, proyectos, contacto, "Sorpréndeme" y preferencias.
 - **Proyectos con evidencia real:** capturas sacadas de los `docs/` de cada repositorio, una consola que reproduce una sesión real del taller de Java y métricas que cuentan al aparecer. Cada tarjeta tiene *"¿Qué dice Buddy?"* con el reto técnico, la arquitectura y su opinión.
+- **Casos de estudio:** cada proyecto abre su problema, solución, decisiones técnicas, resultados y aprendizajes, redactados desde el README del repo y con cada afirmación contrastada con una cita literal.
 - **Ficha `eidan.ts`:** el perfil como un archivo TypeScript en un editor, con resaltado y tecleo animado.
 - **Stack con evidencia:** 14 tecnologías filtrables, cada una con su papel y los proyectos donde se ve.
 - **Nav con tirolesa:** el progreso de lectura es el borde del menú y un mini Clawd cuelga de él; al llegar al final se suelta, baja en paracaídas, aterriza sobre el footer, saluda y se va caminando.
@@ -112,6 +116,10 @@ src/
     skills.ts             14 tecnologías (del portafolio original) con papel, evidencia y capacidades
     buddy-script.ts       Todo lo que dice Buddy: bienvenida, saludos de la intro, tour, FAQ, secciones, "Sorpréndeme", meta
     contact-copy.ts       Textos del formulario de contacto (validación, envío automático, plan B)
+    ui.ts                 Textos de interfaz: menú, botones, diálogos y metadatos
+    en/                   Versión inglesa de cada módulo, con exactamente las mismas claves
+    github-stats.json     Repos y contribuciones de GitHub (el CI los actualiza en cada build)
+  i18n/lang.ts            Idioma (es/en) elegido al cargar: `?lang=`, preferencia guardada o navegador; `pick` elige cada texto
   buddy/
     BuddyProvider.tsx     Estado: hero→ruta, vista, mood, tour, narración, paradas visitadas, movimiento; contextos separados para que cada componente escuche solo lo que usa
     BuddyAvatar.tsx       Clawd: secuencias de fotogramas PNG por ánimo + fotograma por dirección
@@ -138,13 +146,17 @@ src/
     NavParachute.tsx      Paracaídas del mini Clawd: caída, aterrizaje en el footer, saludo y salida caminando
     Contact.tsx           Contacto honesto: envío automático confirmado o Gmail con el mensaje escrito
     KonamiEgg.tsx         Guiño del código Konami: gafas de sol y confeti pixel
-    Nav · Hero · About · Background · TechIcon · interactive · icons
-  lib/                    types.ts (contratos), hooks.ts, storage.ts, scroll.ts (scroll con easing cancelable)
+    QuickView.tsx         "Resumen en 30 s": lo esencial para quien evalúa con prisa
+    CaseStudyDialog.tsx   Caso de estudio de cada proyecto (problema → solución → decisiones → resultados → aprendizajes)
+    Dialog · Nav · Hero · About · Background · TechIcon · interactive · icons
+  lib/                    types.ts (contratos), hooks.ts, storage.ts, scroll.ts (scroll con easing cancelable), useHashLanding.ts (enlaces con `#sección`)
     contact.ts            Validación, redactor de Gmail o `mailto:`, detección de pestaña o app abierta y envío al Apps Script
     rotation.ts           Rotación por visita con memoria por carga (entradas y saludos)
     count.ts · konami.ts  Análisis de métricas y máquina de estados del código Konami
   styles/globals.css      Tokens (paleta Anthropic), vidrio, pixel-corners, reduced-motion
-tests/                    42 tests de la lógica pura con node:test (sin red; dobles para fetch, window.open y el documento)
+tests/                    51 tests de la lógica pura con node:test (sin red; dobles para fetch, window.open y el documento)
+e2e/                      Pruebas E2E con Playwright: flujos clave en escritorio y móvil, sobre el build
+scripts/github-stats.mjs  Cifras de GitHub con la API GraphQL (si falla, conserva las últimas)
 apps-script/              contacto.gs (envío automático a tu Gmail) y su guía de despliegue
 public/
   clawd/                  20 fotogramas de Clawd (Icons8)
@@ -168,6 +180,12 @@ public/
 | Contexto de Buddy dividido y contadores fuera de React | Medido con trazas de Chrome: durante el scroll, React re-renderizaba unas 20 veces por segundo secciones estáticas porque todo escuchaba el contexto completo de Buddy, que cambia con su ánimo y sus mensajes. Acciones, navegación, fase y movimiento van en contextos separados, tarjetas e iconos con `memo` y `CountUp` escribe el número en el DOM. En producción el scroll pasó de 10 a 23 fps en escritorio y de 13 a 30 en móvil con CPU 4× (Chrome headless). |
 | `-webkit-backdrop-filter` siempre **antes** de `backdrop-filter` | Lightning CSS (minificador del build) trata ambos como la misma propiedad y conserva solo el último. En el orden inverso, producción perdía el estándar y Chrome/Edge pintaban el vidrio sin blur. |
 | Scroll de Buddy propio (`lib/scroll.ts`), no `scrollIntoView` smooth | El smooth nativo es rápido y no se puede sincronizar con Clawd; el propio tiene duración y easing controlados y se cancela si el visitante toma el control. |
+| Idioma elegido al cargar (`pick`) y recarga al cambiar | Los datos siguen siendo constantes importadas: ningún componente necesita estado de idioma. Comparando todos los textos del sitio antes y después, el español quedó idéntico; `?lang=en` deja un enlace compartible y la intro no se repite al cambiar. |
+| Salto a `#sección` tras el primer render | El navegador intentaba el salto antes de que React pintara las secciones y los enlaces a una sección se quedaban arriba (también en la versión anterior). Ahora aterrizan, salvo que el visitante ya haya movido la página. |
+| Cifras de GitHub con respaldo | `scripts/github-stats.mjs` consulta la API GraphQL en el CI; sin token o si falla, se conservan las últimas cifras guardadas y el build sigue. |
+| E2E con el Chrome instalado (`channel: "chrome"`) | Ni en local ni en CI hay que descargar navegadores. Los tests leen los textos de `src/data` en vez de copiarlos: un cambio de redacción no los rompe. |
+| Lighthouse CI con umbrales calibrados | Medido sobre el build real (móvil): rendimiento 87–90, accesibilidad 100, buenas prácticas 100 y SEO 100. Los umbrales 80/95/95/95 dejan margen al ruido entre máquinas sin tapar una regresión. |
+| Casos de estudio con cita | Cada afirmación lleva una cita literal del README, y un script verificó las 63 citas carácter a carácter. Al contrastarlas aparecieron dos cifras sin respaldo en el repo (5 competencias y umbral del 65 % en Preselección, 111 KB en Exámenes), que se corrigieron. |
 
 ### Diseño
 
@@ -192,17 +210,20 @@ cd portafolio-junior
 npm install
 npm run dev        # http://localhost:5173
 npm run build      # typecheck + build estático en dist/
-npm test           # 42 tests de la lógica pura (node --test, sin red)
+npm test           # 51 tests de la lógica pura (node --test, sin red)
+npm run test:e2e   # pruebas E2E con Playwright sobre el build (usa tu Chrome)
 npm run preview    # sirve dist/
 ```
 
 Para que el formulario envíe solo, despliega el Apps Script ([`apps-script/README.md`](apps-script/README.md)) y pega su URL en `contactEndpoint` (`src/data/profile.ts`). Sin ella, el formulario abre Gmail con el mensaje escrito.
 
+El idioma se elige solo; para forzarlo, añade `?lang=en` o `?lang=es` a la URL.
+
 Para ver una entrada concreta sin esperar a la rotación, añade `?entrada=` a la URL: `ensamblado`, `caida`, `teletransporte`, `lluvia`, `paracaidas`, `hiperespacio`, `meteorito` u `ovni` (por ejemplo, `http://localhost:5173/?entrada=ovni`).
 
 ### Despliegue
 
-`.github/workflows/deploy.yml` pasa los tests y compila en cada pull request (check de CI) y, al fusionar en `main`, publica `dist/` en GitHub Pages (origen de Pages: **GitHub Actions**). `base: "./"` deja las rutas relativas, así que el mismo build sirve en el subpath `/portafolio-junior/` o en un dominio propio.
+`.github/workflows/deploy.yml` pasa los tests, actualiza las cifras de GitHub, compila y corre las pruebas E2E en cada pull request (check de CI); al fusionar en `main` (y cada lunes, para refrescar las cifras) publica `dist/` en GitHub Pages (origen de Pages: **GitHub Actions**). Si una prueba E2E falla, no se publica. `.github/workflows/lighthouse.yml` mide el build con Lighthouse y falla si rendimiento, accesibilidad, buenas prácticas o SEO bajan de su umbral. `base: "./"` deja las rutas relativas, así que el mismo build sirve en el subpath `/portafolio-junior/` o en un dominio propio.
 
 Se conservan las URL públicas del sitio anterior: `cv/CV-Eidan-Carreno.pdf` y `img/og-image.png`. La versión estática anterior (HTML, CSS y JS) queda en el tag [`v1-estatico`](https://github.com/Eidan210/portafolio-junior/tree/v1-estatico).
 
