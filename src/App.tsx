@@ -10,8 +10,10 @@ import { KonamiEgg } from "@/components/KonamiEgg";
 import { Nav } from "@/components/Nav";
 import { Projects } from "@/components/Projects";
 import { Skills } from "@/components/Skills";
+import { useHashLanding } from "@/lib/useHashLanding";
 
 export function App() {
+  useHashLanding();
   return (
     // BuddyProvider envuelve la app en MotionConfig con la preferencia de movimiento efectiva.
     <BuddyProvider>
